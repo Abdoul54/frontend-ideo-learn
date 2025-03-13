@@ -1,0 +1,16 @@
+export const noPaddingPages = [
+    '/dashboard',
+    '/ssl-management',
+    '/tenant-management',
+    '/custom-domain-management',
+    '/email-smtp-configuration',
+    '/localization-tool',
+    '/user-fields',
+    '/groups',
+    '/users-management',
+    '/manage-team-requests',
+    '/manager-types',
+    '/permissions',
+    '/profiles',
+    '/power-users',
+]

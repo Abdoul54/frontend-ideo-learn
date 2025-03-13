@@ -1,0 +1,39 @@
+// Third-party Imports
+import PerfectScrollbar from 'react-perfect-scrollbar'
+
+// Component Imports
+import NavHeader from '@menu/components/vertical-menu/NavHeader'
+import Logo from '@components/layout/shared/Logo'
+import NavCollapseIcons from '@menu/components/vertical-menu/NavCollapseIcons'
+
+// Hook Imports
+import useHorizontalNav from '@menu/hooks/useHorizontalNav'
+
+// Util Imports
+import { mapHorizontalToVerticalMenu } from '@menu/utils/menuUtils'
+
+const VerticalNavContent = ({ children }) => {
+  // Hooks
+  const { isBreakpointReached } = useHorizontalNav()
+
+  // Vars
+  const ScrollWrapper = isBreakpointReached ? 'div' : PerfectScrollbar
+
+  return (
+    <>
+      <NavHeader>
+        <Logo />
+        <NavCollapseIcons />
+      </NavHeader>
+      <ScrollWrapper
+        {...(isBreakpointReached
+          ? { className: 'bs-full overflow-y-auto overflow-x-hidden' }
+          : { options: { wheelPropagation: false, suppressScrollX: true } })}
+      >
+        {mapHorizontalToVerticalMenu(children)}
+      </ScrollWrapper>
+    </>
+  )
+}
+
+export default VerticalNavContent
