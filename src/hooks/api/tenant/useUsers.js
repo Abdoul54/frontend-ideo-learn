@@ -193,8 +193,6 @@ export const useUsersColumns = ({ actionColumn = {} }) => {
           customCellRenderers
         });
 
-        console.log("Columns:", columns);
-        
         //setColumns(columns)
         //setColumnVisibility(initialVisibility);
         return {
@@ -278,4 +276,75 @@ export const useUsersAndColumns = (setColumns, setColumnVisibility, {
       }
     ]
   })
+}
+
+// post change password /tenant/tanzim/v1/users/password
+
+export const useChangePassword = () => {
+
+  return useMutation({
+    mutationFn: async ({ data }) => {
+      const response = await axiosInstance.post('/tenant/tanzim/v1/users/password', data);
+
+      if (!response.data || !response.data.success) {
+        throw new Error("Invalid response structure");
+      }
+
+      return response.data.data;
+    },
+    onSuccess: () => {
+      toast.success("Password changed successfully");
+    },
+    onError: (error) => {
+      console.error("Failed to change password:", error?.message?.errorMessage);
+      toast.error(error?.message?.errorMessage || "Failed to change password");
+    },
+  });
+}
+
+
+export const useGetPreferences = () => {
+  return useQuery({
+    queryKey: ["preferences"],
+    queryFn: async () => {
+      try {
+        const response = await axiosInstance.get('/tenant/tanzim/v1/users/preferences');
+
+        if (!response.data || !response.data.success) {
+          throw new Error("Invalid response structure");
+        }
+
+        return response.data?.data;
+      } catch (error) {
+        console.error("Preferences Fetch Error:", error.message);
+        throw error;
+      }
+    },
+    staleTime: 5000,
+    retry: 2,
+  });
+}
+
+export const usePostPreferences = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ data }) => {
+      const response = await axiosInstance.post('/tenant/tanzim/v1/users/preferences', data);
+
+      if (!response.data || !response.data.success) {
+        throw new Error("Invalid response structure");
+      }
+
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["preferences"]);
+      toast.success("Preferences updated successfully");
+    },
+    onError: (error) => {
+      console.error("Failed to update preferences:", error.message);
+      toast.error("Failed to update preferences");
+    },
+  });
 }

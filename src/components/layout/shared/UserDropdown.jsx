@@ -8,7 +8,6 @@ import { useRouter } from 'next/navigation'
 
 // MUI Imports
 import { styled } from '@mui/material/styles'
-import Badge from '@mui/material/Badge'
 import Avatar from '@mui/material/Avatar'
 import Popper from '@mui/material/Popper'
 import Fade from '@mui/material/Fade'
@@ -23,30 +22,43 @@ import Button from '@mui/material/Button'
 // Hook Imports
 import { signOut } from 'next-auth/react'
 import { useSettings } from '@/@core/contexts/settingsContext'
-import { useAdvancedSettings } from '@/@core/contexts/advancedSettingsContext'
 import centralChecker from '@/utils/workers/centralChecker'
-
-// Styled component for badge content
-const BadgeContentSpan = styled('span')({
-  width: 8,
-  height: 8,
-  borderRadius: '50%',
-  cursor: 'pointer',
-  backgroundColor: 'var(--mui-palette-success-main)',
-  boxShadow: '0 0 0 2px var(--mui-palette-background-paper)'
-})
+import { useLogout } from '@/hooks/api/useAuth'
+import { stringAvatar } from '@/utils/avatarGenerator'
+import { useUser } from '@/@core/contexts/userContext'
 
 const UserDropdown = ({ advancedSettings = null }) => {
   // States
   const [open, setOpen] = useState(false)
   const [isCentral, setIsCentral] = useState(false)
+
   // Refs
   const anchorRef = useRef(null)
 
   // Hooks
   const router = useRouter()
   const { settings } = useSettings()
-  const logoutUrl = advancedSettings?.user?.user_logout_redirect?.is_enabled && advancedSettings?.user?.user_logout_redirect?.url ? advancedSettings?.user?.user_logout_redirect?.url : '/login'
+  const logout = useLogout()
+  const { user, removeUserData } = useUser();
+
+  // Helper function to normalize user data regardless of format
+  const getUserInfo = () => {
+    if (!user) return { firstName: '', lastName: '', fullName: '', username: '', email: '', avatar: '' }
+
+    return {
+      firstName: (user.first_name || user.firstname || '').trim(),
+      lastName: (user.last_name || user.lastname || '').trim(),
+      fullName: user.full_name || `${(user.first_name || user.firstname || '')} ${(user.last_name || user.lastname || '')}`.trim(),
+      username: user.username || '',
+      email: user.email || '',
+      avatar: user.avatar || ''
+    }
+  }
+
+  const userInfo = getUserInfo()
+  const logoutUrl = user?.user_logout_redirect?.is_enabled && user?.user_logout_redirect?.url
+    ? user?.user_logout_redirect?.url
+    : '/login'
 
   useEffect(() => {
     const checkCentral = async () => {
@@ -61,7 +73,7 @@ const UserDropdown = ({ advancedSettings = null }) => {
   }, [])
 
   const handleDropdownOpen = () => {
-    !open ? setOpen(true) : setOpen(false)
+    setOpen(prevOpen => !prevOpen)
   }
 
   const handleDropdownClose = (event, url) => {
@@ -77,30 +89,49 @@ const UserDropdown = ({ advancedSettings = null }) => {
   }
 
   const handleUserLogout = async () => {
+    logout.mutateAsync()
     signOut({
       redirect: false
+    }).then(() => {
+      removeUserData()
+      // Redirect to login page
+      router.push(isCentral ? '/auth/login' : logoutUrl)
     })
-    // Redirect to login page
-    router.push(isCentral ? '/auth/login' : logoutUrl)
+  }
+
+  const hasUserIdentity = userInfo.firstName || userInfo.lastName || userInfo.avatar
+
+  // Render user avatar or default icon
+  const renderAvatar = (className = '') => {
+    if (!hasUserIdentity) {
+      return (
+        <Avatar
+          className={`text-2xl text-backgroundPaper bg-secondary ${className}`}
+        >
+          <i className='solar-user-bold-duotone' />
+        </Avatar>
+      )
+    }
+
+    return (
+      <Avatar
+        {...stringAvatar(
+          `${userInfo.firstName.toUpperCase()} ${userInfo.lastName.toUpperCase()}`,
+          {}, // Default sx
+          !userInfo.firstName && !userInfo.lastName ? 'solar-user-bold-duotone' : null // Use icon only if no name
+        )}
+        src={userInfo.avatar}
+        className={className}
+      />
+    )
   }
 
   return (
     <>
-      <Badge
-        ref={anchorRef}
-        overlap='circular'
-        badgeContent={<BadgeContentSpan onClick={handleDropdownOpen} />}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-        className='mis-2'
-      >
-        <Avatar
-          ref={anchorRef}
-          alt='John Doe'
-          src='/images/avatars/1.png'
-          onClick={handleDropdownOpen}
-          className='cursor-pointer bs-[38px] is-[38px]'
-        />
-      </Badge>
+      <div ref={anchorRef} onClick={handleDropdownOpen} className="cursor-pointer">
+        {renderAvatar('bs-[38px] is-[38px]')}
+      </div>
+
       <Popper
         open={open}
         transition
@@ -123,19 +154,21 @@ const UserDropdown = ({ advancedSettings = null }) => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-4 gap-2' tabIndex={-1}>
-                    <Avatar alt='John Doe' src='/images/avatars/1.png' />
+                    {renderAvatar('bs-[38px] is-[38px]')}
                     <div className='flex items-start flex-col'>
                       <Typography variant='body2' className='font-medium' color='text.primary'>
-                        John Doe
+                        {userInfo.username}
                       </Typography>
-                      <Typography variant='caption'>admin@Materialize.com</Typography>
+                      <Typography variant='caption'>{userInfo.email}</Typography>
                     </div>
                   </div>
                   <Divider className='mlb-1' />
-                  <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e)}>
-                    <i className='solar-user-bold-duotone' />
-                    <Typography color='text.primary'>My Profile</Typography>
-                  </MenuItem>
+                  {advancedSettings && (
+                    <MenuItem className='gap-3 pli-4' onClick={() => router.push('/profile')}>
+                      <i className='solar-user-bold-duotone' />
+                      <Typography color='text.primary'>My Profile</Typography>
+                    </MenuItem>
+                  )}
                   <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e)}>
                     <i className='solar-settings-bold-duotone' />
                     <Typography color='text.primary'>Settings</Typography>

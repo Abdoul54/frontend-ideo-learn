@@ -18,6 +18,7 @@ import {
     Typography,
     Stack,
     ListItemText,
+    Alert
 } from "@mui/material";
 import DrawerFormContainer from "@/components/DrawerFormContainer";
 import { useState, useEffect } from "react";
@@ -26,47 +27,169 @@ import SelectInput from "@/components/inputs/SelectInput";
 import TextInput from "@/components/inputs/TextInput";
 import SwitchInput from "@/components/inputs/SwitchInput";
 import { usePostUserField, useUpdateUserField } from "@/hooks/api/tenant/useUserFields";
-import { createSchema, defaultValues, fieldTypes } from "@/constants/UserFields";
-
-
+import { createSchema, fieldTypes } from "@/constants/UserFields";
+import { useActiveLanguages } from '@/hooks/api/tenant/useLocalization';
 
 const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
+    // Fetch active languages
+    const { data: activeLanguages, isLoading: isLoadingLanguages } = useActiveLanguages();
+
+    // Find default language from active languages if available
+    const systemDefaultLanguage = activeLanguages?.find(lang => lang.is_default)?.code || defaultLanguage;
+
     const [isUniversal, setIsUniversal] = useState(false);
-    const [schema, setSchema] = useState(() => createSchema(false, defaultLanguage));
-    const [currentLang, setCurrentLang] = useState(defaultLanguage);
-    const addUserField = usePostUserField()
-    const updateUserField = useUpdateUserField()
+    const [schema, setSchema] = useState(() => createSchema(false, systemDefaultLanguage));
+    const [currentLang, setCurrentLang] = useState(systemDefaultLanguage);
+    const addUserField = usePostUserField();
+    const updateUserField = useUpdateUserField();
+
+    // Create default values dynamically based on active languages
+    const getDefaultValues = () => {
+        // Initialize with all universal language
+        const translations = { all: '' };
+
+        // Add all active languages with empty values
+        if (activeLanguages && activeLanguages.length > 0) {
+            activeLanguages.forEach(lang => {
+                translations[lang.code] = '';
+            });
+        } else {
+            // Fallback translations if no active languages
+            translations.fr = '';
+            translations.en = '';
+            translations.ar = '';
+            translations.es = '';
+        }
+
+        return {
+            type: 'textfield',
+            mandatory: false,
+            invisible_to_user: false,
+            translations: translations,
+            //sequence: 1,
+            dropdown_options: [],
+            settings: {}
+        };
+    };
 
     // Update schema when isUniversal or defaultLanguage changes
     useEffect(() => {
-        setSchema(createSchema(isUniversal, defaultLanguage));
-    }, [isUniversal, defaultLanguage]);
+        setSchema(createSchema(isUniversal, systemDefaultLanguage, activeLanguages));
+    }, [isUniversal, systemDefaultLanguage, activeLanguages]);
 
     const methods = useForm({
         resolver: yupResolver(schema),
-        defaultValues: defaultValues
+        defaultValues: getDefaultValues(activeLanguages)
     });
 
     useEffect(() => {
-        const newData = {}
+        if (!open) return;
+
         if (data) {
-            newData.type = data?.type
-            newData.mandatory = data?.mandatory
-            newData.invisible_to_user = data?.invisible_to_user
-            newData.translations = data?.translations
-            newData.sequence = data?.sequence
+            // Build translations object with all active languages
+            const translations = { all: '' };
 
-            if (data?.type === 'dropdownfield')
-                newData.dropdown_options = data?.dropdown_options
+            if (activeLanguages && activeLanguages.length > 0) {
+                activeLanguages.forEach(lang => {
+                    translations[lang.code] = '';
+                });
+            } else {
+                translations.fr = '';
+                translations.en = '';
+                translations.ar = '';
+                translations.es = '';
+            }
 
-            if (data?.type === 'iframe')
-                newData.settings = data?.settings
-            methods.reset(newData)
+            // Override with actual translations from data
+            if (data.translations) {
+                Object.entries(data.translations).forEach(([key, value]) => {
+                    if (translations.hasOwnProperty(key)) {
+                        translations[key] = value || '';
+                    }
+                });
+            }
+
+            const newData = {
+                type: data?.type || 'textfield',
+                mandatory: data?.mandatory || false,
+                invisible_to_user: data?.invisible_to_user || false,
+                translations: translations,
+                //sequence: data?.sequence || 1
+            };
+
+            if (data?.type === 'dropdownfield') {
+                // Process dropdown options to include all languages
+                newData.dropdown_options = (data?.dropdown_options || []).map(option => {
+                    const optionTranslations = { all: '' };
+
+                    if (activeLanguages && activeLanguages.length > 0) {
+                        activeLanguages.forEach(lang => {
+                            optionTranslations[lang.code] = '';
+                        });
+                    } else {
+                        optionTranslations.fr = '';
+                        optionTranslations.en = '';
+                        optionTranslations.ar = '';
+                        optionTranslations.es = '';
+                    }
+
+                    // Override with actual option translations
+                    if (option.translations) {
+                        Object.entries(option.translations).forEach(([key, value]) => {
+                            if (optionTranslations.hasOwnProperty(key)) {
+                                optionTranslations[key] = value || '';
+                            }
+                        });
+                    }
+
+                    return {
+                        ...option,
+                        translations: optionTranslations
+                    };
+                });
+            }
+
+            if (data?.type === 'iframe') {
+                newData.settings = data?.settings || {};
+            }
+
+            methods.reset(newData);
+
+            // Set universal mode if 'all' translation is present
+            setIsUniversal(!!data.translations?.all);
+        } else {
+            methods.reset(getDefaultValues(activeLanguages));
+            setIsUniversal(false);
+        }
+    }, [data, open, activeLanguages]);
+
+    const { control, handleSubmit, watch, setValue, setError } = methods;
+    const selectedType = watch('type');
+
+    // Prepare language options for the MultilingualTextInput
+    const getLanguageOptions = () => {
+        // Start with All Languages option
+        const options = [{ code: 'all', label: 'All Languages' }];
+
+        // Add active languages from API if available
+        if (activeLanguages && activeLanguages.length > 0) {
+            activeLanguages.forEach(lang => {
+                options.push({
+                    code: lang.code,
+                    label: lang.name || lang.native_name,
+                    isDefault: lang.is_default
+                });
+            });
+        } else {
+            // Fallback to default languages
+            options.push({ code: 'en', label: 'English' });
+            options.push({ code: 'fr', label: 'French' });
+            options.push({ code: 'ar', label: 'Arabic' });
+            options.push({ code: 'es', label: 'Spanish' });
         }
 
-    }, [data])
-    const { control, handleSubmit, watch, setValue } = methods;
-    const selectedType = watch('type');
+        return options;
+    };
 
     const onSubmit = (formData) => {
         console.log("Form being submitted", formData);
@@ -85,40 +208,101 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
             submissionData.settings = {}; // Use empty object instead of null
         }
 
+        // Check if translations are valid
+        if (!isUniversal) {
+            // Check if default language translation is provided when universal is not used
+            const hasDefaultTranslation = systemDefaultLanguage &&
+                submissionData.translations[systemDefaultLanguage] &&
+                submissionData.translations[systemDefaultLanguage].trim() !== '';
+
+            if (!hasDefaultTranslation) {
+                setError(`translations.${systemDefaultLanguage}`, {
+                    type: 'manual',
+                    message: `The default language (${systemDefaultLanguage}) translation is required when not using universal translation`
+                });
+                return;
+            }
+
+            // Check dropdown options if applicable
+            if (submissionData.type === 'dropdownfield' && submissionData.dropdown_options?.length > 0) {
+                let hasOptionError = false;
+
+                submissionData.dropdown_options.forEach((option, index) => {
+                    const hasOptionDefaultTranslation = option.translations[systemDefaultLanguage] &&
+                        option.translations[systemDefaultLanguage].trim() !== '';
+
+                    if (!hasOptionDefaultTranslation) {
+                        setError(`dropdown_options.${index}.translations.${systemDefaultLanguage}`, {
+                            type: 'manual',
+                            message: `The default language (${systemDefaultLanguage}) translation is required`
+                        });
+                        hasOptionError = true;
+                    }
+                });
+
+                if (hasOptionError) {
+                    return;
+                }
+            }
+        }
+
+        // Get active language codes
+        const activeLanguageCodes = activeLanguages ?
+            activeLanguages.map(lang => lang.code) :
+            [systemDefaultLanguage]; // Fallback to just the default language
+
         // Handle translations based on universal flag
         if (isUniversal) {
-            // Keep the universal translation and set language-specific ones to empty strings
-            submissionData.translations.en = "";
-            submissionData.translations.fr = "";
-            submissionData.translations.ar = "";
-            submissionData.translations.es = "";
+            // Keep only the universal translation and remove language-specific ones
+            const universalValue = submissionData.translations.all || '';
+
+            // Start with empty object and only add 'all' if it has content
+            const cleanTranslations = {};
+            if (universalValue.trim()) {
+                cleanTranslations.all = universalValue.trim();
+            }
+
+            submissionData.translations = cleanTranslations;
 
             if (submissionData.dropdown_options?.length > 0) {
                 submissionData.dropdown_options.forEach(option => {
-                    option.translations.en = "";
-                    option.translations.fr = "";
-                    option.translations.ar = "";
-                    option.translations.es = "";
+                    const optionUniversalValue = option.translations.all || '';
+
+                    // Start with empty object and only add 'all' if it has content
+                    const cleanOptionTranslations = {};
+                    if (optionUniversalValue.trim()) {
+                        cleanOptionTranslations.all = optionUniversalValue.trim();
+                    }
+
+                    option.translations = cleanOptionTranslations;
                 });
             }
         } else {
             // If not universal, remove the all translation but ensure language-specific ones exist
-            delete submissionData.translations.all;
+            const cleanTranslations = Object.entries(submissionData.translations).reduce((acc, [key, value]) => {
+                const trimmedValue = value?.trim() || '';
+                // Include if it's an active language or the default language, and it has content
+                if (key !== 'all' && (activeLanguageCodes.includes(key) || key === systemDefaultLanguage) && trimmedValue) {
+                    acc[key] = trimmedValue;
+                }
+                return acc;
+            }, {});
 
-            // Ensure all language translations exist (even if empty)
-            submissionData.translations.en = submissionData.translations.en || "";
-            submissionData.translations.fr = submissionData.translations.fr || "";
-            submissionData.translations.ar = submissionData.translations.ar || "";
-            submissionData.translations.es = submissionData.translations.es || "";
+            submissionData.translations = cleanTranslations;
 
             if (submissionData.dropdown_options?.length > 0) {
                 submissionData.dropdown_options.forEach(option => {
-                    delete option.translations.all;
-                    // Ensure all option translations exist
-                    option.translations.en = option.translations.en || "";
-                    option.translations.fr = option.translations.fr || "";
-                    option.translations.ar = option.translations.ar || "";
-                    option.translations.es = option.translations.es || "";
+                    // Clean option translations - only include non-empty values for active languages
+                    const cleanOptionTranslations = Object.entries(option.translations).reduce((acc, [key, value]) => {
+                        const trimmedValue = value?.trim() || '';
+                        // Include if it's an active language or the default language, and it has content
+                        if (key !== 'all' && (activeLanguageCodes.includes(key) || key === systemDefaultLanguage) && trimmedValue) {
+                            acc[key] = trimmedValue;
+                        }
+                        return acc;
+                    }, {});
+
+                    option.translations = cleanOptionTranslations;
                 });
             }
         }
@@ -128,13 +312,51 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
         submissionData.invisible_to_user = submissionData.invisible_to_user ? 1 : 0;
 
         if (data) {
+
+            if (submissionData?.dropdown_options) {
+                // compare the new dropdown options with the old ones
+                const oldOptions = data.dropdown_options || [];
+                const newOptions = submissionData.dropdown_options || [];
+                const deletedOpts = oldOptions.filter(oldOption => {
+                    return !newOptions.some(newOption => newOption.id_option === oldOption.id_option);
+                });
+                const updatedOpts = newOptions.filter(newOption => {
+                    return oldOptions.some(oldOption => oldOption.id_option === newOption.id_option);
+                });
+                const addedOpts = newOptions.filter(newOption => {
+                    return !oldOptions.some(oldOption => oldOption.id_option === newOption.id_option);
+                });
+
+                submissionData.dropdown_options = {}
+                submissionData.dropdown_options.updated = updatedOpts;
+                submissionData.dropdown_options.deleted = deletedOpts;
+                submissionData.dropdown_options.new = addedOpts;
+            }
+
             updateUserField.mutateAsync({ id: data?.id, data: submissionData })
                 .then(() => {
                     onClose();
-                    methods.reset(defaultValues);
+                    methods.reset(getDefaultValues());
                 })
                 .catch(error => {
                     console.error('Error updating user field:', error);
+
+                    // Handle API error response
+                    if (error?.response?.data?.message) {
+                        const errorMessage = Array.isArray(error.response.data.message)
+                            ? error.response.data.message[0]
+                            : error.response.data.message;
+
+                        // If the error is about default language, focus on that field
+                        if (errorMessage.includes('default language') && systemDefaultLanguage) {
+                            setCurrentLang(systemDefaultLanguage);
+                            setError(`translations.${systemDefaultLanguage}`, {
+                                type: 'manual',
+                                message: errorMessage
+                            });
+                        }
+                    }
+
                     // Reset form state for re-submission
                     methods.clearErrors();
                 });
@@ -142,10 +364,27 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
             addUserField.mutateAsync(submissionData)
                 .then(() => {
                     onClose();
-                    methods.reset(defaultValues);
+                    methods.reset(getDefaultValues());
                 })
                 .catch(error => {
                     console.error('Error adding user field:', error);
+
+                    // Handle API error response
+                    if (error?.response?.data?.message) {
+                        const errorMessage = Array.isArray(error.response.data.message)
+                            ? error.response.data.message[0]
+                            : error.response.data.message;
+
+                        // If the error is about default language, focus on that field
+                        if (errorMessage.includes('default language') && systemDefaultLanguage) {
+                            setCurrentLang(systemDefaultLanguage);
+                            setError(`translations.${systemDefaultLanguage}`, {
+                                type: 'manual',
+                                message: errorMessage
+                            });
+                        }
+                    }
+
                     // Reset form state for re-submission
                     methods.clearErrors();
                 });
@@ -155,40 +394,54 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
     const handleTranslationTypeChange = (value) => {
         setIsUniversal(value);
 
+        // Get all active language codes
+        const languageCodes = activeLanguages ?
+            activeLanguages.map(lang => lang.code) :
+            ['fr', 'en', 'es', 'ar'];
+
         // Reset main translations
-        setValue('translations', {
-            all: '',
-            en: '',
-            fr: '',
-            es: '',
-            ar: ''
+        const resetTranslations = { all: '' };
+        languageCodes.forEach(code => {
+            resetTranslations[code] = '';
         });
+        setValue('translations', resetTranslations);
 
         // Reset all dropdown options translations
         const currentOptions = watch('dropdown_options') || [];
-        const resetOptions = currentOptions.map(option => ({
-            ...option,
-            translations: {
-                all: '',
-                en: '',
-                fr: '',
-                es: '',
-                ar: ''
-            }
-        }));
+        const resetOptions = currentOptions.map(option => {
+            const optionTranslations = { all: '' };
+            languageCodes.forEach(code => {
+                optionTranslations[code] = '';
+            });
+
+            return {
+                ...option,
+                translations: optionTranslations
+            };
+        });
         setValue('dropdown_options', resetOptions);
     };
 
     const handleAddDropdownOption = () => {
         const currentOptions = watch('dropdown_options') || [];
+
+        // Create new option with all language translations
+        const newOptionTranslations = { all: '' };
+
+        if (activeLanguages && activeLanguages.length > 0) {
+            activeLanguages.forEach(lang => {
+                newOptionTranslations[lang.code] = '';
+            });
+        } else {
+            // Fallback
+            newOptionTranslations.fr = '';
+            newOptionTranslations.en = '';
+            newOptionTranslations.es = '';
+            newOptionTranslations.ar = '';
+        }
+
         setValue('dropdown_options', [...currentOptions, {
-            translations: {
-                all: '',
-                en: '',
-                fr: '',
-                es: '',
-                ar: ''
-            }
+            translations: newOptionTranslations
         }]);
     };
 
@@ -252,6 +505,14 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
                                 />
                             </Grid>
 
+                            {!isUniversal && (
+                                <Grid item xs={12} component={ListItem}>
+                                    <Alert severity="info">
+                                        When using multiple languages, make sure to provide a translation for the default language ({systemDefaultLanguage}).
+                                    </Alert>
+                                </Grid>
+                            )}
+
                             {/* Main Translation Fields */}
                             {isUniversal ? (
                                 <Grid item xs={12} component={ListItem}>
@@ -271,20 +532,23 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
                                         applyToAllLanguages={false}
                                         currentLang={currentLang}
                                         onLanguageChange={setCurrentLang}
-                                        defaultLanguage={defaultLanguage}
+                                        defaultLanguage={systemDefaultLanguage}
+                                        defaultLocale={systemDefaultLanguage}
+                                        languages={getLanguageOptions()}
+                                        required
                                     />
                                 </Grid>
                             )}
 
                             {/* Other Fields */}
-                            <Grid item xs={12} component={ListItem}>
+                            {/* <Grid item xs={12} component={ListItem}>
                                 <TextInput
                                     name="sequence"
                                     control={control}
                                     label="Sequence"
                                     type="number"
                                 />
-                            </Grid>
+                            </Grid> */}
 
                             {/* Switches */}
                             <Grid item xs={12} component={ListItem}>
@@ -344,16 +608,18 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
                                     borderRadius: 1,
                                     p: 2
                                 }}>
-                                    {!watch('dropdown_options') || watch('dropdown_options')?.length === 0 && <Grid item xs={12} sx={{ mb: 2 }}>
-                                        <Button
-                                            variant="outlined"
-                                            startIcon={<i className="solar-add-circle-outline" />}
-                                            onClick={handleAddDropdownOption}
-                                            size="small"
-                                        >
-                                            Add Option
-                                        </Button>
-                                    </Grid>}
+                                    {(!watch('dropdown_options') || watch('dropdown_options')?.length === 0) && (
+                                        <Grid item xs={12} sx={{ mb: 2 }}>
+                                            <Button
+                                                variant="outlined"
+                                                startIcon={<i className="solar-add-circle-outline" />}
+                                                onClick={handleAddDropdownOption}
+                                                size="small"
+                                            >
+                                                Add Option
+                                            </Button>
+                                        </Grid>
+                                    )}
 
                                     {watch('dropdown_options')?.map((option, index) => (
                                         <Grid
@@ -416,7 +682,10 @@ const UserFieldDrawer = ({ open, onClose, data, defaultLanguage = 'fr' }) => {
                                                             applyToAllLanguages={false}
                                                             currentLang={currentLang}
                                                             onLanguageChange={setCurrentLang}
-                                                            defaultLanguage={defaultLanguage}
+                                                            defaultLanguage={systemDefaultLanguage}
+                                                            defaultLocale={systemDefaultLanguage}
+                                                            languages={getLanguageOptions()}
+                                                            required
                                                         />
                                                     </Grid>
                                                 )}

@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Box, Typography, Paper, IconButton, LinearProgress } from '@mui/material';
 
 // File type configurations
@@ -35,6 +35,19 @@ const FILE_TYPES = {
   }
 };
 
+// Extract file extension from a URL
+const getExtensionFromUrl = (url) => {
+  if (!url) return '';
+  const filename = url.split('/').pop();
+  return filename.split('.').pop().toLowerCase();
+};
+
+// Get filename from URL
+const getFilenameFromUrl = (url) => {
+  if (!url) return '';
+  return url.split('/').pop();
+};
+
 const FileDropzone = ({
   type = 'image',
   maxSize = 5242880, // 5MB
@@ -46,15 +59,39 @@ const FileDropzone = ({
 }) => {
   const fileInputRef = useRef(null);
   const [isDragging, setIsDragging] = useState(false);
-  const [file, setFile] = useState(defaultValue ? { url: defaultValue, file: null } : null);
+  const [file, setFile] = useState(null);
   const [error, setError] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [preview, setPreview] = useState(null);
 
   // Get file type configuration
   const fileConfig = useMemo(() => FILE_TYPES[type] || FILE_TYPES.image, [type]);
 
-  // Generate preview for image files
-  const [preview, setPreview] = useState(null);
+  // Handle default value (existing image URL)
+  useEffect(() => {
+    if (defaultValue) {
+      const extension = getExtensionFromUrl(defaultValue);
+      const isValidExtension = fileConfig.formats.includes(extension);
+
+      if (isValidExtension || type === 'image' || type === 'favicon') {
+        setFile({
+          url: defaultValue,
+          file: null,
+          name: getFilenameFromUrl(defaultValue),
+          // Estimate size as unknown
+          size: 0
+        });
+
+        // Set preview for existing image URLs
+        if (type === 'image' || type === 'favicon') {
+          setPreview(defaultValue);
+        }
+      }
+    } else {
+      setFile(null);
+      setPreview(null);
+    }
+  }, [defaultValue, fileConfig.formats, type]);
 
   const handleDragEnter = useCallback((e) => {
     e.preventDefault();
@@ -87,16 +124,25 @@ const FileDropzone = ({
   }, [fileConfig, maxSize]);
 
   const generatePreview = useCallback((file) => {
-    if (!file || !file.type.startsWith('image/')) {
+    if (!file) {
       setPreview(null);
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreview(reader.result);
-    };
-    reader.readAsDataURL(file);
+    // If it's a File object
+    if (file instanceof File) {
+      if (!file.type.startsWith('image/')) {
+        setPreview(null);
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    }
+    // Preview is already set for URL-based files in the useEffect
   }, []);
 
   const handleFile = useCallback((file) => {
@@ -112,11 +158,16 @@ const FileDropzone = ({
     if (validateFile(file)) {
       const fileData = {
         url: URL.createObjectURL(file),
-        file: file
+        file: file,
+        name: file.name,
+        size: file.size
       };
       setFile(fileData);
       generatePreview(file);
-      onFileSelect?.(file); // Pass the File object directly
+      onFileSelect?.({
+        url: fileData.url,
+        file: file
+      });
       setIsUploading(true);
       setTimeout(() => setIsUploading(false), 1500);
     }
@@ -141,15 +192,15 @@ const FileDropzone = ({
       fileInputRef.current.value = '';
     }
 
+    // Revoke object URL to prevent memory leaks
+    if (file?.url && file.file && !file.url.startsWith('data:')) {
+      URL.revokeObjectURL(file.url);
+    }
+
     setFile(null);
     setPreview(null);
     setError('');
     onFileSelect?.(null);
-
-    // Revoke object URL to prevent memory leaks
-    if (file?.url && !file.url.startsWith('data:')) {
-      URL.revokeObjectURL(file.url);
-    }
   }, [file, onFileSelect]);
 
   return (
@@ -225,11 +276,13 @@ const FileDropzone = ({
                       whiteSpace: 'nowrap',
                       maxWidth: '200px'
                     }}>
-                      {file.file?.name}
+                      {file.name || getFilenameFromUrl(file.url) || 'File'}
                     </Typography>
-                    <Typography variant="caption" color="textSecondary">
-                      {(file.file?.size / 1024).toFixed(1)}KB
-                    </Typography>
+                    {file.size > 0 && (
+                      <Typography variant="caption" color="textSecondary">
+                        {(file.size / 1024).toFixed(1)}KB
+                      </Typography>
+                    )}
                   </Box>
                 </Box>
                 <IconButton

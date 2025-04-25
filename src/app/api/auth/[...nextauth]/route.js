@@ -108,6 +108,55 @@ export const authOptions = (req) => {
                         throw new Error(error.response?.data?.message || error.message || 'Authentication failed');
                     }
                 }
+            }),
+            CredentialsProvider({
+                id: "SSO",
+                name: "SSO",
+                credentials: {
+                    login_user: { label: "Email or Username", type: "text" },
+                    token: { label: "Token", type: "text" },
+                    time: { label: "Timestamp", type: "text" },
+                    api_key: { label: "API Key", type: "text" },
+                    external_user_id: { label: "External User ID", type: "text" },
+                    branch_code: { label: "Branch Code", type: "text" },
+                    first_name: { label: "First Name", type: "text" },
+                    last_name: { label: "Last Name", type: "text" },
+                    issue_refresh_token: { label: "issue_refresh_token", type: "text" },
+
+                },
+                async authorize(credentials, req) {
+
+                    try {
+                        const host = req.headers.host;
+
+                        const requestConfig = {
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Host': host
+                            }
+                        };
+
+
+                        const response = await axiosInstance.get(`/tenant/auth/v1/partners/sso?login_user=${credentials.login_user}&token=${credentials.token}&api_key=${credentials.api_key}&external_user_id=${credentials.external_user_id}&time=${credentials.time}&first_name=${credentials.first_name}&last_name=${credentials.last_name}&branch_code=${credentials.branch_code}`, requestConfig);
+
+                        console.log('Authorization Response:', response.data);
+
+                        // Check both the outer success flag AND inner data status
+                        if (!response.data?.success || response.data?.data?.status === 'error') {
+                            throw new Error(response.data?.data?.message || response.data?.message || 'Sign in failed');
+                        }
+
+                        return response.data?.data;
+
+                    } catch (error) {
+                        console.error('Authorization Error:', {
+                            message: error.message,
+                            response: error.response?.data,
+                            status: error.response?.status
+                        });
+                        throw new Error(error.response?.data?.message || error.message || 'Authentication failed');
+                    }
+                }
             })
         ],
         callbacks: {
@@ -119,14 +168,26 @@ export const authOptions = (req) => {
                         token.accessToken = user.access_token;
                         token.refreshToken = user.refresh_token;
                         token.accessTokenExpires = Math.floor(Date.now() / 1000) + user.expires_in;
+                        token.csrfToken = user.csrf_token;
+                        // {
+                        //     "tenant_id": "ram",
+                        //     "level": "system",
+                        //     "last_name": "master",
+                        //     "first_name": "master",
+                        //     "full_name": "master master",
+                        //     "username": "master-royal-air-maroc",
+                        //     "user_id": 1,
+                        //     "email": "master@royal-air-maroc.com"
+                        // }
                         token.user = {
                             id: user.user_id,
-                            email: decodedToken.sub,
-                            role_id: decodedToken.role_id,
-                            role: decodedToken.role_label,
-                            level_id: decodedToken.level_id,
-                            level: decodedToken.level_label,
-                            permissions: decodedToken.permissions,
+                            email: decodedToken.email,
+                            tenant_id: decodedToken.tenant_id,
+                            username: decodedToken.username,
+                            firstname: decodedToken.first_name,
+                            lastname: decodedToken.last_name,
+                            fullname: decodedToken.full_name,
+                            level: decodedToken.level
                         };
                     } catch (error) {
                         console.error('Token processing error:', error);
@@ -165,6 +226,7 @@ export const authOptions = (req) => {
                     session.accessToken = token.accessToken;
                     session.accessTokenExpires = token.accessTokenExpires;
                     session.refreshToken = token.refreshToken;
+                    session.csrfToken = token.csrfToken;
                     session.user = token.user;
                     session.error = token.error;
 

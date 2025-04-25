@@ -67,7 +67,29 @@ export const columns = ({ onEdit, onDelete }) => [
 ];
 
 // Define validation schema
-export const createSchema = () => {
+export const createSchema = (activeLanguages = null) => {
+    // Default validation for multi-language values
+    let valuesValidation = {};
+
+    // If active languages are provided, use them for validation
+    if (activeLanguages && Array.isArray(activeLanguages) && activeLanguages.length > 0) {
+        // Find default language - it should be required
+        const defaultLang = activeLanguages.find(lang => lang.is_default);
+
+        // Create validation rules for each language
+        activeLanguages.forEach(lang => {
+            // Only make the default language required
+            if (defaultLang && lang.code === defaultLang.code) {
+                valuesValidation[lang.code] = yup.string().required(`${lang.name || lang.native_name} name is required`);
+            } else {
+                valuesValidation[lang.code] = yup.string();
+            }
+        });
+    } else {
+        // Fallback to requiring the default language (fr in this case)
+        valuesValidation.fr = yup.string().required('French name is required');
+    }
+
     return yup.object().shape({
         code: yup.string().required('Code is required').max(50, 'Code must not exceed 50 characters'),
         name: yup.object().shape({
@@ -79,10 +101,7 @@ export const createSchema = () => {
             }),
             values: yup.object().when('type', {
                 is: 'multi_lang',
-                then: (schema) => schema.shape({
-                    en: yup.string().required('English name is required'),
-                    fr: yup.string().required('French name is required')
-                }),
+                then: (schema) => schema.shape(valuesValidation),
                 otherwise: (schema) => schema
             })
         }),
@@ -90,15 +109,12 @@ export const createSchema = () => {
             type: yup.string().oneOf(['single_value', 'multi_lang']),
             value: yup.string().when('type', {
                 is: 'single_value',
-                then: (schema) => schema.required('Name is required').max(255, 'Name must not exceed 255 characters'),
+                then: (schema) => schema.max(255, 'Description must not exceed 255 characters'),
                 otherwise: (schema) => schema
             }),
             values: yup.object().when('type', {
                 is: 'multi_lang',
-                then: (schema) => schema.shape({
-                    en: yup.string().required('English description is required'),
-                    fr: yup.string().required('French description is required')
-                }),
+                then: (schema) => schema.shape(valuesValidation),
                 otherwise: (schema) => schema
             })
         }),

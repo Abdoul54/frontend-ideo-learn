@@ -17,13 +17,21 @@ import toast from 'react-hot-toast';
 import { axiosInstance } from '@/lib/axios';
 import MultilingualTextInput from '@/components/inputs/MultilingualTextInput';
 import { useForm, Controller } from 'react-hook-form';
+import { useActiveLanguages } from '@/hooks/api/tenant/useLocalization';
 
 const EditHaykalDrawer = ({ open, onClose, haykalId }) => {
     const isHaykalIdNumeric = !isNaN(haykalId) && !isNaN(parseFloat(haykalId));
+
+    // Fetch active languages
+    const { data: activeLanguages, isLoading: isLoadingLanguages } = useActiveLanguages();
+
+    // Find default language from active languages
+    const defaultLanguage = activeLanguages?.find(lang => lang.is_default)?.code || 'fr';
+
     const [currentLang, setCurrentLang] = useState('all');
 
     // Use React Hook Form
-    const { control, handleSubmit, setValue, formState: { errors }, reset } = useForm({
+    const { control, handleSubmit, setValue, formState: { errors }, reset, setError } = useForm({
         defaultValues: {
             code: '',
             use_secondary_identifier: !isHaykalIdNumeric,
@@ -48,17 +56,33 @@ const EditHaykalDrawer = ({ open, onClose, haykalId }) => {
     // Update form data when details load
     useEffect(() => {
         if (haykalDetails) {
+            // Initialize translations object with empty strings for all available languages
+            const translations = { all: '' };
+
+            if (activeLanguages) {
+                activeLanguages.forEach(lang => {
+                    translations[lang.code] = '';
+                });
+            } else {
+                // Fallback to common languages if API data not available
+                translations.fr = '';
+                translations.en = '';
+            }
+
+            // Now merge with actual translations from API
+            if (haykalDetails.data.translations) {
+                Object.entries(haykalDetails.data.translations).forEach(([key, value]) => {
+                    translations[key] = value || '';
+                });
+            }
+
             reset({
                 code: haykalDetails.data.code,
-                translations: {
-                    all: haykalDetails.data.translations.all || '',
-                    fr: haykalDetails.data.translations.fr || '',
-                    en: haykalDetails.data.translations.en || ''
-                },
+                translations: translations,
                 use_secondary_identifier: !isHaykalIdNumeric,
             });
         }
-    }, [haykalDetails, isHaykalIdNumeric, reset]);
+    }, [haykalDetails, isHaykalIdNumeric, reset, activeLanguages]);
 
     // Mutation hook for update
     const { mutate: updateHaykal, isLoading, isError } = useUpdateHaykal();
@@ -66,21 +90,64 @@ const EditHaykalDrawer = ({ open, onClose, haykalId }) => {
     // Error state
     const [generalError, setGeneralError] = useState('');
 
-    // Handle translation changes from MultilingualTextInput
-    const handleTranslationChange = (lang, value) => {
-        setValue(`translations.${lang}`, value);
+    // Prepare language options for the MultilingualTextInput
+    const getLanguageOptions = () => {
+        // Always include "All Languages" option
+        const options = [{ code: 'all', label: 'All Languages' }];
+
+        // Add active languages from API
+        if (activeLanguages && activeLanguages.length > 0) {
+            activeLanguages.forEach(lang => {
+                options.push({
+                    code: lang.code,
+                    label: lang.name || lang.native_name,
+                    isDefault: lang.is_default
+                });
+            });
+        } else {
+            // Fallback to common languages if API data not available
+            options.push({ code: 'fr', label: 'French' });
+            options.push({ code: 'en', label: 'English' });
+        }
+
+        return options;
     };
 
     // Submit handler
     const onSubmit = (data) => {
+        const translations = data.translations || {};
+
+        // Check if at least one translation is provided (either 'all' or the default language)
+        const hasAllTranslation = translations.all && translations.all.trim() !== '';
+        const hasDefaultTranslation = defaultLanguage && translations[defaultLanguage] &&
+            translations[defaultLanguage].trim() !== '';
+
+        if (!hasAllTranslation && !hasDefaultTranslation) {
+            setError('translations', {
+                type: 'manual',
+                message: `Either "All Languages" or the default language (${defaultLanguage}) translation is required`
+            });
+            return;
+        }
+
+        // Prepare API payload - only include non-empty translations for active languages
+        const activeLanguageCodes = activeLanguages ?
+            activeLanguages.map(lang => lang.code) :
+            [defaultLanguage]; // Fallback to just the default language
+
+        const cleanTranslations = Object.entries(translations).reduce((acc, [key, value]) => {
+            const trimmedValue = value?.trim() || '';
+            // Include if it's 'all', an active language, or the default language, and it has content
+            if ((key === 'all' || activeLanguageCodes.includes(key) || key === defaultLanguage) && trimmedValue) {
+                acc[key] = trimmedValue;
+            }
+            return acc;
+        }, {});
+
         const payload = {
             code: data.code,
             use_secondary_identifier: data.use_secondary_identifier,
-            translations: {
-                ...(data.translations.all && { all: data.translations.all.trim() }),
-                ...(data.translations.fr && { fr: data.translations.fr.trim() }),
-                ...(data.translations.en && { en: data.translations.en.trim() })
-            }
+            translations: cleanTranslations
         };
 
         updateHaykal(
@@ -90,7 +157,25 @@ const EditHaykalDrawer = ({ open, onClose, haykalId }) => {
                     onClose();
                 },
                 onError: (err) => {
-                    setGeneralError(err?.response?.data?.message || 'Failed to update haykal');
+                    if (err?.response?.data?.message) {
+                        // Handle array or string error messages
+                        const errorMessage = Array.isArray(err.response.data.message)
+                            ? err.response.data.message[0]
+                            : err.response.data.message;
+
+                        setGeneralError(errorMessage);
+
+                        // If the error is about default language, focus on that field
+                        if (errorMessage.includes('default language') && defaultLanguage) {
+                            setCurrentLang(defaultLanguage);
+                            setError(`translations.${defaultLanguage}`, {
+                                type: 'manual',
+                                message: errorMessage
+                            });
+                        }
+                    } else {
+                        setGeneralError('Failed to update haykal');
+                    }
                 }
             }
         );
@@ -130,19 +215,30 @@ const EditHaykalDrawer = ({ open, onClose, haykalId }) => {
 
                         {/* Translations - Using MultilingualTextInput */}
                         <Typography variant="subtitle1" fontWeight="bold">Translations</Typography>
+
+                        <Alert severity="info" sx={{ mb: 2 }}>
+                            {defaultLanguage ?
+                                `You must provide either an "All Languages" translation or a translation in the default language (${defaultLanguage}).` :
+                                "You must provide at least one translation."
+                            }
+                        </Alert>
+
                         <MultilingualTextInput
                             name="translations"
                             control={control}
                             label="Branch Name"
-                            // onChange={handleTranslationChange}
                             currentLang={currentLang}
                             onLanguageChange={setCurrentLang}
                             defaultLanguage="all"
-                            languages={[
-                                { code: 'all', label: 'Universal' },
-                                { code: 'fr', label: 'French' },
-                                { code: 'en', label: 'English' }
-                            ]}
+                            languages={getLanguageOptions()}
+                            applyToAllLanguages={currentLang === 'all'}
+                            required
+                            defaultLocale={defaultLanguage}
+                            InputProps={{
+                                startAdornment: <i className="lucide-globe" style={{ marginRight: 8 }} />,
+                            }}
+                            error={!!errors.translations}
+                            helperText={errors.translations?.message}
                         />
                     </Stack>
                 </Box>

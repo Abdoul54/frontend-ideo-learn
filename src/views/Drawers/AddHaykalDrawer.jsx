@@ -6,31 +6,48 @@ import {
     Typography,
     Alert,
     Stack,
-    Grid
+    Grid,
+    CircularProgress
 } from '@mui/material';
 import DrawerFormContainer from '@/components/DrawerFormContainer';
 import { useAddHaykal, useHaykal } from '@/hooks/api/tenant/useHaykal';
+import { useActiveLanguages } from '@/hooks/api/tenant/useLocalization';
 import { Controller, useForm } from 'react-hook-form';
 import MultilingualTextInput from '@/components/inputs/MultilingualTextInput';
 import BranchSelector from '@/components/BranchSelector';
 
 const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
-    const initialFormData = {
-        code: '',
-        id_parent: currentParentId,
-        use_secondary_identifier: false,
-        translations: {
-            all: '',
-            fr: ''
+    // Fetch active languages
+    const { data: activeLanguages, isLoading: isLoadingLanguages, error: languagesError } = useActiveLanguages();
+
+    // Find default language from active languages
+    const defaultLanguage = activeLanguages?.find(lang => lang.is_default)?.code || 'fr';
+
+    // Create initial form data
+    const getInitialFormData = () => {
+        const translations = { all: '' };
+        
+        // Add active languages
+        if (activeLanguages && activeLanguages.length > 0) {
+            activeLanguages.forEach(lang => {
+                translations[lang.code] = '';
+            });
         }
+        
+        return {
+            code: '',
+            id_parent: currentParentId,
+            use_secondary_identifier: false,
+            translations: translations
+        };
     };
 
     const methods = useForm({
-        defaultValues: initialFormData,
+        defaultValues: getInitialFormData(),
     });
 
     // Form state
-    const { handleSubmit, control, formState: { errors }, setValue, watch } = methods;
+    const { handleSubmit, control, formState: { errors }, setValue, watch, setError, reset } = methods;
     const [currentLang, setCurrentLang] = useState('all');
 
     // Branch selector state
@@ -40,16 +57,34 @@ const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
         title: 'Platform'
     });
 
+    // Update form when languages load
+    useEffect(() => {
+        if (activeLanguages && activeLanguages.length > 0) {
+            // Update form with current values
+            const currentValues = methods.getValues();
+            const updatedTranslations = { all: currentValues.translations?.all || '' };
+            
+            // Add each active language
+            activeLanguages.forEach(lang => {
+                updatedTranslations[lang.code] = currentValues.translations?.[lang.code] || '';
+            });
+            
+            // Update form
+            methods.setValue('translations', updatedTranslations);
+        }
+    }, [activeLanguages]);
+
+    // Reset form when drawer opens/closes
     useEffect(() => {
         if (!open) {
-            methods.reset(initialFormData); // Reset form values
+            reset(getInitialFormData());
             setGeneralError('');
             setSelectedBranch({
                 id: currentParentId,
                 title: 'Platform'
             });
         }
-    }, [open]);
+    }, [open, activeLanguages]);
 
     // Mutation hook
     const { mutate: addHaykal, isLoading, isError, error, isSuccess } = useAddHaykal();
@@ -58,7 +93,7 @@ const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
     const [generalError, setGeneralError] = useState('');
 
     const handleCloseDrawer = () => {
-        methods.reset(initialFormData); // Reset form values
+        reset(getInitialFormData());
         setGeneralError('');
         onClose();
     };
@@ -79,29 +114,79 @@ const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
         }
     };
 
+    // Prepare language options for the MultilingualTextInput
+    const getLanguageOptions = () => {
+        // Always include "All Languages" option
+        const options = [{ code: 'all', label: 'All Languages' }];
+
+        // Add active languages from API
+        if (activeLanguages && activeLanguages.length > 0) {
+            activeLanguages.forEach(lang => {
+                options.push({
+                    code: lang.code,
+                    label: lang.name || lang.native_name,
+                    isDefault: lang.is_default
+                });
+            });
+        } else {
+            // Fallback languages
+            options.push({ code: 'fr', label: 'French', isDefault: true });
+            options.push({ code: 'id', label: 'Indonesian' });
+        }
+
+        return options;
+    };
+
     // Form submission handler
     const onSubmit = (data) => {
-        if (!data.translations?.all?.trim() && !data.translations?.fr?.trim()) {
-            methods.setError('translations', {
+        const translations = data.translations || {};
+
+        // Check if at least one translation is provided (either 'all' or the default language)
+        const hasAllTranslation = translations.all && translations.all.trim() !== '';
+        const hasDefaultTranslation = defaultLanguage && translations[defaultLanguage] &&
+            translations[defaultLanguage].trim() !== '';
+
+        if (!hasAllTranslation && !hasDefaultTranslation) {
+            setError('translations', {
                 type: 'manual',
-                message: 'At least one translation (All or French) is required'
+                message: `Either "All Languages" or the default language (${defaultLanguage}) translation is required`
             });
             return;
         }
 
-        // Prepare API payload
+        // Prepare API payload - only include non-empty translations
+        const cleanTranslations = Object.entries(translations).reduce((acc, [key, value]) => {
+            const trimmedValue = value?.trim() || '';
+            if (trimmedValue) {
+                acc[key] = trimmedValue;
+            }
+            return acc;
+        }, {});
+
+        // Create final payload
         const payload = {
             ...data,
-            translations: {
-                all: data.translations.all.trim(),
-                fr: data.translations.fr.trim()
-            }
+            translations: cleanTranslations
         };
 
         // Submit to API
         addHaykal(payload, {
             onError: (err) => {
-                setGeneralError(err?.response?.data?.message || 'Failed to create haykal');
+                if (err?.response?.data?.message) {
+                    // Handle array or string error messages
+                    const errorMessage = Array.isArray(err.response.data.message)
+                        ? err.response.data.message[0]
+                        : err.response.data.message;
+
+                    setGeneralError(errorMessage);
+
+                    // If the error is about default language, focus on that field
+                    if (errorMessage.includes('default language') && defaultLanguage) {
+                        setCurrentLang(defaultLanguage);
+                    }
+                } else {
+                    setGeneralError('Failed to create branch');
+                }
             }
         });
     };
@@ -110,8 +195,8 @@ const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
         <DrawerFormContainer
             open={open}
             onClose={onClose}
-            title="Create a new haykal"
-            description="Add a new haykal to your hierarchy"
+            title="Create a new branch"
+            description="Add a new branch to your hierarchy"
             width={500}
         >
             {isError && generalError && (
@@ -139,7 +224,7 @@ const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
                                         fullWidth
                                         label="Code"
                                         error={!!errors.code}
-                                        helperText={errors.code?.message || "The code of the haykal"}
+                                        helperText={errors.code?.message || "The code of the branch"}
                                     />
                                 )}
                             />
@@ -214,31 +299,47 @@ const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
                                 Translations
                             </Typography>
 
-                            <Controller
-                                name="translations"
-                                control={control}
-                                render={({ field }) => (
-                                    <MultilingualTextInput
+                            {isLoadingLanguages ? (
+                                <Box display="flex" justifyContent="center" py={2}>
+                                    <CircularProgress size={24} />
+                                </Box>
+                            ) : languagesError ? (
+                                <Alert severity="error">
+                                    Failed to load languages. Please try again.
+                                </Alert>
+                            ) : (
+                                <>
+                                    <Alert severity="info" sx={{ mb: 2 }}>
+                                        {defaultLanguage ?
+                                            `You must provide either an "All Languages" translation or a translation in the default language (${defaultLanguage}).` :
+                                            "You must provide at least one translation."
+                                        }
+                                    </Alert>
+                                    <Controller
                                         name="translations"
                                         control={control}
-                                        label="Translations"
-                                        currentLang={currentLang}
-                                        onLanguageChange={setCurrentLang}
-                                        defaultLanguage="all"
-                                        languages={[
-                                            { code: 'all', label: 'All Languages' },
-                                            { code: 'fr', label: 'French' }
-                                        ]}
-                                        applyToAllLanguages={currentLang === 'all'}
-                                        required
-                                        InputProps={{
-                                            startAdornment: <i className="lucide-globe" style={{ marginRight: 8 }} />,
-                                        }}
-                                        error={!!errors.translations}
-                                        helperText={errors.translations?.message}
+                                        render={({ field }) => (
+                                            <MultilingualTextInput
+                                                name="translations"
+                                                control={control}
+                                                label="Branch Name"
+                                                currentLang={currentLang}
+                                                onLanguageChange={setCurrentLang}
+                                                defaultLanguage="all"
+                                                languages={getLanguageOptions()}
+                                                applyToAllLanguages={currentLang === 'all'}
+                                                required
+                                                defaultLocale={defaultLanguage}
+                                                InputProps={{
+                                                    startAdornment: <i className="lucide-globe" style={{ marginRight: 8 }} />,
+                                                }}
+                                                error={!!errors.translations}
+                                                helperText={errors.translations?.message}
+                                            />
+                                        )}
                                     />
-                                )}
-                            />
+                                </>
+                            )}
 
                             {errors.translations && (
                                 <Typography color="error" variant="body2">
@@ -258,7 +359,7 @@ const AddHaykalDrawer = ({ open, onClose, currentParentId = 1 }) => {
                             </Grid>
                             <Grid item>
                                 <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
-                                    {isLoading ? 'Creating...' : 'Create Haykal'}
+                                    {isLoading ? 'Creating...' : 'Create branch'}
                                 </Button>
                             </Grid>
                         </Grid>

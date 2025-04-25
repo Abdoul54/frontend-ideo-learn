@@ -93,3 +93,25 @@ export const useUpdateLocalizationSettings = () => {
   });
 };
 
+export const useActiveLanguages = () => {
+  return useQuery({
+    queryKey: ["active-languages"],
+    queryFn: async () => {
+      try {
+        const url = "/tenant/localization/v1/languages/active";
+        const response = await axiosInstance.get(url);
+
+        if (!response.data || !response.data.success) {
+          throw new Error("Invalid response structure");
+        }
+
+        return response.data?.data;
+      } catch (error) {
+        console.error("Active Languages Fetch Error:", error);
+        throw error;
+      }
+    },
+    staleTime: 5000,
+    retry: 2,
+  });
+};

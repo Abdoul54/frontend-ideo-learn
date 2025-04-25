@@ -52,12 +52,12 @@ axiosInstance.interceptors.response.use(
             }
 
             // Log the detailed error for debugging
-            console.log('API Error:', {
-                status: error.response.status,
-                statusText: error.response.statusText,
-                errorMessage,
-                fullError: error.response.data
-            });
+            // console.log('API Error:', {
+            //     status: error.response.status,
+            //     statusText: error.response.statusText,
+            //     errorMessage,
+            //     fullError: error.response.data
+            // });
         } else if (error.request) {
             // Request was made but no response received
             errorMessage = 'No response received from server';

@@ -11,6 +11,7 @@ import ThemeProviderWrapper from '@/providers/ThemeProviderWrapper'
 import { MuiLocalizationProvider } from '@/providers/MuiLocalizationProvider'
 import { Toaster } from 'react-hot-toast'
 import AuthWrapper from '@/providers/AuthWrapper'
+import LanguageProvider from '@/providers/LanguageProvider'
 
 const Providers = props => {
   // Props
@@ -19,15 +20,17 @@ const Providers = props => {
 
   return (
     <NextAuthProvider>
-      <AuthWrapper>
+      <AuthWrapper redirectPath='/auth/login'>
         <QueryProvider>
           <VerticalNavProvider>
             <SettingsProvider>
               <ThemeProviderWrapper>
-                <MuiLocalizationProvider>
-                  {children}
-                  <Toaster />
-                </MuiLocalizationProvider>
+                <LanguageProvider>
+                  <MuiLocalizationProvider>
+                    {children}
+                    <Toaster />
+                  </MuiLocalizationProvider>
+                </LanguageProvider>
               </ThemeProviderWrapper>
             </SettingsProvider>
           </VerticalNavProvider>

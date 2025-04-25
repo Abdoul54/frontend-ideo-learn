@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Box,
     Button,
@@ -10,7 +10,10 @@ import {
     FormControlLabel,
     FormLabel,
     Radio,
-    RadioGroup
+    RadioGroup,
+    Alert,
+    Collapse,
+    IconButton
 } from '@mui/material';
 import FileDropzone from '../inputs/FileDropzone';
 import { Controller, useForm } from 'react-hook-form';
@@ -26,6 +29,9 @@ const SignInSettings = () => {
         mode: 'onChange'
     });
 
+    const [showFileReuploadAlert, setShowFileReuploadAlert] = useState(false);
+    const [selectedType, setSelectedType] = useState('color');
+
     const { data } = useSignInSettings();
     const updateSignInSettings = useUpdateSignInSettings();
 
@@ -36,35 +42,59 @@ const SignInSettings = () => {
                 sign_in_page: {
                     type: data?.type || 'color',
                     background_color: data?.color_data || '#FFFFFF',
-                    bg_data: data?.bg_data || null,
+                    // Store bg_data for image type
+                    bg_data: data?.bg_data ? {
+                        url: data.bg_data,
+                        file: null
+                    } : null,
+                    // Store video data if available
                     bg_video_data: {
-                        video: data?.bg_video_data?.video || null,
-                        fallback_image: data?.bg_video_data?.fallback_image || null
+                        video: data?.bg_video_data?.video ? {
+                            url: data.bg_video_data.video,
+                            file: null
+                        } : null,
+                        fallback_image: data?.bg_video_data?.fallback_image ? {
+                            url: data.bg_video_data.fallback_image,
+                            file: null
+                        } : null
                     }
                 }
             };
             reset(adjustedData);
+            setSelectedType(data?.type || 'color');
         }
     }, [data, reset]);
+
+    // Monitor type changes to show appropriate alerts
+    useEffect(() => {
+        const subscription = watch((value, { name }) => {
+            if (name === 'sign_in_page.type') {
+                setSelectedType(value.sign_in_page.type);
+
+                // If changing from color to image/video, show the alert about needing to upload files
+                if (value.sign_in_page.type !== 'color') {
+                    setShowFileReuploadAlert(true);
+                } else {
+                    setShowFileReuploadAlert(false);
+                }
+            }
+        });
+        return () => subscription.unsubscribe();
+    }, [watch]);
 
     const onSubmit = async (formData) => {
         try {
             const { sign_in_page } = formData;
+
+            // Create request data in the format expected by our hook
             const requestData = {
                 type: sign_in_page.type,
                 color_data: sign_in_page.type === 'color' ? sign_in_page.background_color : undefined,
                 bg_data: sign_in_page.type === 'image' ? sign_in_page.bg_data : undefined,
-                bg_video_data: sign_in_page.type === 'video' ? {
-                    video: sign_in_page.bg_video_data.video,
-                    fallback_image: sign_in_page.bg_video_data.fallback_image
-                } : undefined
+                bg_video_data: sign_in_page.type === 'video' ? sign_in_page.bg_video_data : undefined
             };
 
-            // Filter out undefined values
-            Object.keys(requestData).forEach(key =>
-                requestData[key] === undefined && delete requestData[key]
-            );
-
+            console.log('Submitting sign-in settings:', requestData);
             await updateSignInSettings.mutateAsync(requestData);
         } catch (error) {
             console.error('Failed to save sign-in settings:', error);
@@ -89,13 +119,27 @@ const SignInSettings = () => {
                         name="sign_in_page.type"
                         control={control}
                         render={({ field }) => (
-                            <RadioGroup {...field} sx={{ mt: 2, mb: 5 }}>
+                            <RadioGroup {...field} sx={{ mt: 2, mb: 2 }}>
                                 <FormControlLabel value="color" control={<Radio />} label="Color" />
                                 <FormControlLabel value="image" control={<Radio />} label="Full width background image" />
                                 <FormControlLabel value="video" control={<Radio />} label="Full width background video" />
                             </RadioGroup>
                         )}
                     />
+
+                    {/* Alert for image/video types */}
+                    <Collapse in={showFileReuploadAlert}>
+                        <Alert
+                            severity="info"
+                            sx={{ mb: 3 }}
+                            onClose={() => setShowFileReuploadAlert(false)}
+                        >
+                            {selectedType === 'image' ?
+                                "You must upload an image file. The existing image cannot be reused without uploading it again." :
+                                "You must upload a video file and fallback image. Existing files cannot be reused without uploading them again."}
+                        </Alert>
+                    </Collapse>
+
                     {watch("sign_in_page.type") === "color" && (
                         <Controller
                             name="sign_in_page.background_color"
@@ -120,8 +164,13 @@ const SignInSettings = () => {
                                     className="mb-5"
                                     maxSize={5242880}
                                     label="Upload Background Image"
-                                    onFileSelect={(file) => {
-                                        field.onChange(file);
+                                    defaultValue={field.value?.url}
+                                    helperText="Select a new image file (required)"
+                                    onFileSelect={(fileData) => {
+                                        field.onChange({
+                                            url: fileData?.url || null,
+                                            file: fileData?.file || null
+                                        });
                                     }}
                                 />
                             )}
@@ -138,8 +187,13 @@ const SignInSettings = () => {
                                         className="mb-5 max-w-xs"
                                         maxSize={52428800}
                                         label="Upload Background Video"
-                                        onFileSelect={(file) => {
-                                            field.onChange(file);
+                                        defaultValue={field.value?.url}
+                                        helperText="Select a new video file (required)"
+                                        onFileSelect={(fileData) => {
+                                            field.onChange({
+                                                url: fileData?.url || null,
+                                                file: fileData?.file || null
+                                            });
                                         }}
                                     />
                                 )}
@@ -153,8 +207,13 @@ const SignInSettings = () => {
                                         className="mb-5"
                                         maxSize={52428800}
                                         label="Upload Fallback Image"
-                                        onFileSelect={(file) => {
-                                            field.onChange(file);
+                                        defaultValue={field.value?.url}
+                                        helperText="Select a new image file (required)"
+                                        onFileSelect={(fileData) => {
+                                            field.onChange({
+                                                url: fileData?.url || null,
+                                                file: fileData?.file || null
+                                            });
                                         }}
                                     />
                                 )}

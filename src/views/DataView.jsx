@@ -97,16 +97,21 @@ const DataView = ({
     selectedRows,
     setSelectedRows,
     selectAll,
+    noMobileDataTable = false,
     onSelectAllChange,
     slots,
     onDeleteSelected,
     actionGroups = [],
+    filterComponent,
     enableSelection = true,
     datatablemulti = false,
+    disableMultiSelect = false,
     footerComponent,
     isColumnsLoading = false, // New prop for columns loading state
     columnsError = null,
-    initialNavigationOpen = false // New prop to control initial navigation state
+    noToolBar = false, // New prop to hide toolbar
+    initialNavigationOpen = false, // New prop to control initial navigation state
+    getRowId,
 }) => {
     const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -136,12 +141,14 @@ const DataView = ({
             maxWidth: '100vw',
             overflowX: 'hidden',
         }} spacing={4}>
-            <Grid item xs={12}>
-                <ToolBar
-                    breadcrumbs={toolbar?.breadcrumbs}
-                    buttonGroup={toolbar?.buttonGroup}
-                />
-            </Grid>
+            {
+                !noToolBar && <Grid item xs={12}>
+                    <ToolBar
+                        breadcrumbs={toolbar?.breadcrumbs}
+                        buttonGroup={toolbar?.buttonGroup}
+                    />
+                </Grid>
+            }
             <Grid item xs={12}>
                 <Grid
                     container
@@ -185,11 +192,11 @@ const DataView = ({
                             }}
                         >
                             <Collapse in={filtersOpen} timeout="auto">
-                                <DataTableFilter
+                                {filterComponent || <DataTableFilter
                                     filters={slots?.filters}
                                     columns={columns}
                                     onFilter={handleApplyFilters}
-                                />
+                                />}
                             </Collapse>
                         </Paper>}
 
@@ -213,24 +220,43 @@ const DataView = ({
                                         opacity: 1
                                     }}
                                 >
-
-                                    <DataTableNavigation
-                                        height={navigation?.height || 'calc(100vh - 244px)'}
-                                        data={navigation?.data || []}
-                                        setCurrentItem={navigation?.setCurrentItem}
-                                        currentItem={navigation?.currentItem}
-                                        GoBack={navigation?.GoBack}
-                                        count={navigation?.total_count}
-                                        GoForward={navigation?.GoForward}
-                                        isLoading={navigation?.isLoading}
-                                        onSearchChange={navigation?.onSearchChange}
-                                        searchQuery={navigation?.searchQuery}
-                                        searchType={navigation?.searchType}
-                                        onSearchTypeChange={navigation?.onSearchTypeChange}
-                                        enableSearchType={navigation?.enableSearchType || false}
-                                        pagination={navigation?.pagination}
-                                        footerComponent={navigation?.footerComponent}
-                                    />
+                                    {navigation?.DataTableNavigation ? (
+                                        <navigation.DataTableNavigation
+                                            height={navigation?.height || 'calc(100vh - 244px)'}
+                                            data={navigation?.data || []}
+                                            setCurrentItem={navigation?.setCurrentItem}
+                                            currentItem={navigation?.currentItem}
+                                            GoBack={navigation?.GoBack}
+                                            count={navigation?.total_count}
+                                            GoForward={navigation?.GoForward}
+                                            isLoading={navigation?.isLoading}
+                                            onSearchChange={navigation?.onSearchChange}
+                                            searchQuery={navigation?.searchQuery}
+                                            searchType={navigation?.searchType}
+                                            onSearchTypeChange={navigation?.onSearchTypeChange}
+                                            enableSearchType={navigation?.enableSearchType || false}
+                                            pagination={navigation?.pagination}
+                                            footerComponent={navigation?.footerComponent}
+                                        />
+                                    ) : (
+                                        <DataTableNavigation
+                                            height={navigation?.height || 'calc(100vh - 244px)'}
+                                            data={navigation?.data || []}
+                                            setCurrentItem={navigation?.setCurrentItem}
+                                            currentItem={navigation?.currentItem}
+                                            GoBack={navigation?.GoBack}
+                                            count={navigation?.total_count}
+                                            GoForward={navigation?.GoForward}
+                                            isLoading={navigation?.isLoading}
+                                            onSearchChange={navigation?.onSearchChange}
+                                            searchQuery={navigation?.searchQuery}
+                                            searchType={navigation?.searchType}
+                                            onSearchTypeChange={navigation?.onSearchTypeChange}
+                                            enableSearchType={navigation?.enableSearchType || false}
+                                            pagination={navigation?.pagination}
+                                            footerComponent={navigation?.footerComponent}
+                                        />
+                                    )}
                                 </Grid>
                             )}
 
@@ -260,14 +286,14 @@ const DataView = ({
                                         overflowX: 'auto'
                                     }}
                                 >
-                                    {isMobile ? (
+                                    {isMobile && !noMobileDataTable ? (
                                         <>
                                             <Collapse in={filtersOpen} timeout="auto">
-                                                <DataTableFilter
+                                                {filterComponent || <DataTableFilter
                                                     filters={slots?.filters}
                                                     columns={columns}
                                                     onFilter={handleApplyFilters}
-                                                />
+                                                />}
                                             </Collapse>
                                             <MobileDataTableNavigation
                                                 open={navigationOpen}
@@ -367,6 +393,7 @@ const DataView = ({
                                                     selectAll={selectAll}
                                                     isColumnsLoading={isColumnsLoading} // Pass isColumnsLoading prop here
                                                     columnsError={columnsError}
+                                                    getRowId={getRowId}
                                                 />
                                                 {footerComponent}
                                             </>
@@ -377,7 +404,7 @@ const DataView = ({
                     </Grid>
                 </Grid>
             </Grid>
-            {!datatablemulti && enableSelection && <SelectionActionBar
+            {!disableMultiSelect && !datatablemulti && enableSelection && <SelectionActionBar
                 selectedRows={selectedRows}
                 onClearSelection={handleClearSelection}
                 onDelete={handleDelete}
@@ -409,7 +436,7 @@ const DataView = ({
                 ]}
             />
             }
-            {multiselectionActionBar?.selectedRows && datatablemulti && enableSelection && <DataTableMultiSelectActionBar
+            {multiselectionActionBar?.selectedRows && !disableMultiSelect && datatablemulti && enableSelection && <DataTableMultiSelectActionBar
                 selectedRows={multiselectionActionBar?.selectedRows || []}
                 selectAll={selectAll}
                 onSelectAll={multiselectionActionBar?.onSelectAll}

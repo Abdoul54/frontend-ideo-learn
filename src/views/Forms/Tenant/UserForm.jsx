@@ -12,6 +12,7 @@ import { useUseAllUserFields } from "@/hooks/api/tenant/useUserFields";
 import StepFour from "./UserSteps/StepFour";
 import { useManagerTypes } from "@/hooks/api/tenant/useManager";
 import { useAdvancedSettings } from "@/hooks/api/tenant/useAdvancedSettings";
+import StepThreeEdit from "./UserSteps/StepThreeEdit";
 
 export default function UserForm({ open, onClose, userId }) {
     const { data: userfields } = useUseAllUserFields();
@@ -44,10 +45,10 @@ export default function UserForm({ open, onClose, userId }) {
             can_manage_subordinates: false,
         },
         mode: 'onChange',
-        context: { 
-            userfields, 
-            isUpdate: !!userId, 
-            shouldShowUserFields 
+        context: {
+            userfields,
+            isUpdate: !!userId,
+            shouldShowUserFields
         },
     });
 
@@ -307,7 +308,11 @@ export default function UserForm({ open, onClose, userId }) {
             switch (step) {
                 case 0: return <StepOne control={control} watch={watch} />;
                 case 1: return <StepTwo control={control} watch={watch} />;
-                case 2: return <StepThree control={control} />;
+                case 2:
+                    // Conditionally render StepThree or StepThreeEdit based on userId
+                    return userId ?
+                        <StepThreeEdit control={control} userData={userData} /> :
+                        <StepThree control={control} />;
                 case 3: return <StepFour control={control} userData={userData} />;
                 default: return null;
             }

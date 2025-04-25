@@ -119,6 +119,7 @@ export default function DataTable({
     allData = [], // Optional prop to provide all data when selectAll is true
     onSelectAllChange, // Callback when selectAll checkbox state changes
     isColumnsLoading = false, // New prop for columns loading state
+    noPagination = false
 }) {
     const handleSortingChange = updaterOrValue => {
         // Ensure we're always passing an array to onSortingChange
@@ -135,7 +136,7 @@ export default function DataTable({
         // If selectAll is true, then all rows are considered selected
         if (selectAll) return true
 
-        return data.every(row => selectedRows.some(selectedRow => selectedRow.id === row.id))
+        return data.every(row => selectedRows.some(selectedRow => getRowId(selectedRow) === getRowId(row)))
     }, [data, selectedRows, selectAll])
 
     // Function to check if some rows in current page are selected
@@ -145,7 +146,7 @@ export default function DataTable({
         // If selectAll is true, then all rows are selected (not "some")
         if (selectAll) return false
 
-        return data.some(row => selectedRows.some(selectedRow => selectedRow.id === row.id)) && !areAllRowsSelected()
+        return data.some(row => selectedRows.some(selectedRow => getRowId(selectedRow) === getRowId(row))) && !areAllRowsSelected()
     }, [data, selectedRows, areAllRowsSelected, selectAll])
 
     // Handle select all rows in current page
@@ -160,19 +161,19 @@ export default function DataTable({
                 const newSelected = [...selectedRows]
 
                 data.forEach(row => {
-                    if (!selectedRows.some(selectedRow => selectedRow.id === row.id)) {
+                    if (!selectedRows.some(selectedRow => getRowId(selectedRow) === getRowId(row))) {
                         newSelected.push(row)
                     }
                 })
                 onRowSelectionChange(newSelected)
             } else {
                 // Remove all current page rows from selection
-                const newSelected = selectedRows.filter(selectedRow => !data.some(row => row.id === selectedRow.id))
+                const newSelected = selectedRows.filter(selectedRow => !data.some(row => getRowId(row) === getRowId(selectedRow)))
 
                 onRowSelectionChange(newSelected)
             }
         },
-        [data, selectedRows, onRowSelectionChange, selectAll]
+        [data, selectedRows, onRowSelectionChange, selectAll, getRowId]
     )
 
     const selectionColumn = useMemo(
@@ -185,7 +186,7 @@ export default function DataTable({
                     justifyContent: 'center',
                     height: '100%',
                     width: '100%'
-                }} >
+                }}>
                     <Checkbox
                         checked={selectAll || areAllRowsSelected()}
                         indeterminate={!selectAll && areSomeRowsSelected()}
@@ -203,29 +204,44 @@ export default function DataTable({
                     width: '100%'
                 }}>
                     <Checkbox
-                        checked={selectAll || selectedRows.some(selectedRow => selectedRow.id === row.original.id)}
+                        checked={
+                            selectAll ||
+                            selectedRows.some(selectedRow =>
+                                getRowId(selectedRow) === getRowId(row.original)
+                            )
+                        }
                         onChange={e => {
-                            e.stopPropagation()
+                            e.stopPropagation();
 
-                            // If selectAll is true and we're unchecking a box, turn off selectAll
                             if (selectAll) {
                                 if (onSelectAllChange) {
-                                    onSelectAllChange(false) // Turn off selectAll
+                                    onSelectAllChange(false);
                                 }
-                                // Add all data except this row to selectedRows
-                                const newSelected = allData ?
-                                    allData.filter(dataRow => dataRow.id !== row.original.id) :
-                                    data.filter(dataRow => dataRow.id !== row.original.id);
+
+                                const newSelected = allData
+                                    ? allData.filter(dataRow =>
+                                        getRowId(dataRow) !== getRowId(row.original)
+                                    )
+                                    : data.filter(dataRow =>
+                                        getRowId(dataRow) !== getRowId(row.original)
+                                    );
+
                                 onRowSelectionChange(newSelected);
                                 return;
                             }
 
-                            // Normal individual row selection logic
-                            const isSelected = selectedRows.some(selectedRow => selectedRow.id === row.original.id)
+                            const isSelected = selectedRows.some(selectedRow =>
+                                getRowId(selectedRow) === getRowId(row.original)
+                            );
+
                             if (isSelected) {
-                                onRowSelectionChange(selectedRows.filter(selectedRow => selectedRow.id !== row.original.id))
+                                onRowSelectionChange(
+                                    selectedRows.filter(selectedRow =>
+                                        getRowId(selectedRow) !== getRowId(row.original)
+                                    )
+                                );
                             } else {
-                                onRowSelectionChange([...selectedRows, row.original])
+                                onRowSelectionChange([...selectedRows, row.original]);
                             }
                         }}
                         onClick={e => e.stopPropagation()}
@@ -243,9 +259,11 @@ export default function DataTable({
             selectAll,
             allData,
             onSelectAllChange,
-            data
+            data,
+            getRowId // don't forget this
         ]
-    )
+    );
+
 
     // Only include selection column if enableSelection is true
     const allColumns = useMemo(() =>
@@ -297,8 +315,8 @@ export default function DataTable({
     };
 
 
-    const renderBody = () => {
-        if (isColumnsLoading || isLoading && !data.length) {
+    const renderBody = useMemo(() => {
+        if (isColumnsLoading || (isLoading && !data.length)) {
             return (
                 <FlexTableRow>
                     <FlexTableCell flex={1}>
@@ -329,10 +347,7 @@ export default function DataTable({
                             width: '100%',
                             minHeight: emptyStateProps?.height
                         }}>
-                            <Error
-                                width='150px'
-                                height='150px'
-                            />
+                            <Error width='150px' height='150px' />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
                                 {error?.message || "An error occurred while fetching data"}
                             </Typography>
@@ -344,21 +359,16 @@ export default function DataTable({
             return (
                 <FlexTableRow>
                     <FlexTableCell colSpan={allColumns.length}>
-                        <Box
-                            sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                padding: 4,
-                                width: '100%',
-                                minHeight: emptyStateProps?.height,
-                            }}
-                        >
-                            <NoData
-                                width='150px'
-                                height='150px'
-                            />
+                        <Box sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            padding: 4,
+                            width: '100%',
+                            minHeight: emptyStateProps?.height
+                        }}>
+                            <NoData width='150px' height='150px' />
                             <Typography variant="h6" color="text.secondary" gutterBottom>
                                 {emptyStateProps.message || "No data available"}
                             </Typography>
@@ -371,54 +381,70 @@ export default function DataTable({
                     </FlexTableCell>
                 </FlexTableRow>
             );
-        } else {
-            return table.getRowModel().rows.map(row => (
-                <FlexTableRow
-                    key={row.id}
-                    hover
-                    onClick={() => {
-                        if (!enableSelection) return; // Skip selection logic if not enabled
-
-                        // If selectAll is true and we're unchecking a row, turn off selectAll
-                        if (selectAll) {
-                            if (onSelectAllChange) {
-                                onSelectAllChange(false) // Turn off selectAll
-                            }
-                            // Add all data except this row to selectedRows
-                            const newSelected = allData ?
-                                allData.filter(dataRow => dataRow.id !== row.original.id) :
-                                data.filter(dataRow => dataRow.id !== row.original.id);
-                            onRowSelectionChange(newSelected);
-                            return;
-                        }
-
-                        // Normal individual row selection logic
-                        const isSelected = selectedRows.some(selectedRow => selectedRow.id === row.original.id)
-                        if (isSelected) {
-                            onRowSelectionChange(selectedRows.filter(selectedRow => selectedRow.id !== row.original.id))
-                        } else {
-                            onRowSelectionChange([...selectedRows, row.original])
-                        }
-                    }}
-                    sx={{
-                        cursor: enableSelection ? 'pointer' : 'default', // Only show pointer cursor if selection is enabled
-                        bgcolor: enableSelection && (selectAll || selectedRows.some(selectedRow => selectedRow.id === row.original.id))
-                            ? 'action.selected'
-                            : 'inherit',
-                        '&:hover': {
-                            backgroundColor: 'action.hover'
-                        }
-                    }}
-                >
-                    {row.getVisibleCells().map(cell => (
-                        <FlexTableCell key={cell.id} flex={cell.column.columnDef.flex}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </FlexTableCell>
-                    ))}
-                </FlexTableRow>
-            ))
         }
-    }
+
+        return table.getRowModel().rows.map(row => (
+            <FlexTableRow
+                key={getRowId(row.original)}
+                hover
+                onClick={() => {
+                    if (!enableSelection) return;
+
+                    if (selectAll) {
+                        onSelectAllChange?.(false);
+                        const newSelected = allData
+                            ? allData.filter(dataRow => getRowId(dataRow) !== getRowId(row.original))
+                            : data.filter(dataRow => getRowId(dataRow) !== getRowId(row.original));
+                        onRowSelectionChange(newSelected);
+                        return;
+                    }
+
+                    const isSelected = selectedRows.some(selectedRow =>
+                        getRowId(selectedRow) === getRowId(row.original)
+                    );
+
+                    if (isSelected) {
+                        onRowSelectionChange(selectedRows.filter(selectedRow =>
+                            getRowId(selectedRow) !== getRowId(row.original)
+                        ));
+                    } else {
+                        onRowSelectionChange([...selectedRows, row.original]);
+                    }
+                }}
+                sx={{
+                    cursor: enableSelection ? 'pointer' : 'default',
+                    bgcolor: enableSelection && (
+                        selectAll ||
+                        selectedRows.some(selectedRow => getRowId(selectedRow) === getRowId(row.original))
+                    ) ? 'action.selected' : 'inherit',
+                    '&:hover': { backgroundColor: 'action.hover' }
+                }}
+            >
+                {row.getVisibleCells().map(cell => (
+                    <FlexTableCell key={cell.id} flex={cell.column.columnDef.flex}>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </FlexTableCell>
+                ))}
+            </FlexTableRow>
+        ));
+    }, [
+        isColumnsLoading,
+        isLoading,
+        isError,
+        error,
+        data,
+        emptyStateProps,
+        allColumns.length,
+        table,
+        getRowId,
+        selectedRows,
+        onRowSelectionChange,
+        selectAll,
+        allData,
+        enableSelection,
+        onSelectAllChange
+    ]);
+
 
     return (
         <RootContainer height={height} variant={variant}>
@@ -493,10 +519,10 @@ export default function DataTable({
                             ))
                         )}
                     </FlexTableHead>
-                    <FlexTableBody>{renderBody()}</FlexTableBody>
+                    <FlexTableBody>{renderBody}</FlexTableBody>
                 </FlexTable>
             </TableContainer>
-            <PaginationContainer>
+            {!noPagination && <PaginationContainer>
                 <TablePagination
                     rowsPerPageOptions={rowsPerPageOptions || [5, 15, 25]}
                     component={Paper}
@@ -516,7 +542,7 @@ export default function DataTable({
                         onPaginationChange?.({ pageIndex: 0, pageSize: newPageSize })
                     }}
                 />
-            </PaginationContainer>
+            </PaginationContainer>}
         </RootContainer>
     )
 }

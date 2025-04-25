@@ -1,43 +1,58 @@
 'use client'
-// Context Imports
-import { VerticalNavProvider } from '@menu/contexts/verticalNavContext'
-import { SettingsProvider } from '@core/contexts/settingsContext'
 
-// Util Imports
-// import { getDemoName, getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers'
+import { useEffect, useState } from 'react'
 import { NextAuthProvider } from '@/providers/NextAuthProviders'
 import { QueryProvider } from '@/providers/QueryProvider'
-import ThemeProviderWrapper from '@/providers/ThemeProviderWrapper'
 import { MuiLocalizationProvider } from '@/providers/MuiLocalizationProvider'
-import { Toaster } from 'react-hot-toast'
-import AuthWrapper from '@/providers/AuthWrapper'
+import { SettingsProvider } from '@/@core/contexts/settingsContext'
 import { AdvancedSettingsProvider } from '@/@core/contexts/advancedSettingsContext'
+import AuthWrapper from '@/providers/AuthWrapper'
+import ThemeProviderWrapper from '@/providers/ThemeProviderWrapper'
+import { VerticalNavProvider } from '@/@menu/contexts/verticalNavContext'
+import { Toaster } from 'react-hot-toast'
+import { SSOProvider } from '@/providers/SSOProvider'
+import LanguageProvider from '@/providers/LanguageProvider'
+import { UserProvider } from '@/@core/contexts/userContext'
+import { TranslationProvider } from '@/@core/contexts/translationContext'
+export default function TenantProviders({ children }) {
+  const [isClient, setIsClient] = useState(false)
 
-const TenantProviders = props => {
-  // Props
-  const { children } = props
+  useEffect(() => {
+    setIsClient(true)
+  }, [])
 
+  if (!isClient) {
+    // Return loading state or empty component during server rendering
+    return null
+  }
 
   return (
-    <NextAuthProvider>
-      <AuthWrapper>
-        <QueryProvider>
-          <VerticalNavProvider>
-            <SettingsProvider>
-              <AdvancedSettingsProvider>
-                <ThemeProviderWrapper>
+    <QueryProvider>
+      <VerticalNavProvider>
+        <SettingsProvider>
+          <TranslationProvider>
+
+            <AdvancedSettingsProvider>
+              <ThemeProviderWrapper>
+                <LanguageProvider>
                   <MuiLocalizationProvider>
-                    {children}
-                    <Toaster />
+                    <NextAuthProvider>
+                      <AuthWrapper redirectPath='/login'>
+                        <UserProvider>
+                          <SSOProvider>
+                            {children}
+                            <Toaster />
+                          </SSOProvider>
+                        </UserProvider>
+                      </AuthWrapper>
+                    </NextAuthProvider>
                   </MuiLocalizationProvider>
-                </ThemeProviderWrapper>
-              </AdvancedSettingsProvider>
-            </SettingsProvider>
-          </VerticalNavProvider>
-        </QueryProvider>
-      </AuthWrapper>
-    </NextAuthProvider>
+                </LanguageProvider>
+              </ThemeProviderWrapper>
+            </AdvancedSettingsProvider>
+          </TranslationProvider>
+        </SettingsProvider>
+      </VerticalNavProvider>
+    </QueryProvider>
   )
 }
-
-export default TenantProviders

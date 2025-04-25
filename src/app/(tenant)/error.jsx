@@ -56,8 +56,7 @@ export default function Error({ error, reset }) {
                             <Divider flexItem />
 
                             <Typography variant="body1" color="text.secondary" align="center">
-                                We encountered an unexpected error while loading this page.
-                                You can try reloading or contact support if the problem persists.
+                                {error?.message || 'We encountered an unexpected error while loading this page. You can try reloading or contact support if the problem persists.'}
                             </Typography>
 
                             <Box sx={{ mt: 2 }}>

@@ -28,11 +28,13 @@ export default function SelectInput({ name, control, label, options = [], valueK
                         label={label}
                         error={!!error}
                     >
-                        {options.map((option) => (
-                            <MenuItem key={option?.[valueKey]} value={option?.[valueKey]}>
-                                {option?.[labelKey]}
-                            </MenuItem>
-                        ))}
+                        {options.map((option) => {
+                            return (
+                                <MenuItem key={option?.[valueKey]} value={option?.[valueKey]}>
+                                    {option?.[labelKey]}
+                                </MenuItem>
+                            )
+                        })}
                     </Select>
                     {error && <FormHelperText error>{error.message}</FormHelperText>}
                 </FormControl>

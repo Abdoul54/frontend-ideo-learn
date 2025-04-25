@@ -213,7 +213,7 @@ const PowerUsers = ({ profileId }) => {
                     open={deleteConfirmation.open}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
                     data={deleteConfirmation?.data}
-                    title={deleteConfirmation?.data?.username}
+                    title={deleteConfirmation?.data?.name || 'Unassign Power Users'}
                     onSubmit={handleDeleteSubmit}
                     variant={deleteConfirmation?.variant}
                     set={clearSelection} // Pass the clearSelection function

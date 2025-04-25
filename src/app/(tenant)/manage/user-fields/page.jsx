@@ -34,6 +34,7 @@ export default function Page() {
     filters
   });
 
+
   const handleAssignUserFieldsToHaykalDrawerClose = () => {
     setAssignUserFieldsToHaykalDrawerOpen(false);
     setUserFieldIds([]);

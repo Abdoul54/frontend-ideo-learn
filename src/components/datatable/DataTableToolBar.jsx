@@ -31,7 +31,7 @@ const iconButtonStyles = {
 const getActiveIconButtonStyles = (isActive) => ({
     ...iconButtonStyles,
     backgroundColor: isActive ? 'primary.lightOpacity' : 'rgba(255, 255, 255, 0.05)',
-    color: isActive ? 'var(--mui-palette-primary-light)' : 'var(--mui-palette-text-primary)',
+    color: isActive ? 'var(--mui-palette-primary-dark)' : 'var(--mui-palette-text-primary)',
 });
 
 // Memoized sub-components for better performance
@@ -100,13 +100,13 @@ const DataTableToolbar = ({
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
 
-    // Modified useEffect to not override existing visibility settings
+    // Modified useEffect to not override existing visibility settings and respect locked columns
     useEffect(() => {
         if (Object.keys(columnVisibility).length === 0 && columns.length > 0) {
             const initialVisibility = columns.reduce((acc, column) => {
                 if (column.id !== 'actions' && column.id !== 'select') {
-                    // Only initialize if not already set
-                    acc[column.id || column.accessorKey] = true;
+                    // Set locked columns to always be visible
+                    acc[column.id || column.accessorKey] = column.locked ? true : true;
                 }
                 return acc;
             }, {});
@@ -120,11 +120,24 @@ const DataTableToolbar = ({
         [columns]
     );
 
+    // Calculate the number of locked columns
+    const lockedColumnsCount = useMemo(() =>
+        filteredColumns.filter(col => col.locked).length,
+        [filteredColumns]
+    );
+
     // Calculate the number of currently visible columns
     const visibleColumnsCount = useMemo(() =>
         Object.values(columnVisibility).filter(Boolean).length,
         [columnVisibility]
     );
+
+    // Calculate the number of toggleable columns that are currently visible
+    const toggleableVisibleCount = useMemo(() => {
+        return filteredColumns
+            .filter(col => !col.locked && columnVisibility[col.id])
+            .length;
+    }, [filteredColumns, columnVisibility]);
 
     // Check if we've reached the maximum limit of visible columns
     const isAtColumnLimit = visibleColumnsCount >= MAX_VISIBLE_COLUMNS;
@@ -135,6 +148,12 @@ const DataTableToolbar = ({
     };
 
     const handleColumnToggle = (columnId) => {
+        // Find the column
+        const column = filteredColumns.find(col => col.id === columnId);
+
+        // If column is locked, don't allow toggling
+        if (column?.locked) return;
+
         // Get current state of the column
         const isCurrentlyVisible = columnVisibility[columnId] ?? true;
 
@@ -271,31 +290,85 @@ const DataTableToolbar = ({
                         {visibleColumnsCount}/{Object.keys(columnVisibility).length > MAX_VISIBLE_COLUMNS ? MAX_VISIBLE_COLUMNS : Object.keys(columnVisibility).length}
                     </Typography>
                 </MenuItem>
-                {filteredColumns.map((column) => {
-                    const columnId = column.id || column.accessorKey;
-                    const isVisible = columnVisibility[columnId] ?? true;
-                    // Disable checkbox if at limit and column is not visible
-                    const isDisabled = isAtColumnLimit && !isVisible;
 
-                    return (
-                        <MenuItem
-                            key={columnId}
-                            onClick={() => handleColumnToggle(columnId)}
-                            dense
-                            disabled={isDisabled}
-                        >
-                            <Checkbox
-                                checked={isVisible}
-                                size="small"
+                {/* Locked columns section with header */}
+                {lockedColumnsCount > 0 && (
+                    <MenuItem dense disabled sx={{ backgroundColor: 'rgba(0,0,0,0.05)' }}>
+                        <Typography variant="caption" color="text.secondary">
+                            Locked Columns ({lockedColumnsCount})
+                        </Typography>
+                    </MenuItem>
+                )}
+
+                {/* Display locked columns first */}
+                {filteredColumns
+                    .filter(col => col.locked)
+                    .map((column) => {
+                        const columnId = column.id || column.accessorKey;
+                        return (
+                            <MenuItem
+                                key={columnId}
+                                dense
+                                disabled={true} // Always disabled for locked columns
+                                sx={{ backgroundColor: 'rgba(0,0,0,0.02)' }}
+                            >
+                                <Checkbox
+                                    checked={true} // Always checked for locked columns
+                                    size="small"
+                                    disabled={true}
+                                />
+                                <ListItemText
+                                    primary={
+                                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                            {column.header}
+                                            <i className="solar-lock-bold-duotone" style={{ fontSize: '14px', color: 'var(--mui-palette-text-secondary)' }} />
+                                        </Box>
+                                    }
+                                />
+                            </MenuItem>
+                        );
+                    })
+                }
+
+                {/* Header for toggleable columns */}
+                {lockedColumnsCount > 0 && (
+                    <MenuItem dense disabled>
+                        <Typography variant="caption" color="text.secondary">
+                            Optional Columns
+                        </Typography>
+                    </MenuItem>
+                )}
+
+                {/* Display toggleable columns */}
+                {filteredColumns
+                    .filter(col => !col.locked)
+                    .map((column) => {
+                        const columnId = column.id || column.accessorKey;
+                        const isVisible = columnVisibility[columnId] ?? true;
+                        // Disable checkbox if at limit and column is not visible
+                        const isDisabled = isAtColumnLimit && !isVisible;
+
+                        return (
+                            <MenuItem
+                                key={columnId}
+                                onClick={() => handleColumnToggle(columnId)}
+                                dense
                                 disabled={isDisabled}
-                            />
-                            <ListItemText primary={column.header} />
-                        </MenuItem>
-                    );
-                })}
+                            >
+                                <Checkbox
+                                    checked={isVisible}
+                                    size="small"
+                                    disabled={isDisabled}
+                                />
+                                <ListItemText primary={column.header} />
+                            </MenuItem>
+                        );
+                    })
+                }
             </Menu>
         </Toolbar>
     );
 };
+
 
 export default memo(DataTableToolbar);

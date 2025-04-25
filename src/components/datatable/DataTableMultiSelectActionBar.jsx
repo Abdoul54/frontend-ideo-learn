@@ -217,19 +217,20 @@ const DataTableMultiSelectActionBar = ({
                                 </Button>}
 
                                 {/* Primary action buttons */}
-                                {primaryActions.map((action) => (
-                                    <Button
-                                        key={action.id}
-                                        color={action.color || "primary"}
-                                        variant={action.variant || "text"}
-                                        size="small"
-                                        startIcon={action.icon}
-                                        onClick={() => handleAction(action)}
-                                        sx={{ ...style.primaryAction }}
-                                    >
-                                        {action.label}
-                                    </Button>
-                                ))}
+                                {primaryActions.map((action) =>
+                                    action?.component ? action?.component : (
+                                        <Button
+                                            key={action.id}
+                                            color={action.color || "primary"}
+                                            variant={action.variant || "text"}
+                                            size="small"
+                                            startIcon={action.icon}
+                                            onClick={() => handleAction(action)}
+                                            sx={{ ...style.primaryAction }}
+                                        >
+                                            {action.label}
+                                        </Button>
+                                    ))}
 
                                 {/* Action dropdown menu */}
                                 {actionGroups?.length > 0 && (

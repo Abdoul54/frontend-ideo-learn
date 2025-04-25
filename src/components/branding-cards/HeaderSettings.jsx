@@ -23,7 +23,7 @@ const HeaderSettings = () => {
         resolver: yupResolver(schema)
     });
 
-    const { data } = useHeaderSettings();
+    const { data, isLoading } = useHeaderSettings();
     const updateHeaderSettings = useUpdateHeaderSettings();
 
     useEffect(() => {
@@ -32,7 +32,7 @@ const HeaderSettings = () => {
                 page_title: data.page_title,
                 header_message: {
                     status: data.header_message.status,
-                    content: data.header_message.content
+                    content: data.header_message.content || ''
                 },
                 // Store URL and file separately
                 logo: { url: data.logo, file: null },
@@ -144,7 +144,7 @@ const HeaderSettings = () => {
                                 }}
                                 defaultValue={field.value?.url}
                                 maxSize={512 * 1024}
-                                type="image"
+                                type="favicon"
                             />
                         )}
                     />

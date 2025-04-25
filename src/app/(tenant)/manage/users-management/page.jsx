@@ -130,7 +130,7 @@ const HaykalPage = () => {
   };
 
   const handlePowerUsersClick = () => {
-    router.push('/manage/power-users');
+    router.push('/powerusers');
   };
 
   const handleUserFieldsClick = () => {
@@ -403,7 +403,7 @@ const HaykalPage = () => {
         id: 'advanced-settings',
         label: 'Advanced Settings',
         icon: <i className="solar-settings-minimalistic-bold" />,
-        handler: () => router.push('/manage/advanced-settings'),
+        handler: () => router.push('/settings/advanced-settings'),
       },
     ],
   ];
@@ -476,14 +476,14 @@ const HaykalPage = () => {
   );
 
   // const { isLoading: isColumnsLoading, error: columnsError } = useUsersColumns(setColumns, setColumnVisibility, { actionColumn: actionColumn(handleDeleteUser, handleEditUser) })
-  const { 
-    data: columnsData, 
-    isLoading: isColumnsLoading, 
-    error: columnsError 
-  } = useUsersColumns({ 
-    actionColumn: actionColumn(handleDeleteUser, handleEditUser) 
+  const {
+    data: columnsData,
+    isLoading: isColumnsLoading,
+    error: columnsError
+  } = useUsersColumns({
+    actionColumn: actionColumn(handleDeleteUser, handleEditUser)
   });
-  
+
   // Initialize column visibility when data loads
   useEffect(() => {
     if (columnsData?.initialVisibility) {
@@ -542,7 +542,7 @@ const HaykalPage = () => {
             {
               component: (
                 <OptionMenu
-                  menuProps={{ 
+                  menuProps={{
                     elevation: 2,
                     sx: { '& .MuiMenu-paper': { minWidth: 200 } }
                   }}
@@ -553,7 +553,7 @@ const HaykalPage = () => {
                     ...group.map(action => ({
                       text: action.label,
                       icon: action.icon,
-                      menuItemProps: { 
+                      menuItemProps: {
                         onClick: () => action.handler(),
                         sx: { py: 1.5 }
                       }
@@ -566,7 +566,7 @@ const HaykalPage = () => {
             {
               component: (
                 <OptionMenu
-                  menuProps={{ 
+                  menuProps={{
                     elevation: 2,
                     sx: { '& .MuiMenu-paper': { minWidth: 200 } }
                   }}
@@ -577,7 +577,7 @@ const HaykalPage = () => {
                     ...group.map(action => ({
                       text: action.label,
                       icon: action.icon,
-                      menuItemProps: { 
+                      menuItemProps: {
                         onClick: () => action.handler(),
                         sx: { py: 1.5 }
                       }
@@ -608,7 +608,7 @@ const HaykalPage = () => {
             {
               component: (
                 <OptionMenu
-                  menuProps={{ 
+                  menuProps={{
                     elevation: 2,
                     sx: { '& .MuiMenu-paper': { minWidth: 200 } }
                   }}
@@ -619,7 +619,7 @@ const HaykalPage = () => {
                     ...group.map(action => ({
                       text: action.label,
                       icon: action.icon,
-                      menuItemProps: { 
+                      menuItemProps: {
                         onClick: () => action.handler(),
                         sx: { py: 1.5 }
                       }
@@ -630,34 +630,34 @@ const HaykalPage = () => {
               tooltip: "related sections",
             }
           ]
-          }}
-          selectedRows={selectedRows}
-          setSelectedRows={setSelectedRows}
-          slots={{
-            filters,
-            setFilters,
-            globalFilter: usersSearchQuery,
-            setGlobalFilter: setUsersSearchQuery,
-            sorting,
-            setSorting,
-            columnVisibility,
-            setColumnVisibility,
-            features: {
-              search: true,
-              filter: true,
-              navigation: true,
-              columnVisibility: true,
-              breadcrumbs: true
-            },
-            emptyState: {
-              message: "No users found",
-              description: "Try adjusting your filters or add a new user.",
-              height: 'calc(100vh - 400px)',
-              icon: <i className="lucide-user-x" style={{ fontSize: '2rem' }} />
-            }
-          }}
-          onDeleteSelected={handleDeleteSelected}
-          actionGroups={actionGroups}
+        }}
+        selectedRows={selectedRows}
+        setSelectedRows={setSelectedRows}
+        slots={{
+          filters,
+          setFilters,
+          globalFilter: usersSearchQuery,
+          setGlobalFilter: setUsersSearchQuery,
+          sorting,
+          setSorting,
+          columnVisibility,
+          setColumnVisibility,
+          features: {
+            search: true,
+            filter: true,
+            navigation: true,
+            columnVisibility: true,
+            breadcrumbs: true
+          },
+          emptyState: {
+            message: "No users found",
+            description: "Try adjusting your filters or add a new user.",
+            height: 'calc(100vh - 400px)',
+            icon: <i className="lucide-user-x" style={{ fontSize: '2rem' }} />
+          }
+        }}
+        onDeleteSelected={handleDeleteSelected}
+        actionGroups={actionGroups}
       //footerComponent={selectionStatusSwitch}
       />
 

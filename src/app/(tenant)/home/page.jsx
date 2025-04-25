@@ -1,38 +1,26 @@
 'use client';
 
-import { useEffect, useState } from 'react';
 import ToolBar from "@/components/ToolBar";
 import { Grid } from "@mui/material";
-import { useSession } from 'next-auth/react';
 
 const Page = () => {
-  const { status } = useSession();
-  const [isClient, setIsClient] = useState(false);
+  // const { settings, updateSettings } = useSettings()
 
-  // This helps avoid hydration errors when redirecting
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  // Show nothing during initial server render to avoid hydration mismatch
-  if (!isClient) {
-    return null;
-  }
-
-  // Display a loading indicator while session is loading
-  if (status === 'loading') {
-    return (
-      <div className="flex h-screen items-center justify-center">
-        <i className='svg-spinners:90-ring text-2xl' />
-      </div>
-    );
-  }
+  // console.log('settings', settings?.language)
 
   return (
-    <Grid container gap={4}>
+    <Grid container spacing={4}>
       <Grid item xs={12}>
         <ToolBar breadcrumbs={[{ label: 'Home' }]} />
       </Grid>
+      {/* <Grid item xs={12}>
+        <ToggleButtonGroup>
+          <ToggleButton value="en" selected={settings?.language?.locale === 'en' && settings?.language?.direction === 'ltr'} onClick={() => updateSettings({ language: { locale: 'en', direction: 'ltr' } })}>English</ToggleButton>
+          <ToggleButton value="ar" selected={settings?.language?.locale === 'ar' && settings?.language?.direction === 'rtl'} onClick={() => updateSettings({ language: { locale: 'ar', direction: 'rtl' } })}>العربية</ToggleButton>
+          <ToggleButton value="fr" selected={settings?.language?.locale === 'fr' && settings?.language?.direction === 'ltr'} onClick={() => updateSettings({ language: { locale: 'fr', direction: 'ltr' } })}>Français</ToggleButton>
+        </ToggleButtonGroup>
+      </Grid> */}
+
     </Grid>
   );
 };

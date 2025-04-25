@@ -1,6 +1,7 @@
 import { axiosInstance } from '@/lib/axios';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { signIn } from 'next-auth/react';
+import { useState } from 'react';
 
 export const useAuth = (options) => {
     const signInMutation = useMutation({
@@ -23,6 +24,40 @@ export const useAuth = (options) => {
         signIn: signInMutation.mutate,
         isLoading: signInMutation.isPending,
         error: signInMutation.error,
+    };
+};
+
+export const useAuthSSO = () => {
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState(null);
+
+    const handleSignIn = async (credentials) => {
+        setIsLoading(true);
+        setError(null);
+
+        try {
+            const response = await signIn('SSO', {
+                ...credentials,
+                redirect: false,
+            });
+
+            if (response?.error) {
+                throw new Error(response.error);
+            }
+
+            return response;
+        } catch (err) {
+            setError(err);
+            throw err;
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    return {
+        signIn: handleSignIn,
+        isLoading,
+        error
     };
 };
 
@@ -82,6 +117,55 @@ export const useRegister = () => {
         },
         onError: (error) => {
             console.error("Registration failed", error.message);
+        }
+    });
+}
+
+// post /tenant/auth/v1/partners/ping
+export const usePing = () => {
+    return useMutation({
+        mutationFn: async (data) => {
+            const response = await axiosInstance.post("/tenant/auth/v1/partners/ping", data);
+            if (!response?.data?.success) {
+                throw new Error(response?.data?.message || "Invalid response structure");
+            }
+            return response?.data?.data;
+        },
+        onError: (error) => {
+            console.error("Ping failed", error.message);
+        }
+    });
+}
+
+
+// post /tenant/auth/v1/logout 
+export const useLogout = () => {
+    return useMutation({
+        mutationFn: async () => {
+            const response = await axiosInstance.post("/tenant/auth/v1/logout");
+            if (!response?.data?.success) {
+                throw new Error(response?.data?.message || "Invalid response structure");
+            }
+            return response?.data?.data;
+        },
+        onError: (error) => {
+            console.error("Logout failed", error.message);
+        }
+    });
+}
+
+export const useMe = () => {
+    return useQuery({
+        queryKey: ['me'],
+        queryFn: async () => {
+            const response = await axiosInstance.get("/tenant/auth/v1/me");
+            if (!response?.data?.success) {
+                throw new Error(response?.data?.message || "Invalid response structure");
+            }
+            return response?.data?.data;
+        },
+        onError: (error) => {
+            console.error("Me failed", error.message);
         }
     });
 }

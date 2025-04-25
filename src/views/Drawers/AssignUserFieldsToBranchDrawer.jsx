@@ -11,7 +11,7 @@ import {
   FormControlLabel,
   Switch
 } from '@mui/material'
-import { useUserFields } from '@/hooks/api/tenant/useUserFields'
+import { useUserFieldsassigned } from '@/hooks/api/tenant/useUserFields'
 import { useAssignUserFieldsToHaykal } from '@/hooks/api/tenant/useHaykal'
 import DataTable from '@/components/datatable/DataTable'
 
@@ -36,28 +36,55 @@ export default function AssignUserFieldsToBranchDrawer({ open, onClose, haykalId
     desc: sort.desc
   }))
 
-  // Fetch user fields
+  // Fetch user fields for this specific branch
   const {
     data: userFieldsData,
     isLoading,
     isError,
     error
-  } = useUserFields({
-    page,
-    page_size,
-    search,
-    sort: sortParams,
-    filters: []
-  }, { enabled: open })
+  } = useUserFieldsassigned(haykalId ? [haykalId] : [], { enabled: open && !!haykalId })
+
+  // Transform the data to include pre-checked status
+  const transformedUserFields = userFieldsData ? {
+    items: userFieldsData.map(field => ({
+      ...field,
+      isAssigned: field.visible_for_pu === true
+    })),
+    pagination: {
+      total: userFieldsData.length,
+      current_page: 1,
+      per_page: userFieldsData.length
+    }
+  } : { items: [], pagination: { total: 0, current_page: 1, per_page: 15 } }
 
   // Assign user fields mutation
   const assignUserFieldsMutation = useAssignUserFieldsToHaykal()
+
+  // Set initial selection based on visible_for_pu when data loads
+  useEffect(() => {
+    if (userFieldsData && open) {
+      const initialSelection = userFieldsData
+        .filter(field => field.visible_for_pu === true)
+        .map(field => ({
+          ...field,
+          isAssigned: true
+        }))
+
+      setSelectedUserFields(initialSelection)
+    }
+  }, [userFieldsData, open])
 
   // Reset selection when drawer opens/closes
   useEffect(() => {
     if (!open) {
       setSelectedUserFields([])
       setAssignAllFields(false)
+      setSearch('')
+      setPagination({
+        pageIndex: 0,
+        pageSize: 15
+      })
+      setSorting([])
     }
   }, [open])
 
@@ -119,6 +146,12 @@ export default function AssignUserFieldsToBranchDrawer({ open, onClose, haykalId
       cell: ({ row }) => (row.original.mandatory ? 'Yes' : 'No'),
       flex: 0.7
     },
+    // {
+    //   id: 'visible_for_pu',
+    //   header: 'Currently Assigned',
+    //   cell: ({ row }) => (row.original.visible_for_pu ? 'Yes' : 'No'),
+    //   flex: 0.7
+    // },
     {
       id: 'sequence',
       header: 'Sequence',
@@ -141,7 +174,7 @@ export default function AssignUserFieldsToBranchDrawer({ open, onClose, haykalId
     >
       <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
         <Typography variant="h5" sx={{ mb: 3 }}>
-          Assign User Fields to Haykal
+          Assign User Fields to Branch
         </Typography>
 
         <Box sx={{ mb: 2 }}>
@@ -158,8 +191,8 @@ export default function AssignUserFieldsToBranchDrawer({ open, onClose, haykalId
 
         <Box sx={{ flexGrow: 1, mb: 3 }}>
           <DataTable
-            data={userFieldsData?.items || []}
-            totalRows={userFieldsData?.pagination?.total || 0}
+            data={transformedUserFields.items || []}
+            totalRows={transformedUserFields.pagination?.total || 0}
             columns={columns}
             pageIndex={pagination.pageIndex}
             pageSize={pagination.pageSize}

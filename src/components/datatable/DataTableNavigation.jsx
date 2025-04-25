@@ -521,7 +521,7 @@ const EmptyNavigationState = () => {
           }}
         >
           <i
-            className='solar-folder-broken-linear'
+            className='solar-folder-linear'
             style={{
               width: '40px',
               height: '40px',

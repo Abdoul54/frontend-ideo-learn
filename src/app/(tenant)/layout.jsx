@@ -17,6 +17,10 @@ import ScrollToTop from '@core/components/scroll-to-top'
 import { getMode, getSystemMode } from '@core/utils/serverHelpers'
 import NavbarContent from '@/components/layout/horizontal/NavbarContent'
 import TenantProviders from '@/components/TenantProviders'
+import { UserProvider } from '@/@core/contexts/userContext'
+// import { MetadataProvider } from '@/@core/contexts/metaDataContext'
+// import { TranslationProvider } from '@/@core/contexts/translationContext'
+
 
 const Layout = async ({ children }) => {
   // Vars
@@ -25,28 +29,34 @@ const Layout = async ({ children }) => {
 
   return (
     <TenantProviders>
-      <LayoutWrapper
-        systemMode={systemMode}
-        verticalLayout={
-          <VerticalLayout
-            navigation={<Navigation mode={mode} systemMode={systemMode} />}
-            navbar={<Navbar />}
-            footer={<VerticalFooter />}
-          >
-            {children}
-          </VerticalLayout>
-        }
-        horizontalLayout={
-          <HorizontalLayout header={<Header navbarContent={<NavbarContent />} />} >
-            {children}
-          </HorizontalLayout>
-        }
-      />
-      <ScrollToTop className='mui-fixed'>
-        <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
-          <i className='ri-arrow-up-line' />
-        </Button>
-      </ScrollToTop>
+      <UserProvider>
+        {/* <TranslationProvider>
+          <MetadataProvider> */}
+        <LayoutWrapper
+          systemMode={systemMode}
+          verticalLayout={
+            <VerticalLayout
+              navigation={<Navigation mode={mode} systemMode={systemMode} />}
+              navbar={<Navbar />}
+              footer={<VerticalFooter />}
+            >
+              {children}
+            </VerticalLayout>
+          }
+          horizontalLayout={
+            <HorizontalLayout header={<Header navbarContent={<NavbarContent />} />} >
+              {children}
+            </HorizontalLayout>
+          }
+        />
+        {/* <ScrollToTop className='mui-fixed'>
+          <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
+            <i className='ri-arrow-up-line' />
+          </Button>
+        </ScrollToTop> */}
+        {/* </MetadataProvider>
+        </TranslationProvider> */}
+      </UserProvider>
     </TenantProviders>
   )
 }

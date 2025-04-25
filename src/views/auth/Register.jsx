@@ -174,7 +174,6 @@ const Register = () => {
                     poster: settings?.sign_in?.bg_video_data?.fallback_image,
                     alt: 'Registration background',
                     loop: true,
-                    type: 'video/*'
                 }}
                 imageConfig={{
                     src: settings?.sign_in?.bg_data,

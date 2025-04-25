@@ -4,9 +4,12 @@ import SelectInput from "@/components/inputs/SelectInput";
 import DateInput from "@/components/inputs/DateInput";
 import SwitchInput from "@/components/inputs/SwitchInput";
 import { useTimezonesTenant } from "@/hooks/api/tenant/useTimeLangSettings";
+import { useActiveLanguages } from "@/hooks/api/tenant/useLocalization";
 
 const StepOne = ({ control, watch, isUpdate }) => { // Add isUpdate prop
     const { data: timezones } = useTimezonesTenant()
+    const { data: activeLanguages, isLoading: isLoadingActiveLanguages, error: errorActiveLanguages } = useActiveLanguages();
+
 
     return (
         <>
@@ -128,10 +131,10 @@ const StepOne = ({ control, watch, isUpdate }) => { // Add isUpdate prop
                     name="language"
                     control={control}
                     label="Language"
-                    options={[
-                        { value: 'en', label: 'English' },
-                        { value: 'fr', label: 'French' }
-                    ]}
+                    options={activeLanguages || []}
+                    labelKey="name"
+                    valueKey="code"
+                    disabled={isLoadingActiveLanguages || errorActiveLanguages}
                 />
             </Grid>
         </>

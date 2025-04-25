@@ -33,14 +33,30 @@ export const useUpdateHeaderSettings = () => {
             // Append text fields
             formData.append('page_title', data.page_title);
             formData.append('header_message[status]', data.header_message.status);
-            formData.append('header_message[content]', data.header_message.content);
+            formData.append('header_message[content]', data.header_message.content || '');
 
-            // Handle files conditionally
+            // Handle logo
             if (data.logo?.file instanceof File) {
+                // If a new file was uploaded
                 formData.append('logo', data.logo.file);
+            } else if (data.logo?.url) {
+                // If we have an existing URL and want to keep it
+                formData.append('logo_url', data.logo.url);
             }
+
+            // Handle favicon
             if (data.favicon?.file instanceof File) {
+                // If a new file was uploaded
                 formData.append('favicon', data.favicon.file);
+            } else if (data.favicon?.url) {
+                // If we have an existing URL and want to keep it
+                formData.append('favicon_url', data.favicon.url);
+            }
+
+            // Log what we're sending to help debug
+            console.log('Sending header form data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value instanceof File ? value.name : value}`);
             }
 
             const response = await axiosInstance.post(
@@ -70,6 +86,5 @@ export const useUpdateHeaderSettings = () => {
             console.error('Update Failed:', error);
             toast.error(error.response?.data?.message || 'Failed to update header settings');
         },
-
     });
 };

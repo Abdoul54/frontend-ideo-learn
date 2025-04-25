@@ -15,12 +15,17 @@ const ImageBackground = ({ config }) => {
 }
 
 const VideoBackground = ({ config }) => {
+    const defaultPlaceholder = 'https://placehold.co/1920x1080/white/black?text=The+Video+Is+Not+Working+And+You+Forgot+To+Add+An+Image+Background';
+
     return (
         <div className="absolute inset-0 overflow-hidden">
             <video
-                onLoadedMetadata={e => {
-                    e.target.muted = true;
-                }}
+                className="h-full w-full object-cover object-center"
+                poster={config?.poster || defaultPlaceholder}
+                autoPlay
+                muted
+                playsInline
+                loop={config?.loop !== false} // Default to true if not specified
                 onCanPlay={e => {
                     const playPromise = e.target.play();
                     if (playPromise !== undefined) {
@@ -29,20 +34,23 @@ const VideoBackground = ({ config }) => {
                         });
                     }
                 }}
-                className="h-full w-full object-cover object-center"
-                poster={config?.poster || 'https://placehold.co/1920x1080/white/black?text=The+Video+Is+Not+Working+And+You+Forgot+To+Add+An+Image+Background'}
-                autoPlay
-                muted
-                playsInline
-                loop={config?.loop}
             >
-                <source
-                    type={config?.type}
-                    src={config?.src}
-                />
+                {/* Support multiple video formats */}
+                {config?.src && (
+                    <>
+                        {config?.type ? (
+                            <source type={config.type} src={config.src} />
+                        ) : (
+                            <>
+                                <source type="video/webm" src={config.src} />
+                                <source type="video/mp4" src={config.src} />
+                            </>
+                        )}
+                    </>
+                )}
                 <img
-                    src={config?.poster || 'https://placehold.co/1920x1080/white/black?text=The+Video+Is+Not+Working+And+You+Forgot+To+Add+An+Image+Background'}
-                    alt={config?.alt}
+                    src={config?.poster || defaultPlaceholder}
+                    alt={config?.alt || "Background fallback"}
                     className="h-full w-full object-cover object-center transition-opacity duration-300"
                 />
             </video>

@@ -35,7 +35,7 @@ const CentralLogin = () => {
 
     const { signIn, isLoading: isAuthLoading, error: authError } = useAuth({
         onSuccess: () => {
-            window.location.replace('/dashboard') ;
+            router.push('/dashboard');
         }
     })
 
@@ -71,7 +71,6 @@ const CentralLogin = () => {
                     poster: settings?.sign_in?.bg_video_data?.fallback_image,
                     alt: 'Login background',
                     loop: true,
-                    type: 'video/*'
                 }}
                 imageConfig={{
                     src: settings?.sign_in?.bg_data,

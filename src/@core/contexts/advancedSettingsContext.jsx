@@ -171,7 +171,7 @@ export const AdvancedSettingsProvider = ({ children, type }) => {
       }
 
       if (result.data) {
-        console.log('Advanced settings refreshed:', result);
+        // console.log('Advanced settings refreshed:', result);
 
         // Update state with fresh data
         setAdvancedSettings(result.data);

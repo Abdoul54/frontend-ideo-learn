@@ -1,39 +1,39 @@
 import DrawerFormContainer from "@/components/DrawerFormContainer";
+import SelectInput from "@/components/inputs/SelectInput";
 import SwitchInput from "@/components/inputs/SwitchInput";
 import TextInput from "@/components/inputs/TextInput";
 import { defaultValues, schema, FIELDS } from "@/constants/partners";
 import { useUpdatePartner } from "@/hooks/api/tenant/usePartners";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Button, Card, CardActions, CardContent, Grid, List, ListItem, ListItemText } from "@mui/material";
+import { Box, Button, Card, CardActions, CardContent, Divider, Grid, IconButton, List, ListItem, ListItemText, Tooltip, Typography } from "@mui/material";
 import { useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useFieldArray, useForm } from "react-hook-form";
 
 const EditPartnerDrawer = ({ open, onClose, data }) => {
-    const { control, handleSubmit, setValue, watch } = useForm({
+    const { control, handleSubmit, setValue, watch, reset } = useForm({
         resolver: yupResolver(schema),
         defaultValues: defaultValues
     });
 
-
     // Set up field array for provisioning fields
-    // const { fields: provisioningFields, append, remove } = useFieldArray({
-    //     control,
-    //     name: "provisioning_fields"
-    // });
+    const { fields: provisioningFields, append, remove } = useFieldArray({
+        control,
+        name: "provisioning_fields"
+    });
 
     // watch activation status to conditionally show fields
     const isActive = watch("is_active");
 
     // Watch enable_user_provisioning to conditionally show fields
-    // const enableUserProvisioning = watch("enable_user_provisioning");
+    const enableUserProvisioning = watch("enable_user_provisioning");
 
     // Initialize form with partner data when it loads
     useEffect(() => {
         if (data) {
-            setValue('display_name', data.display_name || '');
-            setValue('app_url', data.app_url || '');
-            setValue('is_active', data.is_active || false);
-            setValue('enable_user_provisioning', data.enable_user_provisioning || false);
+            setValue('display_name', data?.name || '');
+            setValue('is_active', data?.is_active || false);
+            setValue('enable_user_provisioning', data?.enable_user_provisioning || false);
+            setValue('username_attribute', data?.username_attribute || '');
 
             // Set provisioning fields if they exist
             if (data.provisioning_fields && data.provisioning_fields.length > 0) {
@@ -45,14 +45,13 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
     const updatePartner = useUpdatePartner();
 
     // Function to add a new provisioning field
-    // const addProvisioningField = () => {
-    //     append({ field: '', attribute: '' });
-    // };
+    const addProvisioningField = () => {
+        append({ field: '', attribute: '' });
+    };
 
 
     const onSubmit = (formData) => {
-        console.log({ formData, data })
-        updatePartner.mutateAsync({ id: data.id, data: formData }).then(() => {
+        updatePartner.mutateAsync({ id: data?.id, data: formData }).then(() => {
             onClose();
             reset();
         })
@@ -114,16 +113,21 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                                 disabled={!isActive}
                             />
                         </Grid>
-                        {/* <Grid item xs={12} component={ListItem}>
-                                    <TextInput
-                                        control={control}
-                                        name='app_url'
-                                        label='App URL'
-                                        disabled={!isActive}
-                                    />
-                                </Grid> */}
-
-                        {/* <Grid item xs={12} component={ListItem}>
+                        <Grid item xs={12} component={ListItem}>
+                            <SelectInput
+                                control={control}
+                                name='username_attribute'
+                                label='Username Attribute'
+                                options={[
+                                    { value: 'username', label: 'Username' },
+                                    { value: 'email', label: 'Email' },
+                                ]}
+                                valueKey='value'
+                                labelKey='label'
+                                disabled={!isActive}
+                            />
+                        </Grid>
+                        <Grid item xs={12} component={ListItem}>
                             <SwitchInput
                                 control={control}
                                 name='enable_user_provisioning'
@@ -141,30 +145,39 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                                     Provisioning Fields
                                 </Typography>
                                 {provisioningFields.map((field, index) => (
-                                    <Box key={field.id} sx={{ display: 'flex', width: '100%', gap: 2, mb: 2 }}>
-                                        <SelectInput
+                                    <Box key={field.id} sx={{ display: 'flex', flexDirection: "column", width: '100%', mb: 2 }}>
+                                        <SwitchInput
                                             control={control}
-                                            name={`provisioning_fields.${index}.field`}
-                                            label="User Field"
-                                            options={FIELDS || []}
-                                            valueKey='value'
-                                            labelKey='label'
+                                            name={`provisioning_fields.${index}.required`}
+                                            label="Required"
                                             disabled={!isActive}
                                         />
-                                        <TextInput
-                                            control={control}
-                                            name={`provisioning_fields.${index}.attribute`}
-                                            label="Partner Attribute"
-                                            disabled={!isActive}
-                                        />
-                                        <IconButton
-                                            color="error"
-                                            onClick={() => remove(index)}
-                                            sx={{ alignSelf: 'center', color: 'error.main' }}
-                                            disabled={!isActive}
-                                        >
-                                            <i className='solar-close-circle-outline' />
-                                        </IconButton>
+                                        <Box key={field.id} sx={{ display: 'flex', width: '100%', gap: 2, alignItems: 'center' }}>
+                                            <SelectInput
+                                                control={control}
+                                                name={`provisioning_fields.${index}.field`}
+                                                label="User Field"
+                                                options={FIELDS || []}
+                                                valueKey='value'
+                                                labelKey='label'
+                                                disabled={!isActive}
+                                            />
+                                            <TextInput
+                                                control={control}
+                                                name={`provisioning_fields.${index}.attribute`}
+                                                label="Partner Attribute"
+                                                disabled={!isActive}
+                                            />
+                                            <IconButton
+                                                color="error"
+                                                onClick={() => remove(index)}
+                                                sx={{ alignSelf: 'center', color: 'error.main' }}
+                                                disabled={!isActive}
+                                            >
+                                                <i className='solar-close-circle-outline' />
+                                            </IconButton>
+                                        </Box>
+
                                     </Box>
                                 ))}
                                 {isActive && <Divider
@@ -179,7 +192,7 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                                 </Divider>
                                 }
                             </Grid>
-                        )} */}
+                        )}
                     </Grid>
                 </CardContent>
                 <CardActions

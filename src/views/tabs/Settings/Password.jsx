@@ -1,6 +1,9 @@
 'use client';
 
-import { Button, Grid, List, ListItem, ListItemText, Typography } from "@mui/material";
+import {
+    Button, Grid, List, ListItem, ListItemText, Typography,
+    Card, CardActions, CardContent, CardHeader
+} from "@mui/material";
 import { useForm } from "react-hook-form";
 import SwitchInput from "@/components/inputs/SwitchInput";
 import TextInput from "@/components/inputs/TextInput";
@@ -33,12 +36,16 @@ export default function Password() {
 
 
     return (
-        <Grid container>
-            <Grid item xs={12}>
-                <Typography variant="h4">Password</Typography>
-            </Grid>
-            <Grid item xs={12} component="form" onSubmit={handleSubmit(onSubmit)}>
-                <Grid container component={List}>
+        <Card component="form" onSubmit={handleSubmit(onSubmit)} >
+            <CardHeader title={
+                <ListItemText
+                    primary="Password"
+                    secondary="Manage your password settings"
+                    primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+                />
+            } />
+            <CardContent>
+                <Grid container spacing={3} component={List}>
                     <Grid item xs={6} component={ListItem}>
                         <SwitchInput
                             name="pass_alpha_numeric"
@@ -115,16 +122,16 @@ export default function Password() {
                         />
                     </Grid>
                 </Grid>
-                <Grid
-                    item
-                    xs={12}
-                    sx={{ display: "flex", justifyContent: "flex-end" }}
-                >
-                    <Button type="submit" variant="contained">
-                        Save
-                    </Button>
+            </CardContent>
+            <CardActions>
+                <Grid container justifyContent="flex-end">
+                    <Grid item>
+                        <Button type="submit" variant="contained" color="primary" disabled={addPasswordSettings.isLoading}>
+                            Save Changes
+                        </Button>
+                    </Grid>
                 </Grid>
-            </Grid>
-        </Grid>
+            </CardActions>
+        </Card>
     );
 }

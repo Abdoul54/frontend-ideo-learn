@@ -13,6 +13,7 @@ import { horizontalLayoutClasses } from '@layouts/utils/layoutClasses'
 import useHorizontalNav from '@menu/hooks/useHorizontalNav'
 import DialogsSettings from '@/views/Dialogs/Settings'
 import { useAdvancedSettings } from '@/@core/contexts/advancedSettingsContext'
+import { useUser } from '@/@core/contexts/userContext'
 
 // Constants
 const NAVBAR_ICONS = [

@@ -5,14 +5,16 @@ import toast from "react-hot-toast";
 
 // Fetch custom domains
 export const useUserFields = ({
-  page = 1,
-  page_size = 10,
+  page,
+  page_size,
   search = "",
   sort = [],
-  filters = [],
+  with_pagination = true,
+  skip_all = true,
+  user_id,
 }) => {
   return useQuery({
-    queryKey: ["user-fields", { page, page_size, search, sort, filters }],
+    queryKey: ["user-fields", { page, page_size, search, sort, skip_all, user_id, with_pagination }],
     queryFn: async () => {
       try {
         const url = urlParamsBuilder({
@@ -21,7 +23,9 @@ export const useUserFields = ({
           page_size,
           search,
           sort,
-          filters,
+          skip_all,
+          user_id,
+          with_pagination
         });
 
         const response = await axiosInstance.get(url);
@@ -53,6 +57,33 @@ export const useUseAllUserFields = () => {
         }
 
         return response.data.data;
+      } catch (error) {
+        console.error("User Fields Fetch Error:", error.message);
+        throw error;
+      }
+    }
+  });
+}
+
+export const useUserFieldsassigned = (branchIds = []) => {
+  return useQuery({
+    queryKey: ["all-user-fields", { branchIds }],
+    queryFn: async () => {
+      try {
+        // Build the URL with branch IDs as query parameters if provided
+        let url = "/tenant/tanzim/v1/userfield";
+        if (branchIds && branchIds.length > 0) {
+          url += '?' + branchIds.map(id => `branch_ids[]=${id}`).join('&');
+        }
+
+        const response = await axiosInstance.get(url);
+
+        if (!response.data || !response.data.success) {
+          throw new Error("Invalid response structure");
+        }
+
+        // Return the items array from the new structure
+        return response.data.data.items;
       } catch (error) {
         console.error("User Fields Fetch Error:", error.message);
         throw error;

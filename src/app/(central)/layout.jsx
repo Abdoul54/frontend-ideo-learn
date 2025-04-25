@@ -14,33 +14,42 @@ import Navbar from '@components/layout/vertical/Navbar'
 import VerticalFooter from '@components/layout/vertical/Footer'
 import ScrollToTop from '@core/components/scroll-to-top'
 import NavbarContent from '@/components/layout/horizontal/CentralNavbarContent'
+import { UserProvider } from '@/@core/contexts/userContext'
+import { MetadataProvider } from '@/@core/contexts/metaDataContext'
+import { TranslationProvider } from '@/@core/contexts/translationContext'
 
 const Layout = ({ children }) => {
 
   return (
     <Providers>
-      <LayoutWrapper
-        systemMode='light'
-        verticalLayout={
-          <VerticalLayout
-            navigation={<Navigation mode='light' systemMode='light' />}
-            navbar={<Navbar />}
-            footer={<VerticalFooter />}
-          >
-            {children}
-          </VerticalLayout>
-        }
-        horizontalLayout={
-          <HorizontalLayout header={<Header navbarContent={<NavbarContent />} />} isCentral >
-            {children}
-          </HorizontalLayout>
-        }
-      />
-      <ScrollToTop className='mui-fixed'>
-        <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
-          <i className='ri-arrow-up-line' />
-        </Button>
-      </ScrollToTop>
+      <UserProvider>
+        {/* <TranslationProvider>
+          <MetadataProvider> */}
+        <LayoutWrapper
+          systemMode='light'
+          verticalLayout={
+            <VerticalLayout
+              navigation={<Navigation mode='light' systemMode='light' />}
+              navbar={<Navbar />}
+              footer={<VerticalFooter />}
+            >
+              {children}
+            </VerticalLayout>
+          }
+          horizontalLayout={
+            <HorizontalLayout header={<Header navbarContent={<NavbarContent />} />} isCentral >
+              {children}
+            </HorizontalLayout>
+          }
+        />
+        {/* <ScrollToTop className='mui-fixed'>
+          <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
+            <i className='ri-arrow-up-line' />
+          </Button>
+        </ScrollToTop> */}
+        {/* </MetadataProvider>
+        </TranslationProvider> */}
+      </UserProvider>
     </Providers>
   )
 }

@@ -13,7 +13,6 @@ const Page = () => {
     const [sorting, setSorting] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [selectedRows, setSelectedRows] = useState([]);
-    console.log('selectedRows', selectedRows);
     const [columnVisibility, setColumnVisibility] = useState({});
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [selectedManagerType, setSelectedManagerType] = useState(null);
@@ -39,21 +38,24 @@ const Page = () => {
 
     useEffect(() => {
         if (managerTypeDetails && selectedManagerTypeId) {
-            const formattedData = {
+            console.log("Manager type details loaded:", managerTypeDetails);
+
+            // Pass the raw API response data to maintain the original structure
+            // This way the drawer can handle either direct API format or formatted data
+            setSelectedManagerType({
                 id: selectedManagerTypeId,
                 code: managerTypeDetails.code,
-                name: managerTypeDetails.title,
+                title: managerTypeDetails.title,  // Keep as title (from API) instead of mapping to name
                 description: managerTypeDetails.description,
-                is_active: managerTypeDetails.active === 1
-            };
-
-            setSelectedManagerType(formattedData);
+                active: managerTypeDetails.active // Keep as active (numeric) instead of mapping to is_active (boolean)
+            });
         }
     }, [managerTypeDetails, selectedManagerTypeId]);
 
     // Open drawer for creating new manager type
     const handleAddNew = () => {
         setSelectedManagerType(null);
+        setSelectedManagerTypeId(null);
         setDrawerOpen(true);
     };
 

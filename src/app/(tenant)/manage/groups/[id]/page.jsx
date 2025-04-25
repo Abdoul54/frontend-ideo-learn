@@ -8,19 +8,25 @@ import Properties from "@/views/tabs/Group/Properties";
 import Users from "@/views/tabs/Group/Users";
 import { TabContext, TabPanel } from "@mui/lab";
 import { Grid, Paper, Tab } from "@mui/material";
-import { useParams } from "next/navigation";
-import { useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const Page = () => {
   const { id } = useParams();
   const [value, setValue] = useState("0");
   const [drawerState, setDrawerState] = useState({ open: false });
+  const searchParams = useSearchParams();
 
   const { data, error } = useGroup(id);
 
   const { data: exportData, isLoading: exportLoading, error: exportError } = useExportGroup({ id });
 
   if (error) throw error;
+
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    setValue(tabParam === "users" ? "1" : "0");
+  }, [searchParams]);
 
   const handleChange = (_, newValue) => {
     setValue(newValue);

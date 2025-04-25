@@ -103,7 +103,6 @@ const ResetPassword = ({ email, token }) => {
           poster: settings?.sign_in?.bg_video_data?.fallback_image,
           alt: 'Reset password background',
           loop: true,
-          type: 'video/*'
         }}
         imageConfig={{
           src: settings?.sign_in?.bg_data,

@@ -21,6 +21,7 @@ const sources = {
     require.resolve('@iconify/json/json/lucide.json'),
     require.resolve('@iconify/json/json/svg-spinners.json'),
     require.resolve('@iconify/json/json/ion.json'),
+    require.resolve('@iconify/json/json/emojione.json'),
   ],
 
   svg: [

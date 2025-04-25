@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect } from "react";
-import { Grid, Button, Typography, List, ListItem, ListItemText } from "@mui/material";
+import { Grid, Button, Typography, List, ListItem, ListItemText, Card, CardActions, CardHeader, CardContent } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useRegistrationSettings, useUpdateRegistrationSettings } from "@/hooks/api/tenant/useUpdateSettings";
@@ -47,13 +47,16 @@ function SelfRegistration() {
     };
 
     return (
-
-        <Grid container>
-            <Grid item xs={12}>
-                <Typography variant="h4">Registration</Typography>
-            </Grid>
-            <Grid item xs={12} component="form" onSubmit={handleSubmit(onSubmit)}>
-                <Grid container component={List}>
+        <Card component="form" onSubmit={handleSubmit(onSubmit)} >
+            <CardHeader title={
+                <ListItemText
+                    primary="Registration"
+                    secondary="Manage your registration settings"
+                    primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
+                />
+            } />
+            <CardContent>
+                <Grid container spacing={3} component={List}>
                     <Grid item xs={12} component={ListItem}>
                         <SelectInput
                             name="registerType"
@@ -104,17 +107,17 @@ function SelfRegistration() {
                         />
                     </Grid>
                 </Grid>
-                <Grid
-                    item
-                    xs={12}
-                    sx={{ display: "flex", justifyContent: "flex-end" }}
-                >
-                    <Button type="submit" variant="contained" disabled={isPending}>
-                        Save
-                    </Button>
+            </CardContent>
+            <CardActions>
+                <Grid container justifyContent="flex-end">
+                    <Grid item>
+                        <Button type="submit" variant="contained" color="primary" disabled={isPending}>
+                            Save Changes
+                        </Button>
+                    </Grid>
                 </Grid>
-            </Grid>
-        </Grid>
+            </CardActions>
+        </Card>
     );
 }
 

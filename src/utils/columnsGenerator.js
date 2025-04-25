@@ -8,7 +8,7 @@
 export const generateColumns = (dataDefinition, config = {}) => {
     if (!dataDefinition) return [];
 
-    const { actionColumn, customCellRenderers = {} } = config;
+    const { actionColumn, customCellRenderers = {}, lockedColumns = [] } = config;
 
     // Transform data object to array of column configs
     const dataArray = Object.entries(dataDefinition).map(([key, value]) => ({
@@ -28,7 +28,8 @@ export const generateColumns = (dataDefinition, config = {}) => {
             type,
             flex: 1,
             enableSorting: true,
-            filters
+            filters,
+            locked: lockedColumns.includes(value),
         };
 
         // Add options if they exist
@@ -57,22 +58,39 @@ export const generateColumns = (dataDefinition, config = {}) => {
 };
 
 // Helper function to generate initial column visibility state
-export const generateInitialVisibility = (dataDefinition, visibleCount = 8) => {
+export const generateInitialVisibility = (dataDefinition, visibleCount = 8, lockedColumns = []) => {
     if (!dataDefinition) return {};
 
     // Get all fields in the data definition
     const fields = Object.keys(dataDefinition);
 
-    // Get the maximum number of visible columns
-    const maximumVisibleColumns = fields?.length > visibleCount ? visibleCount : fields;
+    const lockedColumnsInDefinition = fields.filter(field =>
+        lockedColumns.includes(dataDefinition[field].value)
+    ).length;
+
+    // Adjust remaining slots after accounting for locked columns
+    const remainingSlots = Math.max(0, visibleCount - lockedColumnsInDefinition);
 
     // Create visibility object with first N columns visible by default
     const initialVisibility = {};
+    let nonLockedVisibleCount = 0;
 
-    fields.forEach((field, index) => {
+    // Iterate through fields to set visibility
+    fields.forEach((field) => {
         const columnId = dataDefinition[field].value;
         if (columnId) {
-            initialVisibility[columnId] = index < maximumVisibleColumns;
+            // If column is locked, it's always visible
+            const isLocked = lockedColumns.includes(columnId);
+
+            // For non-locked columns, only show up to the remaining slots
+            const shouldBeVisible = isLocked || (nonLockedVisibleCount < remainingSlots);
+
+            initialVisibility[columnId] = shouldBeVisible;
+
+            // Only increment counter for non-locked columns that are visible
+            if (shouldBeVisible && !isLocked) {
+                nonLockedVisibleCount++;
+            }
         }
     });
 

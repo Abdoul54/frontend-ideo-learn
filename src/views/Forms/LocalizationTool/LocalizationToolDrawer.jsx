@@ -1,28 +1,33 @@
 import DrawerFormContainer from "@/components/DrawerFormContainer";
+import SelectInput from "@/components/inputs/SelectInput";
+import SwitchInput from "@/components/inputs/SwitchInput";
 import TextInput from "@/components/inputs/TextInput";
 import { defaultValues, schema } from "@/constants/LocalizationTool";
-import { useUpdateEmailSender } from "@/hooks/api/tenant/useEmailSender";
+import { useUpdateLocalizationSettings } from "@/hooks/api/tenant/useLocalization";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Button, Card, CardActions, CardContent, Grid } from "@mui/material";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
-const LocalizationToolDrawer = ({ open, onClose, data }) => {
+const LocalizationToolDrawer = ({ open, onClose, localization }) => {
     const { control, formState: { errors }, reset, handleSubmit } = useForm({
         resolver: yupResolver(schema),
         defaultValues: defaultValues
     });
 
-    const updateEmailSender = useUpdateEmailSender();
+    const updateLocalizationSettings = useUpdateLocalizationSettings();
 
     useEffect(() => {
-        if (data) {
-            reset(data);
+        if (localization) {
+            reset(localization);
         }
-    }, [data, reset]);
+    }, [localization, reset]);
 
     const onSubmit = (data) => {
-        updateEmailSender(data, {
+        updateLocalizationSettings.mutate({
+            id: localization.id,
+            data
+        }, {
             onSuccess: () => {
                 reset();
                 onClose();
@@ -40,6 +45,7 @@ const LocalizationToolDrawer = ({ open, onClose, data }) => {
             title="Language Tool Settings"
             open={open}
             onClose={onClose}
+            width="40%"
         >
             <Card
                 component='form'
@@ -69,57 +75,29 @@ const LocalizationToolDrawer = ({ open, onClose, data }) => {
                         <Grid item xs={12}>
                             <TextInput
                                 control={control}
-                                name="host"
-                                label="Host"
-                                error={errors?.host?.message}
+                                name="name"
+                                label="Name"
+                                error={errors?.name?.message}
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextInput
+                            <SelectInput
                                 control={control}
-                                name="port"
-                                label="Port"
-                                error={errors?.port?.message}
+                                name="direction"
+                                label="Direction"
+                                error={errors?.direction?.message}
+                                options={[
+                                    { label: 'Left to Right', value: 'ltr' },
+                                    { label: 'Right to Left', value: 'rtl' }
+                                ]}
                             />
                         </Grid>
                         <Grid item xs={12}>
-                            <TextInput
+                            <SwitchInput
                                 control={control}
-                                name="username"
-                                label="Username"
-                                error={errors?.username?.message}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextInput
-                                control={control}
-                                name="password"
-                                label="Password"
-                                error={errors?.password?.message}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextInput
-                                control={control}
-                                name="encryption"
-                                label="Encryption"
-                                error={errors?.encryption?.message}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextInput
-                                control={control}
-                                name="from_address"
-                                label="From Address"
-                                error={errors?.from_address?.message}
-                            />
-                        </Grid>
-                        <Grid item xs={12}>
-                            <TextInput
-                                control={control}
-                                name="from_name"
-                                label="From Name"
-                                error={errors?.from_name?.message}
+                                name="is_default"
+                                label="Default"
+                                error={errors?.is_default?.message}
                             />
                         </Grid>
                     </Grid>
@@ -143,7 +121,7 @@ const LocalizationToolDrawer = ({ open, onClose, data }) => {
                     </Button>
                 </CardActions>
             </Card>
-        </DrawerFormContainer >
+        </DrawerFormContainer>
     )
 }
 

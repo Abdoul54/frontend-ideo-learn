@@ -1,44 +1,45 @@
-'use client'
+'use client';
 
-import { useState } from 'react';
+import CustomTabList from "@/@core/components/mui/TabList";
 import ToolBar from "@/components/ToolBar";
-import {
-    Grid,
-    Card,
-    CardHeader,
-    CardContent,
-    List,
-    ListItem,
-    ListItemText,
-    IconButton,
-} from "@mui/material";
-import { useActivatePartner, usePartner, useRegeneratePartnerKeys } from '@/hooks/api/tenant/usePartners';
-import { useParams } from 'next/navigation';
-import RegenerateKeysDialog from '@/views/Dialogs/RegenerateKeysDialog';
-import EditPartnerDrawer from '@/views/Forms/Partners/EditPartnerDrawer';
+import { useActivatePartner, usePartner, useRegeneratePartnerKeys } from "@/hooks/api/tenant/usePartners";
+import RegenerateKeysDialog from "@/views/Dialogs/RegenerateKeysDialog";
+import EditPartnerDrawer from "@/views/Forms/Partners/EditPartnerDrawer";
+import Details from "@/views/tabs/partners/Details";
+import Logs from "@/views/tabs/partners/Logs";
+import { TabContext, TabPanel } from "@mui/lab";
+import { Grid, Paper, Tab } from "@mui/material";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const Page = () => {
     const { name } = useParams();
+    const [value, setValue] = useState("0");
     const [showKeysDialog, setShowKeysDialog] = useState(false);
     const [openDrawer, setOpenDrawer] = useState(false);
     const [regeneratedKeys, setRegeneratedKeys] = useState(null);
-    const [copiedSecret, setCopiedSecret] = useState(false);
-    const [copiedKey, setCopiedKey] = useState(false);
+    const activatePartner = useActivatePartner();
+    const regeneratePartnerKeys = useRegeneratePartnerKeys();
+    const searchParams = useSearchParams();
 
-    const maskText = (text) => {
-        if (!text) return '••••••••••••••••';
-        return '•'.repeat(Math.max(text.length - 4, 0)) + text.slice(-4);
-    };
 
-    // Hooks 
+    useEffect(() => {
+        const tabParam = searchParams.get("tab");
+        setValue(tabParam === "logs" ? "1" : "0");
+    }, [searchParams]);
+
+    // Get partner details
     const { data: partner, isLoading, error } = usePartner(name);
 
     if (error) {
-        throw new Error(error);
+        throw error;
     }
 
-    const activatePartner = useActivatePartner();
-    const regeneratePartnerKeys = useRegeneratePartnerKeys();
+    // Handle tab change
+    const handleChange = (_, newValue) => {
+        setValue(newValue);
+    };
 
     // Enhanced handler for regenerating keys
     const handleRegenerateKeys = () => {
@@ -53,107 +54,83 @@ const Page = () => {
         });
     };
 
-
-    const copyToClipboard = (text, keyType) => {
-        navigator.clipboard.writeText(text)
-            .then(() => {
-                // Set the appropriate copied state based on key type
-                if (keyType === 'API Key') {
-                    setCopiedKey(true);
-                    // Reset icon after 2 seconds
-                    setTimeout(() => setCopiedKey(false), 2000);
-                } else if (keyType === 'Secret Key') {
-                    setCopiedSecret(true);  // FIXED: Use setCopiedSecret instead of setCopiedKey
-                    // Reset icon after 2 seconds
-                    setTimeout(() => setCopiedSecret(false), 2000);  // FIXED: Use setCopiedSecret
-                }
-            })
-            .catch(() => {
-                console.error('Failed to copy text to clipboard');
-            });
-    };
-
     return (
-        <Grid container spacing={4}>
-            <Grid item xs={12}>
-                <ToolBar
-                    breadcrumbs={[
-                        { link: `/manage/partners/${name}`, label: partner?.display_name || "Partner" },
-                    ]}
-                    buttonGroup={[
-                        {
-                            text: 'Active',
-                            variant: 'outlined',
-                            tooltip: 'Activate',
-                            icon: 'solar-play-circle-outline',
-                            disabled: partner?.is_active || error || isLoading,
-                            onClick: () => activatePartner.mutate(partner?.id),
-                        },
-                        {
-                            text: 'Edit',
-                            variant: 'outlined',
-                            tooltip: 'Edit Partner',
-                            icon: 'solar-pen-linear',
-                            disabled: !partner?.is_active || error || isLoading,
-                            onClick: () => setOpenDrawer(true),
-                        },
-                        {
-                            label: 'Regenerate Keys',
-                            icon: 'solar-refresh-outline',
-                            tooltip: 'Regenerate API keys',
-                            onClick: handleRegenerateKeys,
-                            disabled: !partner?.is_active || error || isLoading
-                        }
-                    ]}
-                />
-            </Grid>
-            <Grid item xs={12}>
-                <Card>
-                    <CardHeader
-                        sx={{
-                            '& .MuiCardHeader-action': {
-                                color: 'primary.main',
+        <>
+            <Grid container spacing={4}>
+                <Grid item xs={12} >
+                    <ToolBar
+                        breadcrumbs={[
+                            { link: `/manage/partners/${name}`, label: partner?.name || name },
+                        ]}
+                        buttonGroup={[
+                            {
+                                text: partner?.is_active ? 'Deactivate' : 'Activate',
+                                variant: 'outlined',
+                                tooltip: activatePartner.isPending ? 'svg-spinners-90-ring-with-bg' : partner?.is_active ? 'Deactivate Partner' : 'Activate Partner',
+                                icon: partner?.is_active ? 'solar-stop-circle-outline' : 'solar-play-circle-outline',
+                                disabled: error || isLoading,
+                                onClick: () => activatePartner.mutateAsync(partner?.id).then(() => {
+                                    if (partner?.is_active) {
+                                        toast.success('Partner deactivated successfully');
+                                    } else {
+                                        toast.success('Partner activated successfully');
+                                    }
+                                })
+                            },
+                            {
+                                text: 'Edit',
+                                variant: 'outlined',
+                                tooltip: 'Edit Partner',
+                                icon: 'solar-pen-linear',
+                                disabled: !partner?.is_active || error || isLoading,
+                                onClick: () => setOpenDrawer(true),
+                            },
+                            {
+                                label: 'Regenerate Keys',
+                                icon: 'solar-refresh-outline',
+                                tooltip: 'Regenerate API keys',
+                                onClick: handleRegenerateKeys,
+                                disabled: !partner?.is_active || error || isLoading
                             }
-                        }}
-                        title='Manage partner settings'
+                        ]}
                     />
-                    <CardContent>
-                        <Grid container spacing={4} component={List}>
-                            <Grid item xs={6} component={ListItem}>
-                                <ListItemText
-                                    primary='Name'
-                                    secondary={partner?.display_name || 'N/A'}
-                                />
+                </Grid>
+                <Grid item xs={12}>
+                    <TabContext value={value}>
+                        <Grid container spacing={4}>
+                            <Grid item xs={12}>
+                                <Paper elevation={0} sx={{
+                                    bgcolor: 'background.default',
+                                }}>
+                                    <CustomTabList
+                                        pill='true'
+                                        onChange={handleChange}
+                                        variant="fullWidth"
+                                        sx={{
+                                            '& .MuiTabs-flexContainer': {
+                                                width: '100%'
+                                            }
+                                        }}
+                                    >
+                                        <Tab value="0" label="Details" />
+                                        <Tab value="1" label="Logs" />
+                                    </CustomTabList>
+                                </Paper>
                             </Grid>
-                            <Grid item xs={6} component={ListItem}>
-                                <ListItemText
-                                    primary='Status'
-                                    secondary={partner?.is_active ? 'Active' : 'Inactive'}
-                                />
+                            <Grid item xs={12}>
+                                <Paper elevation={0} sx={{ border: 1, borderColor: 'divider', padding: 3 }}>
+                                    <TabPanel value="0">
+                                        {value === "0" && <Details partner={partner} isLoading={isLoading} error={error} />}
+                                    </TabPanel>
+                                    <TabPanel value="1">
+                                        {value === "1" && <Logs id={partner?.id} />}
+                                    </TabPanel>
+                                </Paper>
                             </Grid>
-                            <Grid item xs={6} component={ListItem}>
-                                <ListItemText
-                                    primary='API Key'
-                                    secondary={partner?.credentiels?.key ? maskText(partner?.credentiels?.key) : 'N/A'}
-                                />
-                                {partner?.credentiels?.key && <IconButton onClick={() => copyToClipboard(partner?.credentiels?.key, 'API Key')}>
-                                    <i className={`${copiedKey ? 'solar-check-circle-outline text-success' : 'solar-copy-outline'}`} />
-                                </IconButton>}
-                            </Grid>
-                            <Grid item xs={6} component={ListItem}>
-                                <ListItemText
-                                    primary='Secret Key'
-                                    secondary={partner?.credentiels?.secret ? maskText(partner?.credentiels?.secret) : 'N/A'}
-                                />
-                                {partner?.credentiels?.secret && <IconButton onClick={() => copyToClipboard(partner?.credentiels?.secret, 'Secret Key')}>
-                                    <i className={`${copiedSecret ? 'solar-check-circle-outline text-success' : 'solar-copy-outline'}`} />
-                                </IconButton>}
-                            </Grid>
-
                         </Grid>
-                    </CardContent>
-                </Card>
-            </Grid>
+                    </TabContext>
+                </Grid>
+            </Grid >
             <EditPartnerDrawer
                 open={openDrawer}
                 onClose={() => setOpenDrawer(false)}
@@ -167,8 +144,8 @@ const Page = () => {
                 isLoading={regeneratePartnerKeys.isLoading}
                 error={regeneratePartnerKeys.error?.message}
             />
-        </Grid>
+        </>
     );
-};
+}
 
 export default Page;

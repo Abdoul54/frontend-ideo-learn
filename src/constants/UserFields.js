@@ -45,17 +45,6 @@ export const columns = (setDrawerState, setDeleteConfirmation, setAssignUserFiel
                             className: 'flex items-center gap-2',
                         }
                     },
-                    // {
-                    //     text: 'Assign userFields to Haykal',
-                    //     icon: <i className="solar-text-field-bold-duotone text-base" />,
-                    //     menuItemProps: {
-                    //         onClick: (e) => {
-                    //             e.stopPropagation();
-                    //             setAssignUserFieldsToHaykalDrawerOpen([row.original.id], true);
-                    //         },
-                    //         className: 'flex items-center gap-2'
-                    //     }
-                    // },
                     {
                         text: 'Delete',
                         icon: <i className="solar-trash-bin-2-bold-duotone" />,
@@ -89,105 +78,110 @@ export const fieldTypes = [
     { value: 'textarea', label: 'Text Area' }
 ];
 
+// Create default values based on active languages
+export const getDefaultValues = (activeLanguages = null) => {
+    const translations = { all: '' };
 
-export const defaultValues = {
-    type: 'textfield',
-    mandatory: false,
-    invisible_to_user: false,
-    sequence: 1,
-    translations: {
-        all: '',
-        en: '',
-        fr: '',
-        es: '',
-        ar: ''
-    },
-    settings: {},
-    dropdown_options: []
-}
+    if (activeLanguages && Array.isArray(activeLanguages) && activeLanguages.length > 0) {
+        activeLanguages.forEach(lang => {
+            translations[lang.code] = '';
+        });
+    } else {
+        // Fallback defaults
+        translations.fr = '';
+        translations.en = '';
+        translations.es = '';
+        translations.ar = '';
+    }
 
-export const createSchema = (isUniversal, defaultLanguage = 'en') => yup.object({
-    type: yup.string().oneOf(fieldTypes.map(ft => ft.value)).required('Field type is required'),
-    mandatory: yup.boolean(),
-    invisible_to_user: yup.boolean(),
-    sequence: yup.number().integer().nullable(),
-    settings: yup.object().when('type', {
-        is: 'iframe',
-        then: () => yup.object({
-            url: yup.string().url('Must be a valid URL').required('URL is required for iframe'),
-            field_name: yup.string(),
-            iframe_height: yup.string().required('Height is required for iframe')
-        })
-    }),
-    dropdown_options: yup.array().when('type', {
-        is: 'dropdownfield',
-        then: () => yup.array().of(
-            yup.object({
-                translations: yup.object({
-                    all: yup.string().max(255).when([], {
-                        is: () => isUniversal,
-                        then: (schema) => schema.required('Universal translation is required'),
-                        otherwise: (schema) => schema
-                    }),
-                    en: yup.string().max(255).when([], {
-                        is: () => !isUniversal && defaultLanguage === 'en',
-                        then: (schema) => schema.required('English translation is required'),
-                        otherwise: (schema) => schema
-                    }),
-                    fr: yup.string().max(255).when([], {
-                        is: () => !isUniversal && defaultLanguage === 'fr',
-                        then: (schema) => schema.required('French translation is required'),
-                        otherwise: (schema) => schema
-                    }),
-                    es: yup.string().max(255).when([], {
-                        is: () => !isUniversal && defaultLanguage === 'es',
-                        then: (schema) => schema.required('Spanish translation is required'),
-                        otherwise: (schema) => schema
-                    }),
-                    ar: yup.string().max(255).when([], {
-                        is: () => !isUniversal && defaultLanguage === 'ar',
-                        then: (schema) => schema.required('Arabic translation is required'),
-                        otherwise: (schema) => schema
-                    })
-                })
+    return {
+        type: 'textfield',
+        mandatory: false,
+        invisible_to_user: false,
+        sequence: 1,
+        translations: translations,
+        settings: {},
+        dropdown_options: []
+    };
+};
+
+// For backward compatibility, maintain the original defaultValues
+export const defaultValues = getDefaultValues();
+
+export const createSchema = (isUniversal, defaultLanguage = 'fr', activeLanguages = null) => {
+    // Create dynamic validation for translations
+    const createTranslationsValidation = () => {
+        const translationValidation = {
+            all: yup.string().max(255).when([], {
+                is: () => isUniversal,
+                then: (schema) => schema.required('Universal translation is required'),
+                otherwise: (schema) => schema
             })
-        ).required('Options are required for dropdown')
-    }),
-    translations: yup.object({
-        all: yup.string().max(255).when([], {
-            is: () => isUniversal,
-            then: (schema) => schema.required('Universal translation is required'),
-            otherwise: (schema) => schema
-        }),
-        en: yup.string().max(255).when([], {
-            is: () => !isUniversal && defaultLanguage === 'en',
-            then: (schema) => schema.required('English translation is required'),
-            otherwise: (schema) => schema
-        }),
-        fr: yup.string().max(255).when([], {
-            is: () => !isUniversal && defaultLanguage === 'fr',
-            then: (schema) => schema.required('French translation is required'),
-            otherwise: (schema) => schema
-        }),
-        es: yup.string().max(255).when([], {
-            is: () => !isUniversal && defaultLanguage === 'es',
-            then: (schema) => schema.required('Spanish translation is required'),
-            otherwise: (schema) => schema
-        }),
-        ar: yup.string().max(255).when([], {
-            is: () => !isUniversal && defaultLanguage === 'ar',
-            then: (schema) => schema.required('Arabic translation is required'),
-            otherwise: (schema) => schema
-        })
-    }).test(
-        'required-translation',
-        'Translation is required',
-        function (value) {
-            if (isUniversal) {
-                return value.all && value.all.length > 0;
-            }
+        };
 
-            return value && value[defaultLanguage] && value[defaultLanguage].length > 0;
+        if (activeLanguages && Array.isArray(activeLanguages) && activeLanguages.length > 0) {
+            // Add validation for each active language
+            activeLanguages.forEach(lang => {
+                translationValidation[lang.code] = yup.string().max(255).when([], {
+                    is: () => !isUniversal && defaultLanguage === lang.code,
+                    then: (schema) => schema.required(`${lang.name || lang.native_name} translation is required`),
+                    otherwise: (schema) => schema
+                });
+            });
+        } else {
+            // Fallback for hardcoded common languages
+            const languageConfig = [
+                { code: 'en', name: 'English' },
+                { code: 'fr', name: 'French' },
+                { code: 'es', name: 'Spanish' },
+                { code: 'ar', name: 'Arabic' }
+            ];
+
+            languageConfig.forEach(lang => {
+                translationValidation[lang.code] = yup.string().max(255).when([], {
+                    is: () => !isUniversal && defaultLanguage === lang.code,
+                    then: (schema) => schema.required(`${lang.name} translation is required`),
+                    otherwise: (schema) => schema
+                });
+            });
         }
-    )
-});
+
+        return translationValidation;
+    };
+
+    const translationsValidation = createTranslationsValidation();
+
+    return yup.object({
+        type: yup.string().oneOf(fieldTypes.map(ft => ft.value)).required('Field type is required'),
+        mandatory: yup.boolean(),
+        invisible_to_user: yup.boolean(),
+        sequence: yup.number().integer().nullable(),
+        settings: yup.object().when('type', {
+            is: 'iframe',
+            then: () => yup.object({
+                url: yup.string().url('Must be a valid URL').required('URL is required for iframe'),
+                field_name: yup.string(),
+                iframe_height: yup.string().required('Height is required for iframe')
+            })
+        }),
+        dropdown_options: yup.array().when('type', {
+            is: 'dropdownfield',
+            then: () => yup.array().of(
+                yup.object({
+                    translations: yup.object(translationsValidation)
+                })
+            ).required('Options are required for dropdown')
+        }),
+        translations: yup.object(translationsValidation).test(
+            'required-translation',
+            'Translation is required',
+            function (value) {
+                if (isUniversal) {
+                    return value.all && value.all.length > 0;
+                }
+
+                return value && value[defaultLanguage] && value[defaultLanguage].length > 0;
+            }
+        )
+    });
+};

@@ -20,36 +20,6 @@ export const useSettings = () => {
   return context;
 };
 
-const loadSavedSettings = async () => {
-  if (typeof window === 'undefined') return null;
-
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) {
-      const domains = await getCentralDomains();
-      const url = new URL(window.location.href);
-      const isCentral = domains.centralDomains.includes(url.host);
-
-      if (isCentral) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settingConfig));
-        return settingConfig;
-      }
-
-      const res = await axiosInstance.get('/settings');
-      const settings = res?.data;
-      if (settings) {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-        return settings;
-      }
-    }
-
-    return saved ? JSON.parse(saved) : null;
-  } catch (error) {
-    console.error('Failed to load settings:', error);
-    return null;
-  }
-};
-
 const saveSettings = (settings) => {
   if (typeof window === 'undefined') return;
   try {
@@ -117,21 +87,20 @@ export const SettingsProvider = ({ children, type }) => {
 
   // Initialize settings
   useEffect(() => {
-    const initializeSettings = async () => {
-      try {
-        const savedSettings = await loadSavedSettings();
-        if (savedSettings) {
-          setSettings(savedSettings);
-          applySettings(savedSettings);
-        }
-        setIsInitialized(true);
-      } catch (error) {
-        console.error('Error initializing settings:', error);
-        setIsInitialized(true);
+    // Just read from localStorage without API calls
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const savedSettings = JSON.parse(saved);
+        setSettings(savedSettings);
+        applySettings(savedSettings);
       }
-    };
-
-    initializeSettings();
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    } finally {
+      // Always set initialized to true
+      setIsInitialized(true);
+    }
   }, []);
 
   // Update settings when query data changes

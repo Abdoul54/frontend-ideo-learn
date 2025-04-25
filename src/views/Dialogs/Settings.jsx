@@ -27,28 +27,29 @@ const DialogsSettings = ({
     const adminMenu = {
         'MANAGE': [
             { title: 'Users', link: '/manage/users-management', icon: 'solar-user-bold' },
-            { title: 'Power Users', link: '/manage/power-users', icon: 'solar-user-bold-duotone' },
+            { title: 'Power Users', link: '/powerusers', icon: 'solar-user-bold-duotone' },
             { title: 'Groups', link: '/manage/groups', icon: 'solar-users-group-rounded-bold-duotone' },
         ],
         "E-LEARNING": [
-            { title: 'Courses Management', link: '/manage/courses-management', icon: 'solar-book-2-bold' },
-            { title: 'Course Catalog', link: '/manage/course-catalog', icon: 'solar-library-bold' },
-            { title: 'Learning Plans', link: '/manage/learning-plans', icon: 'solar-clipboard-list-bold' },
-            { title: 'Classroom Locations', link: '/manage/classroom-locations', icon: 'solar-buildings-2-bold' },
-            { title: 'Central Repository', link: '/manage/central-repository', icon: 'solar-folder-with-files-bold' },
-            { title: 'Reports', link: '/manage/reports', icon: 'solar-chart-2-bold' },
+            { title: 'Courses Management', link: '/learn/course', icon: 'solar-book-2-bold-duotone' },
+            { title: 'Course Catalog', link: '/manage/course-catalog', icon: 'solar-library-bold-duotone' },
+            { title: 'Learning Plans', link: '/learn/learning-plans', icon: 'solar-clipboard-list-bold-duotone' },
+            { title: 'Skill Management', link: '/skills', icon: 'solar-star-circle-bold-duotone' },
+            { title: 'Classroom Locations', link: '/learn/classroom-locations', icon: 'solar-buildings-2-bold-duotone' },
+            { title: 'Central Repository', link: '/manage/central-repository', icon: 'solar-folder-with-files-bold-duotone' },
+            { title: 'Reports', link: '/manage/reports', icon: 'solar-chart-2-bold-duotone' },
         ],
         'SETTINGS': [
-            { title: 'Domain management', link: '/manage/domain-management', icon: 'solar-global-bold-duotone' },
-            { title: 'Localization tool', link: '/manage/localization-tool', icon: 'solar-gps-bold-duotone' },
-            { title: 'Advanced settings', link: '/manage/advanced-settings', icon: 'solar-settings-bold' },
-            { title: 'Configure branding and look', link: '/manage/branding', icon: 'solar-palette-bold' }
+            { title: 'Domain management', link: '/settings/domain-management', icon: 'solar-global-bold-duotone' },
+            { title: 'Localization tool', link: '/settings/localization-tool', icon: 'solar-gps-bold-duotone' },
+            { title: 'Advanced settings', link: '/settings/advanced-settings', icon: 'solar-settings-bold-duotone' },
+            { title: 'Configure branding and look', link: '/settings/branding', icon: 'solar-palette-bold-duotone' }
         ],
     };
 
     const appsFeatures = {
         '': [
-            { title: 'AGIRH Connector', link: '/manage/partners/agirh', icon: 'solar-users-group-two-rounded-outline' }
+            { title: 'AGIRH Connector', link: '/manage/partners/agirh', icon: 'solar-users-group-two-rounded-line-duotone' }
         ],
         // 'API AND SSO': ['Manage'],
         // 'ARTIFICIAL INTELLIGENCE': ['Manage'],

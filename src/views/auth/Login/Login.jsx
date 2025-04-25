@@ -36,7 +36,8 @@ const Login = () => {
 
     const { signIn, isLoading: isAuthLoading, error: authError } = useAuth({
         onSuccess: () => {
-            window.location.replace('/home') ;
+            router.push('/home');
+            router.refresh();
         }
     })
 
@@ -72,7 +73,6 @@ const Login = () => {
                     poster: settings?.sign_in?.bg_video_data?.fallback_image,
                     alt: 'Login background',
                     loop: true,
-                    type: 'video/*'
                 }}
                 imageConfig={{
                     src: settings?.sign_in?.bg_data,

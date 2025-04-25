@@ -1,4 +1,5 @@
 import { axiosInstance } from "@/lib/axios";
+import { urlParamsBuilder } from "@/utils/urlParamsBuilder";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
@@ -89,7 +90,7 @@ export const useActivatePartner = () => {
         },
         onSuccess: () => {
             queryClient.invalidateQueries("partners");
-            toast.success("Partner activated successfully");
+            // toast.success("Partner activated successfully");
         },
         onError: (error) => {
             console.error("Failed to activate partner:", error);
@@ -153,3 +154,74 @@ export const useUserProvisioningFields = () => {
         retry: 2,
     });
 };
+
+// get /tenant/partners/v1/partners/{partner_id}/activity-logs
+
+export const usePartnerActivityLogs = ({
+    partnerId,
+    page = null,
+    page_size = null,
+    search = "",
+    sort = [],
+    action,
+    status,
+    user_id,
+    ip_address,
+    get_total_count,
+    include_stats,
+    period,
+    start_date,
+    end_date
+}) => {
+    return useQuery({
+        queryKey: ["partner-activity-logs", {
+            partnerId,
+            page,
+            page_size,
+            search,
+            sort,
+            action,
+            status,
+            user_id,
+            ip_address,
+            get_total_count,
+            include_stats,
+            period,
+            start_date,
+            end_date
+        }],
+        queryFn: async () => {
+            try {
+                const url = urlParamsBuilder({
+                    prefix: `/tenant/partners/v1/partners/${partnerId}/activity-logs`,
+                    page: page,
+                    page_size,
+                    search,
+                    sort,
+                    action,
+                    status,
+                    user_id,
+                    ip_address,
+                    get_total_count,
+                    include_stats,
+                    period,
+                    start_date,
+                    end_date
+                });
+
+                const response = await axiosInstance.get(url);
+
+                if (!response.data || !response.data.success) {
+                    throw new Error("Invalid response structure");
+                }
+
+                return response.data.data;
+            } catch (error) {
+                console.error("Partner Activity Logs Fetch Error:", error);
+                throw error;
+            }
+        },
+        staleTime: 5000,
+        retry: 2,
+    });
+}

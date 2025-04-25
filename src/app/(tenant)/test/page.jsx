@@ -1,25 +1,25 @@
 'use client';
 
-import { Button, Grid } from "@mui/material";
-import { useSession } from "next-auth/react";
+import Map from '@/components/Map';
+import ToolBar from '@/components/ToolBar';
+import { Grid2 } from '@mui/material';
 
 const Page = () => {
-    const { update, data } = useSession();
-
-    console.log(data);
-
-    const handleSession = () => {
-        update({
-            error: "SessionExpired",
-        });
-    }
     return (
-        <Grid container>
-            <Grid item xs={12}>
-                <Button variant="contained" color="primary" loading onClick={handleSession}>Test</Button>
-            </Grid>
-        </Grid>
-    )
-}
+        <Grid2 container spacing={2} >
+            <Grid2 size={12}>
+                <ToolBar
+                    breadcrumbs={[
+                        { label: 'Test', path: '/test' }
+                    ]}
+                />
+            </Grid2>
+            <Grid2 size={6}>
+                <Map disableZoom disableMapType />
+            </Grid2>
+        </Grid2>
+
+    );
+};
 
 export default Page;

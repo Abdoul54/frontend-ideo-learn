@@ -13,8 +13,9 @@ export default function MultilingualTextInput({
     onLanguageChange,
     adorment,
     required = false,
-    defaultLanguage = 'en',
+    defaultLanguage = null, // Changed from 'en' to null
     languages = [],
+    defaultLocale = null, // System default language from API
     ...props
 }) {
     // Access form context - will be available because we wrapped with FormProvider
@@ -22,27 +23,29 @@ export default function MultilingualTextInput({
     const { watch, getValues, formState } = formContext || {};
     const [disableOtherLanguages, setDisableOtherLanguages] = useState(false);
 
-    // Use provided languages or fallback to defaults
-    const languagesToDisplay = languages.length > 0 ? languages : [
-        { code: 'en', label: 'English' },
-        { code: 'es', label: 'Spanish' },
-        { code: 'fr', label: 'French' },
-        { code: 'ar', label: 'Arabic' },
-    ];
+    // Use provided languages or fallback to empty array - don't use hardcoded defaults
+    const languagesToDisplay = languages.length > 0 ? languages : [];
+
+    // Identify the system default language (if any)
+    const systemDefaultLanguage = defaultLocale;
+    // Use systemDefaultLanguage as the actual default if provided, otherwise use defaultLanguage or first language in list
+    const actualDefaultLang = systemDefaultLanguage || 
+                              defaultLanguage || 
+                              (languagesToDisplay.length > 0 ? languagesToDisplay[0].code : null);
 
     // Check if default language has value
     useEffect(() => {
-        if (!formContext) return;
+        if (!formContext || !actualDefaultLang) return;
 
-        const defaultValue = getValues(`${name}.${defaultLanguage}`);
+        const defaultValue = getValues(`${name}.${actualDefaultLang}`);
         const isDefaultEmpty = !defaultValue || defaultValue.trim() === '';
-        setDisableOtherLanguages(isDefaultEmpty && currentLang !== defaultLanguage);
+        setDisableOtherLanguages(isDefaultEmpty && currentLang !== actualDefaultLang);
 
         // If default is empty and user is on a different language, force back to default
-        if (isDefaultEmpty && currentLang !== defaultLanguage) {
-            onLanguageChange(defaultLanguage);
+        if (isDefaultEmpty && currentLang !== actualDefaultLang) {
+            onLanguageChange(actualDefaultLang);
         }
-    }, [watch ? watch(`${name}.${defaultLanguage}`) : null, currentLang, defaultLanguage, name, formContext]);
+    }, [watch ? watch(`${name}.${actualDefaultLang}`) : null, currentLang, actualDefaultLang, name, formContext]);
 
     const handleLanguageChange = (event) => {
         const newLang = event.target.value;
@@ -51,10 +54,10 @@ export default function MultilingualTextInput({
             return;
         }
 
-        const defaultValue = getValues(`${name}.${defaultLanguage}`);
+        const defaultValue = getValues(`${name}.${actualDefaultLang}`);
 
         // Only allow changing if default language has content or user is selecting default language
-        if (!defaultValue && newLang !== defaultLanguage) {
+        if (!defaultValue && newLang !== actualDefaultLang) {
             return; // Prevent language change
         }
 
@@ -91,13 +94,19 @@ export default function MultilingualTextInput({
                         onChange={onChange}
                         value={value || ''}
                         {...props}
-                        label={label}
+                        label={
+                            currentLang === actualDefaultLang && systemDefaultLanguage
+                                ? `${label} (Default Language)`
+                                : label
+                        }
                         fullWidth
                         error={!!getError(fieldState, name, applyToAllLanguages, currentLang)}
                         helperText={
                             getError(fieldState, name, applyToAllLanguages, currentLang) ||
-                            (currentLang === defaultLanguage && disableOtherLanguages ?
-                                "You must fill this field before switching languages" : "")
+                            (currentLang === actualDefaultLang && disableOtherLanguages ?
+                                "You must fill this field before switching languages" : "") ||
+                            (currentLang === systemDefaultLanguage && required && !value ?
+                                "This field is required when 'All Languages' is not provided" : "")
                         }
                         InputProps={{
                             ...props.InputProps,
@@ -113,9 +122,11 @@ export default function MultilingualTextInput({
                                             <MenuItem
                                                 key={lang.code}
                                                 value={lang.code}
-                                                disabled={lang.code !== defaultLanguage && disableOtherLanguages}
+                                                disabled={lang.code !== actualDefaultLang && disableOtherLanguages}
                                             >
-                                                {lang.label}
+                                                {lang.code === systemDefaultLanguage ?
+                                                    `${lang.label} (Default)` :
+                                                    lang.label}
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -126,9 +137,9 @@ export default function MultilingualTextInput({
                     />
                 )}
             />
-            {currentLang !== defaultLanguage && disableOtherLanguages && (
+            {currentLang !== actualDefaultLang && disableOtherLanguages && (
                 <div style={{ color: 'red', fontSize: '0.75rem', marginTop: '3px' }}>
-                    You must fill the {languagesToDisplay.find(l => l.code === defaultLanguage)?.label} field first
+                    You must fill the {languagesToDisplay.find(l => l.code === actualDefaultLang)?.label} field first
                 </div>
             )}
         </>

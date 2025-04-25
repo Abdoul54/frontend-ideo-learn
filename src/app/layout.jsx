@@ -1,38 +1,15 @@
-'use client'
-
-// Third-party Imports
+// app/layout.jsx - Convert to server component
+import '@/app/globals.css'
+import '@assets/iconify-icons/generated-icons.css'
 import 'react-perfect-scrollbar/dist/css/styles.css'
 import 'swiper/css'
-import { useEffect, useState } from 'react'
 
-// Style Imports
-import '@/app/globals.css'
-
-// Generated Icon CSS Imports
-import '@assets/iconify-icons/generated-icons.css'
-
-const RootLayout = ({ children }) => {
-  const [language, setLanguage] = useState({
-    locale: 'en',
-    direction: 'ltr'
-  })
-
-  useEffect(() => {
-    try {
-      const settings = JSON.parse(localStorage.getItem('app_settings'))
-      if (settings?.language) {
-        setLanguage(settings.language)
-      }
-    } catch (error) {
-      console.error('Error reading from localStorage:', error)
-    }
-  }, [])
-
+// Server component with client-side language handling
+export default function RootLayout({ children }) {
+  // Note: This is now a server component 
   return (
-    <html id='__next' lang={language?.locale} dir={language?.direction}>
+    <html lang="en" dir="ltr" id="__next">
       <body className='flex is-full min-bs-full flex-auto flex-col'>{children}</body>
     </html>
   )
 }
-
-export default RootLayout

@@ -52,6 +52,7 @@ const ThemeProvider = props => {
 
   return (
     <AppRouterCacheProvider
+      key={`direction-${direction}`}
       options={{
         prepend: true,
         ...(direction === 'rtl' && {

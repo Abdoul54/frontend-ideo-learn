@@ -41,7 +41,7 @@ export default function Page() {
     <>
       <DataView
         title="Groups"
-        columns={columns(setDrawerState, setDeleteConfirmation, router)}
+        columns={columns(setDeleteConfirmation, router)}
         data={data?.items}
         isLoading={isLoading}
         error={error}

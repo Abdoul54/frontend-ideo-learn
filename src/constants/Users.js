@@ -101,7 +101,7 @@ export const actionColumn = (handleDeleteUser, handleEditUser) => {
         options={[
           {
             text: 'Edit',
-            icon: <i className="solar-pencil-line-duotone text-base" />,
+            icon: <i className="solar-pen-2-bold text-base" />,
             menuItemProps: {
               onClick: (e) => {
                 e.stopPropagation();
@@ -111,7 +111,7 @@ export const actionColumn = (handleDeleteUser, handleEditUser) => {
             },
           },
           {
-            text: 'Remove from Haykal',
+            text: 'Remove from Branch',
             icon: <i className="solar-folder-error-line-duotone text-base" />,
             menuItemProps: {
               onClick: (e) => {
@@ -120,7 +120,7 @@ export const actionColumn = (handleDeleteUser, handleEditUser) => {
               },
               className: 'flex items-center gap-2 text-error hover:bg-errorLight',
             },
-          }
+          },
         ]}
       />
     ),

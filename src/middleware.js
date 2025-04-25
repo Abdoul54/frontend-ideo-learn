@@ -23,6 +23,7 @@ const SHARED_PAGES = [
 const PUBLIC_TENANT_PAGES = [
     '/forgot-password',
     '/reset-password',
+    '/sso',
     '/register'
 ]
 
@@ -31,8 +32,26 @@ async function middleware(request) {
     const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
     const host = request?.headers?.get('host') || ''
     const mainDomains = (process.env.NEXT_PUBLIC_MAIN_DOMAINES?.split(',') || []).filter(Boolean)
+    // console.log('Main domains:', mainDomains)
+    // console.log('Current host:', host)
     const isCentral = mainDomains.includes(host)
     const currentPath = request.nextUrl.pathname
+
+    // console.log('is central:', isCentral);
+
+    // Check if URL has all required tenant auth params
+    const searchParams = request.nextUrl.searchParams
+    const hasTenantAuthParams =
+        searchParams.has('login_user') &&
+        searchParams.has('token') &&
+        searchParams.has('time') &&
+        searchParams.has('api_key') &&
+        searchParams.has('external_user_id')
+
+    // If all tenant auth params are present, proceed without authentication check
+    if (!isCentral && hasTenantAuthParams) {
+        return NextResponse.next()
+    }
 
     // Allow access to shared pages regardless of authentication
     if (SHARED_PAGES.some(page => currentPath.startsWith(page))) {
@@ -46,13 +65,13 @@ async function middleware(request) {
         return NextResponse.redirect(new URL(redirectPath, request.url))
     }
 
-    // Handle login page paths without redirection - show 404 if path doesn't match domain type
+    // Handle login page paths with redirection - redirect users to the appropriate login page based on domain type
     if (isCentral && currentPath === '/login') {
-        return NextResponse.rewrite(new URL('/404', request.url))
+        return NextResponse.redirect(new URL('/auth/login', request.url))
     }
 
     if (!isCentral && currentPath === '/auth/login') {
-        return NextResponse.rewrite(new URL('/404', request.url))
+        return NextResponse.redirect(new URL('/login', request.url))
     }
 
     // Handle home page paths without redirection - show 404 if path doesn't match domain type

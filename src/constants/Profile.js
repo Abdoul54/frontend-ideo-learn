@@ -34,7 +34,7 @@ export const columns = (grantPowerUserDrawerState, setGrantPowerUserDrawerState,
                         menuItemProps: {
                             onClick: (e) => {
                                 e.stopPropagation();
-                                router.push(`/manage/power-users/profiles/${row?.original.id}`);
+                                router.push(`/powerusers/profiles/${row?.original.id}`);
                             },
                             className: 'flex items-center gap-2'
                         }

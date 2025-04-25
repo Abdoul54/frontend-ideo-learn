@@ -126,6 +126,35 @@ export const useUpdateUser = (onSuccess) => {
     });
 };
 
+export const useUpdateUserWithFiles = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ id, data }) => {
+            const response = await axiosInstance.post(`/tenant/tanzim/v1/users/${id}`, data, {
+                headers: {
+                    "Content-Type": "multipart/form-data",
+                },
+            });
+
+            if (!response.data || !response.data.success) {
+                throw new Error("Invalid response structure while updating profile");
+            }
+
+            return response.data.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries("users");
+            queryClient.invalidateQueries("me");
+            toast.success("Profile updated successfully");
+        },
+        onError: (error) => {
+            console.error("Failed to update profile:", error);
+            toast.error("Failed to update profile");
+        }
+    });
+}
+
 export const useAddUsersToBranches = (onSuccess) => {
     const queryClient = useQueryClient();
 

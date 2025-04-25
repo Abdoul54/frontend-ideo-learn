@@ -4,8 +4,16 @@ export default async function centralChecker() {
         // Get the host from the window location
         const host = typeof window !== 'undefined' ? window.location.host : '';
 
-        // Safely access the environment variable with fallback
-        const mainDomains = process.env.NEXT_PUBLIC_MAIN_DOMAINES?.split(',') || [];
+        // make a request to http://localhost/api/getters/central-domains
+        const response = await fetch('/api/getters/central-domains');
+
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+
+        const data = await response.json();
+
+        const mainDomains = data.centralDomains || [];
 
         // Check if the current host is in the list of main domains
         const isCentral = mainDomains.filter(Boolean).includes(host);

@@ -26,49 +26,64 @@ export const useSignInSettings = () => {
 export const useUpdateSignInSettings = () => {
     const queryClient = useQueryClient();
     const { refreshSettings } = useSettings();
+
     return useMutation({
         mutationFn: async (data) => {
+            // Create FormData object instead of sending JSON
             const formData = new FormData();
+
+            // Append the type
             formData.append('type', data.type);
 
-            switch (data.type) {
-                case 'color':
-                    // Handle color data
-                    if (data.color_data) {
-                        formData.append('color_data', data.color_data);
-                    }
-                    break;
-
-                case 'image':
-                    // Handle image upload
-                    if (data.bg_data instanceof File) {
-                        formData.append('bg_data', data.bg_data);
-                    }
-                    break;
-
-                case 'video':
-                    // Handle video and fallback image
-                    if (data.bg_video_data) {
-                        if (data.bg_video_data.video instanceof File) {
-                            formData.append('bg_video_data[video]', data.bg_video_data.video);
-                        }
-                        if (data.bg_video_data.fallback_image instanceof File) {
-                            formData.append('bg_video_data[fallback_image]', data.bg_video_data.fallback_image);
-                        }
-                    }
-                    break;
+            // Handle color type
+            if (data.type === 'color' && data.color_data) {
+                formData.append('color_data', data.color_data);
             }
 
-            // Log FormData contents for debugging
-            for (let pair of formData.entries()) {
-                console.log(pair[0] + ': ' + pair[1]);
-            }
-
-            const response = await axiosInstance.post("/tenant/brandings/v1/signin", formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data'
+            // Handle image type
+            if (data.type === 'image') {
+                // Only append bg_data if it's a File object
+                if (data.bg_data?.file instanceof File) {
+                    formData.append('bg_data', data.bg_data.file);
+                } else {
+                    // If no file is provided but we're in image mode,
+                    // throw an error that will be shown to the user
+                    throw new Error('Please select an image file. The existing image cannot be reused without uploading it again.');
                 }
-            });
+            }
+
+            // Handle video type
+            if (data.type === 'video' && data.bg_video_data) {
+                // Video file - only append if it's a File object
+                if (data.bg_video_data.video?.file instanceof File) {
+                    formData.append('bg_video_data[video]', data.bg_video_data.video.file);
+                } else {
+                    throw new Error('Please select a video file. The existing video cannot be reused without uploading it again.');
+                }
+
+                // Fallback image - only append if it's a File object
+                if (data.bg_video_data.fallback_image?.file instanceof File) {
+                    formData.append('bg_video_data[fallback_image]', data.bg_video_data.fallback_image.file);
+                } else {
+                    throw new Error('Please select a fallback image. The existing image cannot be reused without uploading it again.');
+                }
+            }
+
+            // Log what we're sending to help debug
+            console.log('Sending sign-in form data:');
+            for (let [key, value] of formData.entries()) {
+                console.log(`${key}: ${value instanceof File ? value.name : value}`);
+            }
+
+            const response = await axiosInstance.post(
+                "/tenant/brandings/v1/signin",
+                formData,
+                {
+                    headers: {
+                        'Content-Type': 'multipart/form-data',
+                    }
+                }
+            );
 
             if (!response?.data) {
                 throw new Error('No response data received');
@@ -76,16 +91,20 @@ export const useUpdateSignInSettings = () => {
             if (!response.data.success) {
                 throw new Error(response.data.message || 'Failed to update sign-in settings');
             }
-            refreshSettings();
+
+            if (refreshSettings) {
+                refreshSettings();
+            }
+
             return response.data;
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: 'signInSettings' });
+            queryClient.invalidateQueries(['signInSettings']);
             toast.success('Sign-in settings updated successfully');
         },
         onError: (error) => {
             console.error('Update Failed:', error);
-            toast.error('Failed to update sign-in settings');
-        }
+            toast.error(error.response?.data?.message || error.message || 'Failed to update sign-in settings');
+        },
     });
 };
