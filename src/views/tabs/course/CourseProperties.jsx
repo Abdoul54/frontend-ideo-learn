@@ -38,6 +38,7 @@ import CategorySelector from '@/components/CategorySelector';
 import debounce from 'lodash/debounce';
 import dayjs from 'dayjs';
 import { TabContext, TabPanel } from "@mui/lab";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 // Custom input components
 import DateInput from '@/components/inputs/DateInput';
@@ -49,6 +50,8 @@ import { useActiveLanguages } from '@/hooks/api/tenant/useLocalization';
 import TextEditorInput from '@/components/inputs/TextEditorInput';
 
 const CourseProperties = ({ course }) => {
+    const { translate } = useTranslation();
+    
     const [selectedSkills, setSelectedSkills] = useState([]);
     const [skillSearchTerm, setSkillSearchTerm] = useState('');
     const [inputValue, setInputValue] = useState('');
@@ -104,7 +107,7 @@ const CourseProperties = ({ course }) => {
             soft_deadline: course?.time_options?.soft_deadline === 1,
             valid_time: course?.time_options?.valid_time || 0,
             valid_time_type: course?.time_options?.valid_time_type || 0,
-            validity_time_update_existing: course?.time_options?.validity_time_update_existing || 0,
+            validity_time_update_existing: course?.time_options?.validity_time_update_existing || false,
 
             created_at: course?.created_at || '',
             updated_at: course?.updated_at || '',
@@ -262,7 +265,7 @@ const CourseProperties = ({ course }) => {
 
                 // Set valid_time_type properly
                 valid_time_type: course.time_options?.valid_time_type === 1 ? 'first_access' : 'enrollment_date',
-                validity_time_update_existing: course.time_options?.validity_time_update_existing === 1,
+                validity_time_update_existing: course.time_options?.validity_time_update_existing === true,
 
                 // Form control states for validity options
                 validity_period_enabled: shouldEnableValidityPeriod,
@@ -491,11 +494,11 @@ const CourseProperties = ({ course }) => {
                 formDataToSend.append('valid_time', formData.valid_time || '');
                 const validTimeType = formData.valid_time_type === 'first_access' ? 1 : 0;
                 formDataToSend.append('valid_time_type', validTimeType);
-                formDataToSend.append('validity_time_update_existing', formData.validity_time_update_existing ? 1 : 0);
+                formDataToSend.append('validity_time_update_existing', formData.validity_time_update_existing ? true : false);
             } else {
                 formDataToSend.append('valid_time', '');
                 formDataToSend.append('valid_time_type', '0');
-                formDataToSend.append('validity_time_update_existing', '0');
+                formDataToSend.append('validity_time_update_existing', false);
             }
 
             // Debug the form data being sent
@@ -528,15 +531,15 @@ const CourseProperties = ({ course }) => {
                 <Grid item xs={12} md={3}>
                     <Paper elevation={0} sx={{ bgcolor: 'background.paper', p: 2 }}>
                         <CustomTabList
-                            pill='false'
                             onChange={(e, newValue) => handleTabChange(newValue)}
                             orientation='vertical'
+                            vertical="true"
                             variant="fullWidth"
                             sx={{ width: '100%', '& .MuiTabs-flexContainer': { width: '100%' } }}
                         >
-                            <Tab value="details" label="Details" />
-                            <Tab value="enrollment_options" label="Enrollment options" />
-                            <Tab value="time_options" label="Time options" />
+                            <Tab value="details" label={translate('Course management.SIDEBAR_MENU_DETAILS', 'Details')} />
+                            <Tab value="enrollment_options" label={translate('Course management.SIDEBAR_MENU_ENROLLMENT_OPTIONS', 'Enrollment options')} />
+                            <Tab value="time_options" label={translate('Course management.SIDEBAR_MENU_TIME_OPTIONS', 'Time options')} />
                         </CustomTabList>
                     </Paper>
                 </Grid>
@@ -548,8 +551,8 @@ const CourseProperties = ({ course }) => {
                             <CardHeader
                                 title={
                                     <ListItemText
-                                        primary="Course Information"
-                                        secondary="Configure the course basic options: course information, thumbnail, cover, skills, e-signature, and average completion time"
+                                        primary={translate('Course management.SECTION_COURSE_INFORMATION', 'Course Information')}
+                                        secondary={translate('Course management.SECTION_SUBTITLE_COURSE_MANAGEMENT_INFO', 'Configure the course basic options: course information, thumbnail, cover, skills, e-signature, and average completion time')}
                                         primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
                                     />
                                 }
@@ -580,13 +583,13 @@ const CourseProperties = ({ course }) => {
                                             control={control}
                                             render={({ field }) => (
                                                 <FormControl fullWidth>
-                                                    <InputLabel>Course Type</InputLabel>
+                                                    <InputLabel>{translate('Course management.FIELD_COURSE_TYPE', 'Course Type')}</InputLabel>
                                                     <Select
                                                         {...field}
-                                                        label="Course Type"
+                                                        label={translate('Course management.FIELD_COURSE_TYPE', 'Course Type')}
                                                     >
-                                                        <MenuItem value="elearning">E-Learning</MenuItem>
-                                                        <MenuItem value="classroom">Classroom</MenuItem>
+                                                        <MenuItem value="elearning">{translate('Course management.DROPDOWN_ELEARNING', 'E-Learning')}</MenuItem>
+                                                        <MenuItem value="classroom">{translate('Course management.DROPDOWN_CLASSROOM', 'Classroom')}</MenuItem>
                                                     </Select>
                                                 </FormControl>
                                             )}
@@ -600,13 +603,13 @@ const CourseProperties = ({ course }) => {
                                             control={control}
                                             render={({ field }) => (
                                                 <FormControl fullWidth>
-                                                    <InputLabel>Status</InputLabel>
+                                                    <InputLabel>{translate('Course management.FIELD_STATUS', 'Status')}</InputLabel>
                                                     <Select
                                                         {...field}
-                                                        label="Status"
+                                                        label={translate('Course management.FIELD_STATUS', 'Status')}
                                                     >
-                                                        <MenuItem value="published">Published</MenuItem>
-                                                        <MenuItem value="unpublished">Unpublished</MenuItem>
+                                                        <MenuItem value="published">{translate('Course management.DROPDOWN_STATUS_PUBLISHED', 'Published')}</MenuItem>
+                                                        <MenuItem value="unpublished">{translate('Course management.DROPDOWN_STATUS_UNPUBLISHED', 'Unpublished')}</MenuItem>
                                                     </Select>
                                                 </FormControl>
                                             )}
@@ -621,7 +624,7 @@ const CourseProperties = ({ course }) => {
                                             render={({ field, fieldState: { error } }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Course Name"
+                                                    label={translate('Course management.FIELD_COURSE_NAME', 'Course Name')}
                                                     fullWidth
                                                     required
                                                     error={!!error}
@@ -640,10 +643,10 @@ const CourseProperties = ({ course }) => {
                                             render={({ field, fieldState: { error } }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Course Code"
+                                                    label={translate('Course management.FIELD_COURSE_CODE', 'Course Code')}
                                                     fullWidth
                                                     error={!!error}
-                                                    helperText={error ? error.message : "Unique identifier for this course"}
+                                                    helperText={error ? error.message : translate('Course management.FIELD_CODE_DESCRIPTION', 'Unique identifier for this course')}
                                                     variant="outlined"
                                                 />
                                             )}
@@ -657,10 +660,10 @@ const CourseProperties = ({ course }) => {
                                             control={control}
                                             render={({ field }) => (
                                                 <FormControl fullWidth error={!!languagesError}>
-                                                    <InputLabel>Language</InputLabel>
+                                                    <InputLabel>{translate('Course management.TABLE_HEADER_LANGUAGE', 'Language')}</InputLabel>
                                                     <Select
                                                         {...field}
-                                                        label="Language"
+                                                        label={translate('Course management.TABLE_HEADER_LANGUAGE', 'Language')}
                                                         disabled={isLoadingLanguages}
                                                         startAdornment={
                                                             isLoadingLanguages ? (
@@ -681,9 +684,6 @@ const CourseProperties = ({ course }) => {
                                                             >
                                                                 <Box sx={{ display: 'flex', flexDirection: 'column' }}>
                                                                     <Typography variant="body1">{lang.name}</Typography>
-                                                                    {/* <Typography variant="caption" color="text.secondary">
-                                                                        {lang.native_name}
-                                                                    </Typography> */}
                                                                 </Box>
                                                                 {lang.is_default && (
                                                                     <Chip
@@ -699,12 +699,12 @@ const CourseProperties = ({ course }) => {
                                                     </Select>
                                                     {languagesError && (
                                                         <FormHelperText error>
-                                                            Failed to load languages. Please try again.
+                                                            {translate('Course management.FAILED_TO_LOAD_LANGUAGES', 'Failed to load languages. Please try again.')}
                                                         </FormHelperText>
                                                     )}
                                                     {!languagesError && !isLoadingLanguages && activeLanguages?.length === 0 && (
                                                         <FormHelperText>
-                                                            No active languages found
+                                                            {translate('Course management.NO_ACTIVE_LANGUAGES', 'No active languages found')}
                                                         </FormHelperText>
                                                     )}
                                                 </FormControl>
@@ -715,7 +715,7 @@ const CourseProperties = ({ course }) => {
                                     {showLanguageWarning && (
                                         <Grid item xs={12}>
                                             <Alert severity="warning" sx={{ mt: 2 }}>
-                                                No active languages were loaded. Using default language settings.
+                                                {translate('Course management.NO_LANGUAGES_WARNING', 'No active languages were loaded. Using default language settings.')}
                                             </Alert>
                                         </Grid>
                                     )}
@@ -730,7 +730,7 @@ const CourseProperties = ({ course }) => {
                                                     render={({ field }) => (
                                                         <TextField
                                                             {...field}
-                                                            label="Hours"
+                                                            label={translate('Course management.FIELD_DURATION_HOURS', 'Hours')}
                                                             type="number"
                                                             fullWidth
                                                             InputProps={{ inputProps: { min: 0 } }}
@@ -750,7 +750,7 @@ const CourseProperties = ({ course }) => {
                                                     render={({ field }) => (
                                                         <TextField
                                                             {...field}
-                                                            label="Minutes"
+                                                            label={translate('Course management.FIELD_DURATION_MINUTES', 'Minutes')}
                                                             type="number"
                                                             fullWidth
                                                             InputProps={{ inputProps: { min: 0, max: 59 } }}
@@ -770,7 +770,7 @@ const CourseProperties = ({ course }) => {
                                                     render={({ field }) => (
                                                         <TextField
                                                             {...field}
-                                                            label="Seconds"
+                                                            label={translate('Course management.FIELD_DURATION_SECONDS', 'Seconds')}
                                                             type="number"
                                                             fullWidth
                                                             InputProps={{ inputProps: { min: 0, max: 59 } }}
@@ -794,12 +794,12 @@ const CourseProperties = ({ course }) => {
                                             render={({ field, fieldState: { error } }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Short Description"
+                                                    label={translate('Course management.FIELD_SHORT_DESCRIPTION', 'Short Description')}
                                                     fullWidth
                                                     multiline
                                                     rows={2}
                                                     error={!!error}
-                                                    helperText={error ? error.message : "Brief description shown in listings"}
+                                                    helperText={error ? error.message : translate('Course management.FIELD_SHORT_DESCRIPTION_HINT', 'Brief description shown in listings')}
                                                     variant="outlined"
                                                 />
                                             )}
@@ -808,11 +808,13 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Full Description */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">Full Description</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {translate('Course management.SUB_SECTION_FULL_DESCRIPTION', 'Full Description')}
+                                        </Typography>
                                         <Controller
                                             name="description"
                                             control={control}
-                                            render={({ field, fieldState: { error } }) => (
+                                            render={({ field }) => (
                                                 <TextEditorInput
                                                     content={description}
                                                     onUpdate={handleEditorUpdate}
@@ -823,7 +825,9 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Course Image */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">Course Image</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {translate('Course management.SUB_SECTION_COURSE_IMAGE', 'Course Image')}
+                                        </Typography>
                                         <Controller
                                             name="image"
                                             control={control}
@@ -841,7 +845,7 @@ const CourseProperties = ({ course }) => {
                                                         setSelectedFile(fileData?.file || null);
                                                     }}
                                                     defaultValue={field.value?.url || course?.image}
-                                                    helperText="Upload an image for this course"
+                                                    helperText={translate('Course management.TEXT_UPLOAD_IMAGE', 'Upload an image for this course')}
                                                 />
                                             )}
                                         />
@@ -849,9 +853,11 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Skills */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">Skills</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {translate('Course management.SUB_SECTION_SKILLS', 'Skills')}
+                                        </Typography>
                                         <Typography variant="body2" color="textSecondary" gutterBottom>
-                                            Associate skills with this course to help users find it based on their interests.
+                                            {translate('Course management.TEXT_ASSOCIATE_SKILLS', 'Associate skills with this course to help users find it based on their interests.')}
                                         </Typography>
 
                                         {selectedSkills.length > 0 && (
@@ -879,14 +885,14 @@ const CourseProperties = ({ course }) => {
                                             options={skills}
                                             getOptionLabel={(option) => option.name}
                                             isOptionEqualToValue={(option, value) => option.id === value.id}
-                                            noOptionsText="No skills found"
+                                            noOptionsText={translate('Course management.NO_SKILLS_FOUND', 'No skills found')}
                                             loading={skillsLoading}
-                                            loadingText="Loading skills..."
+                                            loadingText={translate('Course management.LOADING_SKILLS', 'Loading skills...')}
                                             renderInput={(params) => (
                                                 <TextField
                                                     {...params}
-                                                    label="Search for skills"
-                                                    placeholder="Type to search..."
+                                                    label={translate('Course management.FIELD_SEARCH_SKILLS', 'Search for skills')}
+                                                    placeholder={translate('Course management.PLACEHOLDER_SEARCH_SKILLS', 'Type to search...')}
                                                     InputProps={{
                                                         ...params.InputProps,
                                                         endAdornment: (
@@ -911,15 +917,17 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Category */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">Category</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {translate('Course management.SUB_SECTION_CATEGORY', 'Category')}
+                                        </Typography>
                                         <Typography variant="body2" color="textSecondary" gutterBottom>
-                                            Assign this course to a category to help organize your courses.
+                                            {translate('Course management.TEXT_ASSIGN_CATEGORY', 'Assign this course to a category to help organize your courses.')}
                                         </Typography>
 
                                         {categoryDetails && (
                                             <Box mb={2} mt={2}>
                                                 <Typography variant="body2" fontWeight="medium">
-                                                    Selected Category: {categoryDetails.title}
+                                                    {translate('Course management.TEXT_SELECTED_CATEGORY', 'Selected Category')}: {categoryDetails.title}
                                                 </Typography>
                                             </Box>
                                         )}
@@ -939,7 +947,7 @@ const CourseProperties = ({ course }) => {
                                     {/* Creation Info */}
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Created By"
+                                            label={translate('Course management.FIELD_CREATED_BY', 'Created By')}
                                             value={course?.created_by || 'N/A'}
                                             fullWidth
                                             disabled
@@ -949,7 +957,7 @@ const CourseProperties = ({ course }) => {
 
                                     <Grid item xs={12} md={6}>
                                         <TextField
-                                            label="Created At"
+                                            label={translate('Course management.FIELD_CREATED_AT', 'Created At')}
                                             value={course?.created_at || 'N/A'}
                                             fullWidth
                                             disabled
@@ -966,8 +974,8 @@ const CourseProperties = ({ course }) => {
                             <CardHeader
                                 title={
                                     <ListItemText
-                                        primary="Enrollment options"
-                                        secondary="Configure the course enrollment policy: self-unenrollment, enrollment links and codes"
+                                        primary={translate('Course management.SECTION_ENROLLMENT_OPTIONS', 'Enrollment options')}
+                                        secondary={translate('Course management.SECTION_SUBTITLE_ENROLLMENT_OPTIONS', 'Configure the course enrollment policy: self-unenrollment, enrollment links and codes')}
                                         primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
                                     />
                                 }
@@ -976,12 +984,14 @@ const CourseProperties = ({ course }) => {
                                 <Grid container spacing={3}>
                                     {/* Self-unenrollment */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">Self-unenrollment</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {translate('Course management.SUB_SECTION_SELF_UNENROLLMENT', 'Self-unenrollment')}
+                                        </Typography>
 
                                         <CheckboxInput
                                             name="enable_self_unenrollment"
                                             control={control}
-                                            label="Enable self-unenrollment for this course"
+                                            label={translate('Course management.CHECKBOX_ENABLE_SELF_UNENROLLMENT', 'Enable self-unenrollment for this course')}
                                         />
 
                                         {watch('enable_self_unenrollment') && (
@@ -989,7 +999,7 @@ const CourseProperties = ({ course }) => {
                                                 <CheckboxInput
                                                     name="enable_unenrollment_on_course_completion"
                                                     control={control}
-                                                    label="Allow self-unenrollment from the course even if the learner has completed it"
+                                                    label={translate('Course management.CHECKBOX_ALLOW_SELF_UNENROLLMENT', 'Allow self-unenrollment from the course even if the learner has completed it')}
                                                 />
                                             </Box>
                                         )}
@@ -997,23 +1007,25 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Enrollment link */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>Enrollment link</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>
+                                            {translate('Course management.SUB_SECTION_ENROLLMENT_LINK', 'Enrollment link')}
+                                        </Typography>
 
                                         <CheckboxInput
                                             name="enable_deep_link"
                                             control={control}
-                                            label="Enable enrollment link for this course"
+                                            label={translate('Course management.CHECKBOX_ENABLE_ENROLLMENT_LINK', 'Enable enrollment link for this course')}
                                         />
 
                                         {watch('enable_deep_link') && (
                                             <Box sx={{ ml: 4, mt: 1 }}>
                                                 <TextField
-                                                    label="Enrollment URL"
+                                                    label={translate('Course management.PLACEHOLDER_ENROLLMENT_URL', 'Enrollment URL')}
                                                     variant="outlined"
                                                     fullWidth
                                                     value={watch('enrollment_url')}
                                                     disabled
-                                                    helperText="Learners can enroll in the course using this link"
+                                                    helperText={translate('Course management.TEXT_ENROLLMENT_URL_DESCRIPTION', 'Learners can enroll in the course using this link')}
                                                 />
                                             </Box>
                                         )}
@@ -1021,7 +1033,9 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Quick enrollment */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>Quick enrollment</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>
+                                            {translate('Course management.SUB_SECTION_QUICK_ENROLLMENT', 'Quick enrollment')}
+                                        </Typography>
 
                                         <Controller
                                             name="enrollment_enabled"
@@ -1049,7 +1063,7 @@ const CourseProperties = ({ course }) => {
                                                             }}
                                                         />
                                                     }
-                                                    label="Enable quick enrollment for this course"
+                                                    label={translate('Course management.CHECKBOX_ENABLE_QUICK_ENROLLMENT', 'Enable quick enrollment for this course')}
                                                 />
                                             )}
                                         />
@@ -1057,7 +1071,7 @@ const CourseProperties = ({ course }) => {
                                         {watch('enrollment_enabled') && (
                                             <Box sx={{ ml: 4, mt: 1 }}>
                                                 <FormControl component="fieldset">
-                                                    <FormLabel component="legend">Enrollment Type</FormLabel>
+                                                    <FormLabel component="legend">{translate('Course management.SUBTITLE_ENROLLMENT_TYPE', 'Enrollment Type')}</FormLabel>
                                                     <Controller
                                                         name="allow_automatically_type"
                                                         control={control}
@@ -1078,12 +1092,12 @@ const CourseProperties = ({ course }) => {
                                                                 <FormControlLabel
                                                                     value="1"
                                                                     control={<Radio />}
-                                                                    label="Allow automatic enrollment"
+                                                                    label={translate('Course management.RADIO_ALLOW_AUTOMATIC_ENROLLMENT', 'Allow automatic enrollment')}
                                                                 />
                                                                 <FormControlLabel
                                                                     value="0"
                                                                     control={<Radio />}
-                                                                    label="Do not allow automatic enrollment (default)"
+                                                                    label={translate('Course management.RADIO_DO_NOT_ALLOW_AUTOMATIC', 'Do not allow automatic enrollment (default)')}
                                                                 />
                                                             </RadioGroup>
                                                         )}
@@ -1102,8 +1116,8 @@ const CourseProperties = ({ course }) => {
                             <CardHeader
                                 title={
                                     <ListItemText
-                                        primary="Time options"
-                                        secondary="Configure the course time options: validity period, days of validity and soft deadline"
+                                        primary={translate('Course management.SECTION_TIME_OPTIONS', 'Time options')}
+                                        secondary={translate('Course management.SECTION_SUBTITLE_TIME_OPTIONS', 'Configure the course time options: validity period, days of validity and soft deadline')}
                                         primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
                                     />
                                 }
@@ -1112,9 +1126,11 @@ const CourseProperties = ({ course }) => {
                                 <Grid container spacing={3}>
                                     {/* Course validity period */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">Course validity period</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold">
+                                            {translate('Course management.SUB_SECTION_COURSE_VALIDITY', 'Course validity period')}
+                                        </Typography>
                                         <Typography variant="body2" gutterBottom>
-                                            Learners will be able to access the course according to the selected dates
+                                            {translate('Course management.TEXT_COURSE_VALIDITY_DESCRIPTION', 'Learners will be able to access the course according to the selected dates')}
                                         </Typography>
 
                                         <Controller
@@ -1132,7 +1148,7 @@ const CourseProperties = ({ course }) => {
                                                             }}
                                                         />
                                                     }
-                                                    label="Enable a validity period for this course"
+                                                    label={translate('Course management.CHECKBOX_ENABLE_VALIDITY_PERIOD', 'Enable a validity period for this course')}
                                                 />
                                             )}
                                         />
@@ -1142,15 +1158,15 @@ const CourseProperties = ({ course }) => {
                                                 <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1, mt: 2, mb: 2 }}>
                                                     <Box sx={{ display: 'flex', alignItems: 'center', mb: 1 }}>
                                                         <Box component="span" sx={{ mr: 1 }}>ℹ️</Box>
-                                                        <Typography variant="subtitle2">Validity time details</Typography>
+                                                        <Typography variant="subtitle2">{translate('Course management.INFO_VALIDITY_TIME_DETAILS', 'Validity time details')}</Typography>
                                                     </Box>
                                                     <Typography variant="body2">
-                                                        The course validity period starts at 00:00:00 UTC of the start date and ends at 23:59:59 UTC of the end date
+                                                        {translate('Course management.TEXT_VALIDITY_PERIOD_UTC', 'The course validity period starts at 00:00:00 UTC of the start date and ends at 23:59:59 UTC of the end date')}
                                                     </Typography>
                                                 </Box>
 
                                                 <FormControl component="fieldset">
-                                                    <FormLabel component="legend">Select Period Type</FormLabel>
+                                                    <FormLabel component="legend">{translate('Course management.FIELD_SELECT_PERIOD_TYPE', 'Select Period Type')}</FormLabel>
                                                     <RadioGroup
                                                         name="period_type_direct"
                                                         value={periodType}
@@ -1163,17 +1179,17 @@ const CourseProperties = ({ course }) => {
                                                         <FormControlLabel
                                                             value="start_date"
                                                             control={<Radio />}
-                                                            label="Start date (Learners will be able to access the course from the selected start date onwards)"
+                                                            label={translate('Course management.RADIO_START_DATE', 'Start date (Learners will be able to access the course from the selected start date onwards)')}
                                                         />
                                                         <FormControlLabel
                                                             value="end_date"
                                                             control={<Radio />}
-                                                            label="End date (Learners will be able to access the course up to the selected end date)"
+                                                            label={translate('Course management.RADIO_END_DATE', 'End date (Learners will be able to access the course up to the selected end date)')}
                                                         />
                                                         <FormControlLabel
                                                             value="period"
                                                             control={<Radio />}
-                                                            label="Period (Learners will be able to access the course during the period extending from the start date to the end date)"
+                                                            label={translate('Course management.RADIO_PERIOD', 'Period (Learners will be able to access the course during the period extending from the start date to the end date)')}
                                                         />
                                                     </RadioGroup>
                                                 </FormControl>
@@ -1183,14 +1199,14 @@ const CourseProperties = ({ course }) => {
                                                     {periodType === 'start_date' && (
                                                         <Box sx={{ ml: 4, mt: 2, mb: 2, border: '1px solid', borderColor: 'primary.main', p: 2, borderRadius: 1 }}>
                                                             <Typography variant="subtitle2" color="primary" gutterBottom>
-                                                                Start Date Configuration (Current type: {periodType})
+                                                                {translate('Course management.FIELD_START_DATE_CONFIGURATION', 'Start Date Configuration (Current type: start_date)')}
                                                             </Typography>
                                                             <Grid container spacing={2}>
                                                                 <Grid item xs={12}>
                                                                     <DateInput
                                                                         name="sub_start_date"
                                                                         control={control}
-                                                                        label="Subscription start date"
+                                                                        label={translate('Course management.PLACEHOLDER_SUBSCRIPTION_START_DATE', 'Subscription start date')}
                                                                         value={watch('sub_start_date')}
                                                                         onChange={(date) => {
                                                                             setValue('sub_start_date', date, { shouldDirty: true });
@@ -1205,14 +1221,14 @@ const CourseProperties = ({ course }) => {
                                                     {periodType === 'end_date' && (
                                                         <Box sx={{ ml: 4, mt: 2, mb: 2, border: '1px solid', borderColor: 'primary.main', p: 2, borderRadius: 1 }}>
                                                             <Typography variant="subtitle2" color="primary" gutterBottom>
-                                                                End Date Configuration (Current type: {periodType})
+                                                                {translate('Course management.FIELD_END_DATE', 'End Date Configuration (Current type: end_date)')}
                                                             </Typography>
                                                             <Grid container spacing={2}>
                                                                 <Grid item xs={12}>
                                                                     <DateInput
                                                                         name="sub_end_date"
                                                                         control={control}
-                                                                        label="Subscription end date"
+                                                                        label={translate('Course management.SUB_SECTION_SELF_ENROLLMENT', 'Subscription end date')}
                                                                         value={watch('sub_end_date')}
                                                                         onChange={(date) => {
                                                                             setValue('sub_end_date', date, { shouldDirty: true });
@@ -1227,19 +1243,19 @@ const CourseProperties = ({ course }) => {
                                                     {periodType === 'period' && (
                                                         <Box sx={{ ml: 4, mt: 2, mb: 2, border: '1px solid', borderColor: 'primary.main', p: 2, borderRadius: 1 }}>
                                                             <Typography variant="subtitle2" color="primary" gutterBottom>
-                                                                Full Period Configuration (Current type: {periodType})
+                                                                {translate('Course management.FULL_PERIOD_CONFIGURATION', 'Full Period Configuration (Current type: period)')}
                                                             </Typography>
                                                             <Grid container spacing={2}>
                                                                 <Grid item xs={12}>
                                                                     <Typography variant="subtitle2" color="primary" gutterBottom mt={2}>
-                                                                        Subscription Period
+                                                                        {translate('Course management.SUB_SECTION_ENROLLMENT_VALIDITY_PERIOD', 'Subscription Period')}
                                                                     </Typography>
                                                                 </Grid>
                                                                 <Grid item xs={12} md={6}>
                                                                     <DateInput
                                                                         name="sub_start_date"
                                                                         control={control}
-                                                                        label="Subscription start date"
+                                                                        label={translate('Course management.PLACEHOLDER_SUBSCRIPTION_START_DATE', 'Subscription start date')}
                                                                         value={watch('sub_start_date')}
                                                                         onChange={(date) => {
                                                                             setValue('sub_start_date', date, { shouldDirty: true });
@@ -1251,7 +1267,7 @@ const CourseProperties = ({ course }) => {
                                                                     <DateInput
                                                                         name="sub_end_date"
                                                                         control={control}
-                                                                        label="Subscription end date"
+                                                                        label={translate('Course management.SUB_SECTION_SELF_ENROLLMENT', 'Subscription end date')}
                                                                         minDate={watch('sub_start_date')}
                                                                         value={watch('sub_end_date')}
                                                                         onChange={(date) => {
@@ -1270,7 +1286,9 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Days of validity */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>Enrollment validity period</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>
+                                            {translate('Course management.SUB_SECTION_ENROLLMENT_VALIDITY_PERIOD', 'Enrollment validity period')}
+                                        </Typography>
 
                                         <Controller
                                             name="validity_days_enabled"
@@ -1288,7 +1306,7 @@ const CourseProperties = ({ course }) => {
                                                             }}
                                                         />
                                                     }
-                                                    label="Enable days of validity for this course"
+                                                    label={translate('Course management.CHECKBOX_ENABLE_DAYS_VALIDITY', 'Enable days of validity for this course')}
                                                 />
                                             )}
                                         />
@@ -1296,7 +1314,7 @@ const CourseProperties = ({ course }) => {
                                         {watch('validity_days_enabled') && (
                                             <Box sx={{ ml: 4, mt: 2 }}>
                                                 <Typography variant="body2" gutterBottom>
-                                                    Set the number of days for learners to access the course/learning plan within the course availability period
+                                                    {translate('Course management.TEXT_DAYS_VALIDITY_DESCRIPTION', 'Set the number of days for learners to access the course/learning plan within the course availability period')}
                                                 </Typography>
 
                                                 <Controller
@@ -1305,11 +1323,11 @@ const CourseProperties = ({ course }) => {
                                                     render={({ field }) => (
                                                         <TextField
                                                             {...field}
-                                                            label="Number of days available to learners (required)"
+                                                            label={translate('Course management.PLACEHOLDER_NUMBER_OF_DAYS', 'Number of days available to learners (required)')}
                                                             fullWidth
                                                             type="number"
                                                             InputProps={{ inputProps: { min: 0 } }}
-                                                            helperText="Insert numbers greater than 0"
+                                                            helperText={translate('Course management.TEXT_NUMBER_VALIDATION', 'Insert numbers greater than 0')}
                                                             sx={{ mt: 2, mb: 2 }}
                                                         />
                                                     )}
@@ -1320,7 +1338,7 @@ const CourseProperties = ({ course }) => {
                                                     control={control}
                                                     render={({ field }) => (
                                                         <FormControl component="fieldset">
-                                                            <FormLabel component="legend">Calculation Start Date</FormLabel>
+                                                            <FormLabel component="legend">{translate('Course management.FIELD_CALCULATION', 'Calculation Start Date')}</FormLabel>
                                                             <RadioGroup
                                                                 {...field}
                                                                 onChange={(e) => {
@@ -1331,12 +1349,12 @@ const CourseProperties = ({ course }) => {
                                                                 <FormControlLabel
                                                                     value="first_access"
                                                                     control={<Radio />}
-                                                                    label="Start calculation from the first access date"
+                                                                    label={translate('Course management.RADIO_CALCULATION_FIRST_ACCESS', 'Start calculation from the first access date')}
                                                                 />
                                                                 <FormControlLabel
                                                                     value="enrollment_date"
                                                                     control={<Radio />}
-                                                                    label="Start calculation from the enrollment date"
+                                                                    label={translate('Course management.RADIO_CALCULATION_ENROLLMENT_DATE', 'Start calculation from the enrollment date')}
                                                                 />
                                                             </RadioGroup>
                                                         </FormControl>
@@ -1359,7 +1377,7 @@ const CourseProperties = ({ course }) => {
                                                                         }}
                                                                     />
                                                                 }
-                                                                label="Apply settings to all users, including those already enrolled"
+                                                                label={translate('Course management.CHECKBOX_APPLY_TO_ALL_USERS', 'Apply settings to all users, including those already enrolled')}
                                                             />
                                                         )}
                                                     />
@@ -1370,7 +1388,9 @@ const CourseProperties = ({ course }) => {
 
                                     {/* Soft deadline */}
                                     <Grid item xs={12}>
-                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>Soft deadline</Typography>
+                                        <Typography variant="subtitle1" gutterBottom fontWeight="bold" sx={{ mt: 2 }}>
+                                            {translate('Course management.SUB_SECTION_SOFT_DEADLINE', 'Soft deadline')}
+                                        </Typography>
 
                                         <Controller
                                             name="soft_deadline_enabled"
@@ -1393,7 +1413,7 @@ const CourseProperties = ({ course }) => {
                                                             }}
                                                         />
                                                     }
-                                                    label="Enable soft deadline (access after end date)"
+                                                    label={translate('Course management.CHECKBOX_ENABLE_SOFT_DEADLINE', 'Enable soft deadline (access after end date)')}
                                                 />
                                             )}
                                         />
@@ -1401,7 +1421,7 @@ const CourseProperties = ({ course }) => {
                                         {watch('soft_deadline_enabled') && (
                                             <Box sx={{ ml: 4, mt: 2 }}>
                                                 <FormControl component="fieldset">
-                                                    <FormLabel component="legend">Soft Deadline Type</FormLabel>
+                                                    <FormLabel component="legend">{translate('Course management.FIELD_SOFT_DEADLINE_TYPE', 'Soft Deadline Type')}</FormLabel>
                                                     <Controller
                                                         name="soft_deadline_type"
                                                         control={control}
@@ -1420,19 +1440,19 @@ const CourseProperties = ({ course }) => {
                                                                 <FormControlLabel
                                                                     value="1"
                                                                     control={<Radio />}
-                                                                    label="Soft deadline on"
+                                                                    label={translate('Course management.RADIO_SOFT_DEADLINE_ON', 'Soft deadline on')}
                                                                 />
                                                                 <FormHelperText sx={{ mt: -1, ml: 4 }}>
-                                                                    Learners will be able to access the course's training material after the course end date
+                                                                    {translate('Course management.TEXT_SOFT_DEADLINE_ON_DESCRIPTION', "Learners will be able to access the course's training material after the course end date")}
                                                                 </FormHelperText>
                                                                 
                                                                 <FormControlLabel
                                                                     value="0"
                                                                     control={<Radio />}
-                                                                    label="Soft deadline off (default)"
+                                                                    label={translate('Course management.RADIO_SOFT_DEADLINE_OFF', 'Soft deadline off (default)')}
                                                                 />
                                                                 <FormHelperText sx={{ mt: -1, ml: 4 }}>
-                                                                    Learners will not be allowed to access the course after the end date
+                                                                    {translate('Course management.TEXT_SOFT_DEADLINE_OFF_DESCRIPTION', 'Learners will not be allowed to access the course after the end date')}
                                                                 </FormHelperText>
                                                             </RadioGroup>
                                                         )}

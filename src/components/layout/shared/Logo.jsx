@@ -26,7 +26,7 @@ const LogoText = styled.span`
     isCollapsed && !isHovered ? 'opacity: 0; margin-inline-start: 0;' : 'opacity: 1; margin-inline-start: 8px;'}
 `
 
-const Logo = ({ component = false }) => {
+const Logo = ({ component = false, className = 'h-7 md:h-8 w-full' }) => {
   // Refs
   const logoTextRef = useRef(null)
 
@@ -58,8 +58,8 @@ const Logo = ({ component = false }) => {
   return (
     // eslint-disable-next-line lines-around-comment
     /* @ts-ignore */
-    <LogoWrapper className='flex items-center min-bs-[24px]' {...(!component && { href: '/' })}>
-      <img src={settings?.header?.logo} alt='Logo' className='h-12 w-full' />
+    <LogoWrapper className='flex items-center min-bs-[24px] ' {...(!component && { href: '/' })}>
+      <img src={settings?.header?.logo} alt='Logo' className={className} />
     </LogoWrapper>
   )
 }

@@ -1,27 +1,27 @@
 import OptionMenu from '@/@core/components/option-menu';
 import * as yup from 'yup';
 
-export const columns = (drawerState, setDrawerState, grantProfileDrawerState, setGrantProfileDrawerState, setDeleteConfirmation) => [
+export const columns = (drawerState, setDrawerState, setDeleteConfirmation, router, translate) => [
     {
-        header: 'Username',
+        header: translate('Power User & Profile Management.TABLE_HEADER_USERNAME'),
         accessorKey: 'username',
         flex: 1,
         enableSorting: true
     },
     {
-        header: 'First Name',
+        header: translate('Power User & Profile Management.TABLE_HEADER_FIRST_NAME'),
         accessorKey: 'firstname',
         flex: 1,
         enableSorting: true
     },
     {
-        header: 'Last Name',
+        header: translate('Power User & Profile Management.TABLE_HEADER_LAST_NAME'),
         accessorKey: 'lastname',
         flex: 1,
         enableSorting: true
     },
     {
-        header: 'Email',
+        header: translate('Power User & Profile Management.TABLE_HEADER_EMAIL'),
         accessorKey: 'email',
         flex: 1,
         enableSorting: true
@@ -33,29 +33,40 @@ export const columns = (drawerState, setDrawerState, grantProfileDrawerState, se
             <OptionMenu
                 options={[
                     {
-                        text: 'Edit',
+                        text: translate('Power User & Profile Management.MENU_EDIT'),
                         icon: <i className='solar-pen-outline' />,
                         menuItemProps: {
                             onClick: (e) => {
                                 e.stopPropagation();
-                                setDrawerState({ ...drawerState, open: true, data: row?.original });
+                                router.push(`/powerusers/${row?.original?.id}`);
                             },
                             className: 'flex items-center gap-2'
                         }
                     },
                     {
-                        text: 'Assign Profiles',
+                        text: translate('Power User & Profile Management.MENU_ASSIGN_PROFILES'),
                         icon: <i className='solar-user-check-rounded-outline' />,
                         menuItemProps: {
                             onClick: (e) => {
                                 e.stopPropagation();
-                                setGrantProfileDrawerState({ ...grantProfileDrawerState, open: true, data: row?.original });
+                                setDrawerState({ ...drawerState, open: true, data: row?.original, type: 'assign_profiles' });
                             },
                             className: 'flex items-center gap-2'
                         }
                     },
                     {
-                        text: 'Unassign Profiles',
+                        text: translate('Power User & Profile Management.MENU_ASSIGN_RESOURCES'),
+                        icon: <i className='solar-user-check-rounded-outline' />,
+                        menuItemProps: {
+                            onClick: (e) => {
+                                e.stopPropagation();
+                                setDrawerState({ open: true, data: row?.original, type: 'assign_resources' });
+                            },
+                            className: 'flex items-center gap-2'
+                        }
+                    },
+                    {
+                        text: translate('Power User & Profile Management.MENU_UNASSIGN_PROFILES'),
                         icon: <i className='solar-user-check-rounded-outline' />,
                         menuItemProps: {
                             className: 'flex items-center gap-2 text-error hover:bg-errorLight',
@@ -67,7 +78,7 @@ export const columns = (drawerState, setDrawerState, grantProfileDrawerState, se
                     },
 
                     {
-                        text: 'Remove Power User',
+                        text: translate('Power User & Profile Management.MENU_REMOVE_POWER_USER'),
                         className: 'text-error',
                         icon: <i className='solar-user-cross-rounded-outline' />,
                         menuItemProps: {
@@ -85,6 +96,7 @@ export const columns = (drawerState, setDrawerState, grantProfileDrawerState, se
         flex: 0.1
     }
 ];
+
 export const profilePowerUsersColumns = (setDeleteConfirmation) => [
     {
         header: 'Username',
@@ -134,7 +146,7 @@ export const profilePowerUsersColumns = (setDeleteConfirmation) => [
                             className: 'flex items-center gap-2 text-error hover:bg-errorLight',
                             onClick: (e) => {
                                 e.stopPropagation();
-                                setDeleteConfirmation({ open: true, data: row?.original, type: 'unassign-poweruser', variant: 'simple' });
+                                setDeleteConfirmation({ open: true, data: row?.original, type: 'deleteOne' })
                             }
                         }
                     },

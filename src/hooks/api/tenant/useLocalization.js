@@ -10,9 +10,10 @@ export const useLocalization = ({
   search = "",
   sort = [],
   filters = [],
+  with_pagination = true
 }) => {
   return useQuery({
-    queryKey: ["localization", { page, page_size, search, sort, filters }],
+    queryKey: ["localization", { page, page_size, search, sort, filters, with_pagination }],
     queryFn: async () => {
       try {
         const url = urlParamsBuilder({
@@ -22,6 +23,7 @@ export const useLocalization = ({
           search,
           sort,
           filters,
+          with_pagination
         });
 
         const response = await axiosInstance.get(url);
@@ -105,7 +107,7 @@ export const useActiveLanguages = () => {
           throw new Error("Invalid response structure");
         }
 
-        return response.data?.data;
+        return response?.data?.data;
       } catch (error) {
         console.error("Active Languages Fetch Error:", error);
         throw error;
@@ -115,3 +117,59 @@ export const useActiveLanguages = () => {
     retry: 2,
   });
 };
+
+// get /tenant/localization/v1/translations
+
+export const useTranslations = (params) => {
+  return useQuery({
+    queryKey: ["translations", params],
+    queryFn: async () => {
+      try {
+        const url = urlParamsBuilder({
+          prefix: "/tenant/localization/v1/translations",
+          ...params,
+        });
+
+        const response = await axiosInstance.get(url);
+
+        if (!response.data || !response.data.success) {
+          throw new Error("Invalid response structure");
+        }
+
+        return response.data?.data;
+      } catch (error) {
+        console.error("Translations Fetch Error:", error);
+        throw error;
+      }
+    },
+    staleTime: 5000,
+    retry: 2,
+  });
+}
+
+
+// put /tenant/localization/v1/translations/{id}/locale
+export const useUpdateTranslation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, data }) => {
+      const url = `/tenant/localization/v1/translations/${id}/locale`;
+      const response = await axiosInstance.put(url, data);
+
+      if (!response.data || !response.data.success) {
+        throw new Error("Invalid response structure while updating translation");
+      }
+
+      return response.data.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(["translations"]);
+      toast.success("Translation updated successfully");
+    },
+    onError: (error) => {
+      console.error("Update Translation Error:", error);
+      toast.error("Failed to update translation");
+    },
+  });
+}

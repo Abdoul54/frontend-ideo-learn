@@ -4,7 +4,6 @@ import { VerticalNavProvider } from '@menu/contexts/verticalNavContext'
 import { SettingsProvider } from '@core/contexts/settingsContext'
 
 // Util Imports
-// import { getDemoName, getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers'
 import { NextAuthProvider } from '@/providers/NextAuthProviders'
 import { QueryProvider } from '@/providers/QueryProvider'
 import ThemeProviderWrapper from '@/providers/ThemeProviderWrapper'
@@ -12,6 +11,8 @@ import { MuiLocalizationProvider } from '@/providers/MuiLocalizationProvider'
 import { Toaster } from 'react-hot-toast'
 import AuthWrapper from '@/providers/AuthWrapper'
 import LanguageProvider from '@/providers/LanguageProvider'
+import { TranslationProvider } from '@/@core/contexts/translationContext'
+import { UserProvider } from '@/@core/contexts/userContext'
 
 const Providers = props => {
   // Props
@@ -24,14 +25,18 @@ const Providers = props => {
         <QueryProvider>
           <VerticalNavProvider>
             <SettingsProvider>
-              <ThemeProviderWrapper>
+              <UserProvider>
                 <LanguageProvider>
-                  <MuiLocalizationProvider>
-                    {children}
-                    <Toaster />
-                  </MuiLocalizationProvider>
+                  <TranslationProvider>
+                    <ThemeProviderWrapper>
+                      <MuiLocalizationProvider>
+                        {children}
+                        <Toaster />
+                      </MuiLocalizationProvider>
+                    </ThemeProviderWrapper>
+                  </TranslationProvider>
                 </LanguageProvider>
-              </ThemeProviderWrapper>
+              </UserProvider>
             </SettingsProvider>
           </VerticalNavProvider>
         </QueryProvider>

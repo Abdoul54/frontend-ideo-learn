@@ -3,7 +3,7 @@ import React from 'react';
 /**
  * StatusCard - A versatile card component for displaying status information with various styling options
  * 
- * @param {string} type - The type of status ('info', 'success', 'error', 'warning')
+ * @param {string} type - The type of status ('info', 'success', 'error', 'warning', 'loading')
  * @param {string} title - The card title
  * @param {string} message - The card message/description
  * @param {Array} actions - Array of action objects for footer buttons
@@ -67,6 +67,16 @@ const StatusCard = ({
             chipText: 'text-yellow-800',
             buttonColor: 'text-yellow-600 hover:bg-yellow-50',
             containedBtnBg: 'bg-yellow-600 hover:bg-yellow-700'
+        },
+        loading: {
+            iconClass: 'svg-spinners-90-ring-with-bg',
+            color: 'text-gray-600',
+            bgColor: 'bg-gray-50',
+            borderColor: 'border-gray-200',
+            chipBg: 'bg-gray-100',
+            chipText: 'text-gray-800',
+            buttonColor: 'text-gray-600 hover:bg-gray-50',
+            containedBtnBg: 'bg-gray-600 hover:bg-gray-700'
         }
     };
 

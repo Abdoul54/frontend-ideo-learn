@@ -1,21 +1,21 @@
 import OptionMenu from '@/@core/components/option-menu';
 import * as yup from 'yup';
 
-export const columns = (grantPowerUserDrawerState, setGrantPowerUserDrawerState, router) => [
+export const columns = (grantPowerUserDrawerState, setGrantPowerUserDrawerState, router, translate) => [
     {
-        header: 'Name',
+        header: translate('Power User & Profile Management.TABLE_HEADER_NAME'),
         accessorKey: 'name',
         flex: 1,
         enableSorting: true
     },
     {
-        header: 'Description',
+        header: translate('Power User & Profile Management.TABLE_HEADER_DESCRIPTION'),
         accessorKey: 'description',
         flex: 1,
         enableSorting: true
     },
     {
-        header: 'Assigned Power Users',
+        header: translate('Power User & Profile Management.TABLE_HEADER_ASSIGNED_POWER_USERS'),
         accessorKey: 'assigned_power_users',
         flex: 1,
         enableSorting: true,
@@ -29,7 +29,7 @@ export const columns = (grantPowerUserDrawerState, setGrantPowerUserDrawerState,
             <OptionMenu
                 options={[
                     {
-                        text: 'Edit',
+                        text: translate('Power User & Profile Management.MENU_EDIT_PROFILE'),
                         icon: <i className='solar-pen-outline' />,
                         menuItemProps: {
                             onClick: (e) => {
@@ -40,7 +40,7 @@ export const columns = (grantPowerUserDrawerState, setGrantPowerUserDrawerState,
                         }
                     },
                     {
-                        text: 'Grant Power User',
+                        text: translate('Power User & Profile Management.MENU_GRANT_POWER_USER'),
                         icon: <i className='solar-user-check-rounded-outline' />,
                         menuItemProps: {
                             onClick: (e) => {

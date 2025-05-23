@@ -1,45 +1,36 @@
 'use client';
 
 import CustomTabList from "@/@core/components/mui/TabList";
+import StatusCard from "@/components/StatusCard";
 import ToolBar from "@/components/ToolBar";
 import { useActivatePartner, usePartner, useRegeneratePartnerKeys } from "@/hooks/api/tenant/usePartners";
+import useUrlTabs from "@/hooks/useUrlTabs";
 import RegenerateKeysDialog from "@/views/Dialogs/RegenerateKeysDialog";
 import EditPartnerDrawer from "@/views/Forms/Partners/EditPartnerDrawer";
 import Details from "@/views/tabs/partners/Details";
 import Logs from "@/views/tabs/partners/Logs";
 import { TabContext, TabPanel } from "@mui/lab";
-import { Grid, Paper, Tab } from "@mui/material";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Grid2 as Grid, Paper, Tab } from "@mui/material";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 import toast from "react-hot-toast";
 
 const Page = () => {
     const { name } = useParams();
-    const [value, setValue] = useState("0");
     const [showKeysDialog, setShowKeysDialog] = useState(false);
     const [openDrawer, setOpenDrawer] = useState(false);
     const [regeneratedKeys, setRegeneratedKeys] = useState(null);
     const activatePartner = useActivatePartner();
     const regeneratePartnerKeys = useRegeneratePartnerKeys();
-    const searchParams = useSearchParams();
 
-
-    useEffect(() => {
-        const tabParam = searchParams.get("tab");
-        setValue(tabParam === "logs" ? "1" : "0");
-    }, [searchParams]);
+    const { activeTab, handleTabChange } = useUrlTabs({
+        defaultTab: 'details',
+        validTabs: ['details', 'logs'],
+    });
 
     // Get partner details
     const { data: partner, isLoading, error } = usePartner(name);
 
-    if (error) {
-        throw error;
-    }
-
-    // Handle tab change
-    const handleChange = (_, newValue) => {
-        setValue(newValue);
-    };
 
     // Enhanced handler for regenerating keys
     const handleRegenerateKeys = () => {
@@ -57,10 +48,11 @@ const Page = () => {
     return (
         <>
             <Grid container spacing={4}>
-                <Grid item xs={12} >
+                <Grid item size={12} >
                     <ToolBar
                         breadcrumbs={[
                             { link: `/manage/partners/${name}`, label: partner?.name || name },
+                            ...(activeTab === 'logs' && (!error && !isLoading) ? [{ label: "Logs" }] : []),
                         ]}
                         buttonGroup={[
                             {
@@ -95,38 +87,47 @@ const Page = () => {
                         ]}
                     />
                 </Grid>
-                <Grid item xs={12}>
-                    <TabContext value={value}>
+                <Grid item size={12}>
+                    <TabContext value={activeTab}>
                         <Grid container spacing={4}>
-                            <Grid item xs={12}>
+                            <Grid item size={12}>
                                 <Paper elevation={0} sx={{
                                     bgcolor: 'background.default',
                                 }}>
                                     <CustomTabList
-                                        pill='true'
-                                        onChange={handleChange}
-                                        variant="fullWidth"
+                                        onChange={handleTabChange}
                                         sx={{
                                             '& .MuiTabs-flexContainer': {
                                                 width: '100%'
                                             }
                                         }}
                                     >
-                                        <Tab value="0" label="Details" />
-                                        <Tab value="1" label="Logs" />
+                                        <Tab value="details" label="Details" disabled={error || isLoading} />
+                                        <Tab value="logs" label="Logs" disabled={error || isLoading} />
                                     </CustomTabList>
                                 </Paper>
                             </Grid>
-                            <Grid item xs={12}>
-                                <Paper elevation={0} sx={{ border: 1, borderColor: 'divider', padding: 3 }}>
-                                    <TabPanel value="0">
-                                        {value === "0" && <Details partner={partner} isLoading={isLoading} error={error} />}
-                                    </TabPanel>
-                                    <TabPanel value="1">
-                                        {value === "1" && <Logs id={partner?.id} />}
-                                    </TabPanel>
-                                </Paper>
-                            </Grid>
+                            {
+                                error || isLoading ?
+                                    <Grid item size={12}>
+                                        <StatusCard
+                                            type={isLoading ? 'loading' : 'error'}
+                                            title={isLoading ? "Loading the partner" : `Error: ${error?.message}`}
+                                            message={
+                                                isLoading ? "Please wait while we load the partner." : "An error occurred while loading the partner."
+                                            }
+                                        />
+                                    </Grid>
+                                    :
+                                    <Grid item size={12}>
+                                        <TabPanel value="details">
+                                            {activeTab === "details" && <Details partner={partner} isLoading={isLoading} error={error} />}
+                                        </TabPanel>
+                                        <TabPanel value="logs">
+                                            {activeTab === "logs" && <Logs id={partner?.id} />}
+                                        </TabPanel>
+                                    </Grid>
+                            }
                         </Grid>
                     </TabContext>
                 </Grid>

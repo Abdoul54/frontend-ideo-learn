@@ -4,11 +4,10 @@ import { useState } from "react";
 import DataView from "@/views/DataView";
 import { columns } from "@/constants/Profile";
 import { useBatchDeleteProfile, useProfiles } from "@/hooks/api/tenant/useProfiles";
-import ProfilesDrawer from "@/views/Forms/Profiles/ProfilesDrawer";
 import GrantPowerUsersDrawer from "@/views/Forms/Profiles/GrantPowerUsersDrawer";
 import { useRouter } from "next/navigation";
 
-const Profile = () => {
+const Profile = ({ translate }) => {
     const [filters, setFilters] = useState(null);
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
@@ -16,11 +15,6 @@ const Profile = () => {
     const [selectedRows, setSelectedRows] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
     const router = useRouter();
-
-    const [drawerState, setDrawerState] = useState({
-        open: false,
-        data: null
-    });
 
     const [grantPowerUserDrawerState, setGrantPowerUserDrawerState] = useState({
         open: false,
@@ -43,7 +37,7 @@ const Profile = () => {
         <>
             <DataView
                 title="Profiles"
-                columns={columns(grantPowerUserDrawerState, setGrantPowerUserDrawerState, router)}
+                columns={columns(grantPowerUserDrawerState, setGrantPowerUserDrawerState, router, translate)}
                 data={data?.items}
                 height="calc(100vh - 300px)"
                 isLoading={isLoading}
@@ -52,16 +46,7 @@ const Profile = () => {
                 setPagination={setPagination}
                 selectedRows={selectedRows}
                 setSelectedRows={setSelectedRows}
-                toolbar={{
-                    breadcrumbs: [{ label: 'Profiles', path: '/profiles' }],
-                    buttonGroup: [{
-                        text: 'Add Profile',
-                        variant: 'contained',
-                        tooltip: 'Add new profile',
-                        icon: 'solar-add-circle-outline',
-                        onClick: () => setDrawerState({ open: true, data: null })
-                    }]
-                }}
+                noToolbar
                 selectAll={selectAll}
                 onSelectAllChange={setSelectAll}
                 slots={{
@@ -100,13 +85,6 @@ const Profile = () => {
                 datatablemulti
                 enableSelection
             />
-            {
-                drawerState?.open && <ProfilesDrawer
-                    open={drawerState?.open}
-                    onClose={() => setDrawerState({ open: false, data: null })}
-                    data={drawerState?.data}
-                />
-            }
             {
                 grantPowerUserDrawerState?.open && <GrantPowerUsersDrawer
                     open={grantPowerUserDrawerState?.open}

@@ -26,6 +26,7 @@ import {
 import { useUsers } from "@/hooks/api/tenant/useUsers";
 import { useGroups } from "@/hooks/api/tenant/useGroups";
 import BranchSelector from "@/components/BranchSelector";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 export default function SelectUsersStep({ control, errors, setValue, isBulkEnrollment = false }) {
     // State for tab selection (Users, Branches, Groups)
@@ -73,7 +74,13 @@ export default function SelectUsersStep({ control, errors, setValue, isBulkEnrol
     };
 
     const handleDescendantsChange = (event) => {
-        setIncludeDescendants(event.target.checked);
+        const newIncludeDescendants = event.target.checked;
+        setIncludeDescendants(newIncludeDescendants);
+
+        console.log("Include Descendants:", newIncludeDescendants);
+
+        // Update the global form value to keep track of the toggle state
+        setValue('includeDescendants', newIncludeDescendants);
 
         // Update any existing branches with the new status
         setValue('branches', value => {
@@ -85,7 +92,7 @@ export default function SelectUsersStep({ control, errors, setValue, isBulkEnrol
             // Update selected_status for all valid branches
             return validBranches.map(branch => ({
                 branch_id: branch.branch_id || branch.id,
-                selected_status: event.target.checked ? 1 : 2 // 1 = include descendants, 2 = no descendants
+                selected_status: newIncludeDescendants ? 1 : 2 // 1 = include descendants, 2 = no descendants
             }));
         });
     };
@@ -124,11 +131,13 @@ export default function SelectUsersStep({ control, errors, setValue, isBulkEnrol
     const groups = groupsData?.items || [];
     const totalGroups = groupsData?.pagination?.total || 0;
 
+    const { translate } = useTranslation();
+
     return (
         <Grid container spacing={3}>
             <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ mt: 2, mb: 2 }}>
-                    Select a single user or multiple users, enroll them into courses, then select their roles in the courses
+                    {translate('Course management.TEXT_SELECT_USERS', 'Select a single user or multiple users, enroll them into courses, then select their roles in the courses')}
                 </Typography>
             </Grid>
 
@@ -199,7 +208,7 @@ export default function SelectUsersStep({ control, errors, setValue, isBulkEnrol
                                         <TableBody>
                                             {usersLoading ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={6} align="center">Loading users...</TableCell>
+                                                    <TableCell colSpan={6} align="center">{translate('common.loading', 'Loading users...')}</TableCell>
                                                 </TableRow>
                                             ) : users.length === 0 ? (
                                                 <TableRow>
@@ -266,23 +275,34 @@ export default function SelectUsersStep({ control, errors, setValue, isBulkEnrol
                             {/* Branch selection mode - Simplified to a checkbox */}
                             <Box sx={{ p: 2, mb: 2, border: '1px solid', borderColor: 'divider', borderRadius: 1 }}>
                                 <Typography variant="subtitle2" gutterBottom>
-                                    Branch Selection Mode
+                                    {translate('Course management.SECTION_BRANCH_SELECTION_MODE', 'Branch Selection Mode')}
                                 </Typography>
 
-                                <FormControlLabel
-                                    control={
-                                        <Switch
-                                            checked={includeDescendants}
-                                            onChange={handleDescendantsChange}
-                                            color="primary"
+                                {/* Initialize the includeDescendants form value when this component mounts */}
+                                <Controller
+                                    name="includeDescendants"
+                                    control={control}
+                                    defaultValue={true}
+                                    render={({ field }) => (
+                                        <FormControlLabel
+                                            control={
+                                                <Switch
+                                                    checked={field.value}
+                                                    onChange={(e) => {
+                                                        field.onChange(e.target.checked);
+                                                        handleDescendantsChange(e);
+                                                    }}
+                                                    color="primary"
+                                                />
+                                            }
+                                            label={translate('Course management.TOGGLE_INCLUDE_DESCENDANTS', 'Include Descendants')}
                                         />
-                                    }
-                                    label="Include Descendants"
+                                    )}
                                 />
 
                                 <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
                                     {includeDescendants
-                                        ? "Enroll users in the selected branches and all their descendant branches."
+                                        ? translate('Course management.TEXT_INCLUDE_DESCENDANTS', 'Enroll users in the selected branches and all their descendant branches.')
                                         : "Enroll users only in the selected branches."}
                                 </Typography>
                             </Box>
@@ -343,7 +363,7 @@ export default function SelectUsersStep({ control, errors, setValue, isBulkEnrol
                                         <TableBody>
                                             {groupsLoading ? (
                                                 <TableRow>
-                                                    <TableCell colSpan={4} align="center">Loading groups...</TableCell>
+                                                    <TableCell colSpan={4} align="center">{translate('common.loading', 'Loading groups...')}</TableCell>
                                                 </TableRow>
                                             ) : groups.length === 0 ? (
                                                 <TableRow>

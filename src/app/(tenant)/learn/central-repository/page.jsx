@@ -2,104 +2,33 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import DataView from "@/views/DataView";
 import { useHistoryNavigation } from '@/hooks/useHistoryNavigation';
-import { useRouter } from 'next/navigation';
 import { Box, FormControlLabel, Switch, Typography } from '@mui/material';
 
-// Import mock data hooks instead of real API hooks
-import { useRepositoryFolders } from '@/hooks/api/tenant/learn/central-repo/useRepositoryFoldersMock';
-import { useRepositoryMaterials } from '@/hooks/api/tenant/learn/central-repo/useRepositoryMaterialsMock';
-import { IconButton } from '@mui/material';
-
-// import { useMaterialsColumns } from '@/hooks/api/repository/useMaterialsColumns';
-// import AddFolderDrawer from '@/views/Drawers/AddFolderDrawer';
-// import AddMaterialDrawer from '@/views/Drawers/AddMaterialDrawer';
-// import EditMaterialDrawer from '@/views/Drawers/EditMaterialDrawer';
-// import DeleteConfirmationDialog from '@/views/Dialogs/DeleteConfirmation';
-// import MoveMaterialsDrawer from '@/views/Drawers/MoveMaterialsDrawer';
 import OptionMenu from '@/@core/components/option-menu';
-import { useDeleteMaterial, useMoveMaterials, useUpdateMaterialStatus } from '@/hooks/api/tenant/learn/central-repo/useRepositoryFolders';
+import { useDeleteFolder, useFolders } from '@/hooks/api/tenant/repos/useFolders';
+import { columns } from '@/constants/LearningUnits';
+import { useDeleteLearningUnit, useLearningUnits } from '@/hooks/api/tenant/repos/useLeaningUnits';
+import ConfirmationDialog from '@/components/ConfirmationDialog';
+import LearningUnitDrawer from '@/views/Forms/LearningUnits/LearningUnitDrawer';
+import Previewer from '@/views/Dialogs/LearningUnit/Previewer';
+import { useTranslation } from '@/@core/contexts/translationContext';
+import LearningUnitAssignmentToCourseDrawer from '@/views/Forms/LearningUnits/LearningUnitAssignmentToCourseDrawer';
+import FolderDrawer from '@/views/Forms/Folders/FolderDrawer';
+// import FolderDrawer from '@/views/Forms/Folders/FolderDrawer';
 
-const RepositoryPageWithMockData = () => {
+const page = () => {
   // State management
-  const [filters, setFilters] = useState(null);
+
   const [foldersPagination, setFoldersPagination] = useState({ pageIndex: 0, pageSize: 10 });
   const [materialsPagination, setMaterialsPagination] = useState({ pageIndex: 0, pageSize: 15 });
   const [sorting, setSorting] = useState([]);
-  const [materialsSearchQuery, setMaterialsSearchQuery] = useState("");
+  const [learningUnitSearchQuery, setLearningUnitSearchQuery] = useState("");
   const [foldersSearchQuery, setFoldersSearchQuery] = useState("");
   const [selectedRows, setSelectedRows] = useState([]);
+  const [drawerState, setDrawerState] = useState({ open: false, data: null, type: null });
+  const [deleteConfirmation, setDeleteConfirmation] = useState({ open: false, data: null, type: null });
   const [columnVisibility, setColumnVisibility] = useState({});
-  const [materialDrawerOpen, setMaterialDrawerOpen] = useState(false);
-  const [materialId, setMaterialId] = useState(null);
-
-  const [addFolderDrawerOpen, setAddFolderDrawerOpen] = useState(false);
-  const [addMaterialDrawerOpen, setAddMaterialDrawerOpen] = useState(false);
-  const [moveMaterialsDrawerOpen, setMoveMaterialsDrawerOpen] = useState(false);
-  const [batchDeleteConfirmation, setBatchDeleteConfirmation] = useState({
-    open: false,
-    materialIds: [],
-  });
-
   const [searchType, setSearchType] = useState(1);
-
-  const router = useRouter();
-
-  // Delete material mutation
-  const deleteMaterialMutation = useDeleteMaterial();
-  
-  // Update material status mutation
-  const updateMaterialStatusMutation = useUpdateMaterialStatus();
-  
-  // Move materials mutation
-  const moveMaterialsMutation = useMoveMaterials();
-
-  const handleBatchDelete = (rows) => {
-    const materialIds = rows.map((row) => row.material_id);
-    setBatchDeleteConfirmation({ open: true, materialIds });
-  };
-
-  const handleDeleteMaterial = async (material) => {
-    try {
-      await deleteMaterialMutation.mutateAsync(material.material_id);
-    } catch (error) {
-      console.error('Error deleting material:', error);
-    }
-  };
-
-  // Handle delete action for selected rows
-  const handleDeleteSelected = async (rows) => {
-    try {
-      const materialIds = rows.map(row => row.material_id);
-      for (const id of materialIds) {
-        await deleteMaterialMutation.mutateAsync(id);
-      }
-      setSelectedRows([]);
-    } catch (error) {
-      console.error('Error deleting materials:', error);
-    }
-  };
-
-  const handleCreateMaterialClick = useCallback(() => {
-    setMaterialId(null);
-    setMaterialDrawerOpen(true);
-  }, []);
-
-  // Drawer handlers
-  const handleAddMaterialClick = useCallback(() => {
-    setAddMaterialDrawerOpen(true);
-  }, []);
-
-  const handleAddMaterialDrawerClose = useCallback(() => {
-    setAddMaterialDrawerOpen(false);
-  }, []);
-
-  const handleAddFolderClick = useCallback(() => {
-    setAddFolderDrawerOpen(true);
-  }, []);
-
-  const handleAddFolderDrawerClose = useCallback(() => {
-    setAddFolderDrawerOpen(false);
-  }, []);
 
   const handleSearchTypeChange = useCallback((newSearchType) => {
     setSearchType(newSearchType);
@@ -107,89 +36,71 @@ const RepositoryPageWithMockData = () => {
     setFoldersPagination(prev => ({ ...prev, pageIndex: 0 }));
   }, []);
 
-  // Navigation history management
+  const { language, translate } = useTranslation()
+
   const {
     history: navigationHistory,
     currentItem: currentFolder,
     goForward,
     goBack,
-    goToBreadcrumb
+    goToBreadcrumb,
+    setCurrentItem
   } = useHistoryNavigation(
-    { folder_id: 1, name: 'IDEO', code: 'IDEO' },
-    (newItem, direction) => {
-      // Optional callback when navigation changes
-    }
+    { id: 1, title: "", code: "", },
+    null
   );
 
-  // Fetch folders data
-  const { data: foldersData, isLoading: isFoldersLoading, error: foldersError } = useRepositoryFolders({
+  const { data: folders, isLoading: isFoldersLoading, error: foldersError } = useFolders({
     page: foldersPagination.pageIndex + 1,
     page_size: foldersPagination.pageSize,
-    search: foldersSearchQuery || undefined,
-    sort_attr: sorting[0]?.id || 'name',
-    sort_dir: sorting[0]?.desc ? 'desc' : 'asc',
-    folder_id: currentFolder?.folder_id,
-    search_type: searchType
+    search_text: foldersSearchQuery || undefined,
+    lang: language,
+    folderId: currentFolder?.id,
+    search_type: 2
   });
 
-  // Fetch materials data for the selected folder
-  const {
-    data: materialsData,
-    isLoading: isMaterialsLoading,
-    error: materialsError,
-  } = useRepositoryMaterials({
-    search_text: materialsSearchQuery || '',
+
+  const { data: learningUnits, isLoading: isLearningUnitsLoading, error: learnigUnitsError } = useLearningUnits({
     page: materialsPagination.pageIndex + 1,
     page_size: materialsPagination.pageSize,
-    sort_attr: sorting[0]?.id || 'created_on',
-    sort_dir: sorting[0]?.desc ? 'desc' : 'asc',
-    folder_id: currentFolder?.folder_id,
-    filters
+    search_text: learningUnitSearchQuery || undefined,
+    folderId: currentFolder?.id,
+    sort: sorting,
   });
+
+  useEffect(() => {
+    if (folders?.extra_data && folders?.extra_data?.id === 1) {
+      setCurrentItem({ id: 1, title: folders?.extra_data?.title, code: folders?.extra_data?.code });
+    }
+  }, [folders?.extra_data, setCurrentItem]);
+
+  const deleteLearningUnit = useDeleteLearningUnit()
+  const deleteFolder = useDeleteFolder()
 
   // Transform Folders API response for navigation
   const transformedFoldersData = useMemo(() => {
-    const items = foldersData?.data?.items || [];
-    const total = foldersData?.data?.total_count || 0;
-    
     return {
-      items: items.map(item => ({
-        id: item.folder_id,
-        title: item.name,
-        code: item.code,
-        has_children: item.children_count > 0
-      })),
-      total,
-      current_page: foldersData?.data?.current_page || 1,
-      per_page: foldersData?.data?.current_page_size || 10,
-      parent: foldersData?.extra_data?.parent_folder || null,
+      items: folders?.items,
+      total: folders?.pagination?.total || 0,
+      current_page: folders?.pagination?.current_page || 1,
+      per_page: folders?.pagination?.per_page || 10,
+      parent: folders?.extra_data?.parent_folder || null,
     };
-  }, [foldersData]);
-
-  // Transform Materials API response for the table
-  const transformedMaterialsData = useMemo(() => ({
-    items: materialsData?.data?.items?.map(item => ({
-      ...item,
-      id: item.material_id
-    })) || [],
-    total: materialsData?.data?.total_count || 0,
-    current_page: materialsData?.data?.current_page || 1,
-    per_page: materialsData?.data?.current_page_size || 15,
-  }), [materialsData]);
+  }, [folders]);
 
   // Navigation handlers
   const handleNavigateForward = useCallback((id, title) => {
-    const matchingItem = transformedFoldersData.items.find(item => item.id === id);
+    const matchingItem = folders?.items.find(item => item.id === id);
     if (!matchingItem) return;
-    
+
     goForward({
-      folder_id: id,
-      name: title,
+      id,
+      title,
       code: matchingItem.code
     });
     setFoldersPagination(prev => ({ ...prev, pageIndex: 0 }));
     setMaterialsPagination(prev => ({ ...prev, pageIndex: 0 }));
-  }, [transformedFoldersData.items, goForward]);
+  }, [folders?.items, goForward]);
 
   const handleNavigateBack = useCallback(() => {
     goBack();
@@ -197,258 +108,93 @@ const RepositoryPageWithMockData = () => {
     setMaterialsPagination(prev => ({ ...prev, pageIndex: 0 }));
   }, [goBack]);
 
-  const handleEditMaterial = (material) => {
-    setMaterialId(material.material_id);
-    setMaterialDrawerOpen(true);
-  };
+  const handleDeleteSubmit = async () => {
+    try {
+      if (deleteConfirmation?.type === 'delete_folder') {
+        const result = await deleteFolder.mutateAsync(deleteConfirmation?.data?.id);
 
-  // Define action groups for multi-selection
-  const actionGroups = [
-    // Status actions grouped
-    [
-      {
-        id: 'status',
-        label: 'Status',
-        icon: <i className='solar-check-square-bold-duotone' size={18} />,
-        subMenu: [
-          {
-            id: 'set-available',
-            label: 'Set Available',
-            icon: <i className='solar-check-circle-bold-duotone' size={18} />,
-            handler: (rows) => {
-              const materialIds = rows.map(row => row.material_id);
-              updateMaterialStatusMutation.mutate({ materialIds, status: 'available' });
-            }
-          },
-          {
-            id: 'set-unavailable',
-            label: 'Set Unavailable',
-            icon: <i className='solar-close-circle-bold-duotone' size={18} />,
-            handler: (rows) => {
-              const materialIds = rows.map(row => row.material_id);
-              updateMaterialStatusMutation.mutate({ materialIds, status: 'unavailable' });
-            }
-          }
-        ]
-      },
-      {
-        id: 'move-materials',
-        label: 'Move Materials',
-        icon: <i className="solar-move-to-folder-bold-duotone" size={18} />,
-        handler: (rows) => {
-          setSelectedRows(rows);
-          setMoveMaterialsDrawerOpen(true);
-        },
-      },
-    ],
-    // Keep Delete in its own group
-    [
-      {
-        id: 'delete-selected',
-        label: 'Delete',
-        icon: <i className="solar-trash-bin-2-bold-duotone" size={18} />,
-        handler: (rows) => {
-          handleBatchDelete(rows);
-        },
-        disabled: selectedRows.length === 0,
-      },
-    ],
-  ];
+        return result;
+      } else if (deleteConfirmation?.type === 'delete_learning_unit') {
+        const result = await deleteLearningUnit.mutateAsync(deleteConfirmation?.data?.id);
+
+        return result;
+      }
+    } catch (error) {
+      console.error("Error deleting item:", error);
+      throw error; // Re-throw so dialog can handle it
+    }
+  }
 
   const actionItems = [
     [
       {
         id: 'add-material',
-        label: 'Add Material',
+        label: translate('CR management.MENU_ADD_MATERIAL'),
         icon: <i className="lucide-file-plus" />,
-        handler: handleAddMaterialClick,
+        handler: setDrawerState.bind(null, { open: true, data: null, type: 'add_learning_unit' }),
       },
       {
         id: 'add-folder',
-        label: 'Add Folder',
+        label: translate('CR management.MENU_ADD_FOLDER'),
         icon: <i className="lucide-folder-plus" />,
-        handler: handleAddFolderClick,
+        handler: setDrawerState.bind(null, { open: true, data: null, type: 'add_folder' }),
       },
     ],
   ];
 
-  // Navigation data
-  const navigationData = useMemo(() => 
-    Array.isArray(transformedFoldersData.items) ? transformedFoldersData.items : []
-  , [transformedFoldersData.items]);
+  // Add state for subfolders content toggle
+  const [showSubfoldersContent, setShowSubfoldersContent] = useState(false);
 
-  // Define columns manually for mock implementation
-  const columns = useMemo(() => [
-    {
-      id: 'name',
-      header: 'Name',
-      accessorKey: 'name',
-      meta: { type: 'text', width: 250, flex: 1 },
-      minWidth: 250,
-      cell: (info) => info.getValue()
-    },
-    {
-      id: 'type',
-      header: 'Type',
-      accessorKey: 'type',
-      meta: { type: 'text', width: 120 },
-      minWidth: 120,
-      cell: (info) => {
-        const typeMap = {
-          'scormorg': 'SCORM',
-          'document': 'Document',
-          'video': 'Video',
-          'assessment': 'Assessment'
-        };
-        
-        return typeMap[info.getValue()] || info.getValue();
-      }
-    },
-    {
-      id: 'status',
-      header: 'Status',
-      accessorKey: 'status',
-      meta: { type: 'text', width: 120 },
-      minWidth: 120,
-      cell: (info) => {
-        const value = info.getValue();
-        const color = value === 'available' ? 'success' : 'error';
-        const formattedValue = value.charAt(0).toUpperCase() + value.slice(1);
-        
-        return (
-          <Box 
-            sx={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              px: 1, 
-              py: 0.5, 
-              borderRadius: 1,
-              bgcolor: theme => `${theme.palette[color].lighter}`,
-              color: theme => `${theme.palette[color].main}`
-            }}
-          >
-            {formattedValue}
-          </Box>
-        );
-      }
-    },
-    {
-      id: 'versions_count',
-      header: 'Versions',
-      accessorKey: 'versions_count',
-      meta: { type: 'number', width: 100 },
-      minWidth: 100,
-      cell: (info) => info.getValue()
-    },
-    {
-      id: 'assigned_courses_counts',
-      header: 'Courses',
-      accessorFn: (row) => row.assigned_courses_counts?.total || 0,
-      meta: { type: 'number', width: 100 },
-      minWidth: 100,
-      cell: (info) => info.getValue()
-    },
-    {
-      id: 'created_on',
-      header: 'Created On',
-      accessorKey: 'created_on',
-      meta: { type: 'date', width: 150 },
-      minWidth: 150,
-      cell: (info) => {
-        const date = new Date(info.getValue());
-        return date.toLocaleString();
-      }
-    },
-    {
-      id: 'created_by',
-      header: 'Created By',
-      accessorFn: (row) => row.created_by?.fullname || '',
-      meta: { type: 'text', width: 180 },
-      minWidth: 180,
-      cell: (info) => info.getValue()
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      meta: { type: 'actions', width: 100 },
-      minWidth: 100,
-      cell: (info) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <IconButton 
-            onClick={() => handleEditMaterial(info.row.original)}
-            size="small"
-            color="primary"
-          >
-            <i className="solar-pen-2-linear" style={{ fontSize: '1.25rem' }} />
-          </IconButton>
-          <IconButton 
-            onClick={() => handleDeleteMaterial(info.row.original)}
-            size="small"
-            color="error"
-          >
-            <i className="solar-trash-bin-trash-linear" style={{ fontSize: '1.25rem' }} />
-          </IconButton>
-        </Box>
-      )
-    }
-  ], []);
-
-// Add state for subfolders content toggle
-const [showSubfoldersContent, setShowSubfoldersContent] = useState(false);
-
-// Handler for the switch toggle
-const handleShowSubfoldersContentChange = useCallback((event) => {
+  // Handler for the switch toggle
+  const handleShowSubfoldersContentChange = useCallback((event) => {
     setShowSubfoldersContent(event.target.checked);
     // You could trigger a data refresh here if needed
-}, []);
+  }, []);
 
-const selectionStatusSwitch = (
+  const selectionStatusSwitch = (
     <Box
-        sx={{
-            display: 'flex',
-            justifyContent: 'flex-start',
-            alignItems: 'center',
-            padding: 2,
-            borderTop: '1px solid',
-            borderBottom: '1px solid',
-            borderColor: 'divider'
-        }}
+      sx={{
+        display: 'flex',
+        justifyContent: 'flex-start',
+        alignItems: 'center',
+        padding: 2,
+        borderTop: '1px solid',
+        borderBottom: '1px solid',
+        borderColor: 'divider'
+      }}
     >
-        <Typography variant="body2" color="text.secondary" mr={1}>
-            Show subfolders content
-        </Typography>
-        <FormControlLabel
-            control={
-                <Switch
-                    checked={showSubfoldersContent}
-                    onChange={handleShowSubfoldersContentChange}
-                    color="primary"
-                />
-            }
-        />
+      <Typography variant="body2" color="text.secondary" mr={1}>
+        Show subfolders content
+      </Typography>
+      <FormControlLabel
+        control={
+          <Switch
+            checked={showSubfoldersContent}
+            onChange={handleShowSubfoldersContentChange}
+            color="primary"
+          />
+        }
+      />
     </Box>
-);
+  );
 
   return (
     <>
       <DataView
-        title="Central Repository (Mock Data)"
-        columns={columns}
-        isColumnsLoading={false}
-        columnsError={null}
+        title="Central Repository"
+        columns={columns(setDrawerState, setDeleteConfirmation, translate)}
         pagination={{
-          pageIndex: materialsPagination.pageIndex,
-          pageSize: materialsPagination.pageSize,
-          total: transformedMaterialsData.total
+          ...materialsPagination,
+          total: learningUnits?.pagination?.total
         }}
         setPagination={setMaterialsPagination}
-        data={transformedMaterialsData.items}
-        isLoading={isMaterialsLoading}
-        error={materialsError}
+        data={learningUnits?.items}
+        isLoading={isLearningUnitsLoading}
+        error={learnigUnitsError}
         getRowId={(row) => row.material_id}
         initialNavigationOpen={true}
         navigation={{
-          data: navigationData,
+          data: folders?.items,
           currentItem: currentFolder,
           GoBack: handleNavigateBack,
           GoForward: handleNavigateForward,
@@ -456,10 +202,10 @@ const selectionStatusSwitch = (
           onSearchChange: (e) => setFoldersSearchQuery(e.target.value),
           searchType: searchType,
           onSearchTypeChange: handleSearchTypeChange,
-          enableSearchType: true,
+          enableSearchType: false,
           isLoading: isFoldersLoading,
           pagination: {
-            count: transformedFoldersData.total,
+            count: folders?.pagination?.total,
             page: foldersPagination.pageIndex,
             rowsPerPage: foldersPagination.pageSize,
             onPageChange: (newPage) => {
@@ -470,14 +216,36 @@ const selectionStatusSwitch = (
             }
           },
           parent: transformedFoldersData.parent,
-          footerComponent: selectionStatusSwitch
+          footerComponent: selectionStatusSwitch,
+          actions: [
+            {
+              label: "Edit",
+              icon: "solar-pen-outline text-base",
+              className: "flex items-center gap-2 text-base",
+              onClick: (item) => {
+                setDrawerState({ open: true, data: item, type: 'edit_folder' });
+              }
+            },
+            {
+              label: 'Delete',
+              icon: <i className="solar-trash-bin-minimalistic-2-outline text-base" />,
+              onClick: (item) => {
+                setDeleteConfirmation({ open: true, data: item, type: 'delete_folder' });
+              },
+              className: 'flex items-center gap-2 text-error hover:bg-errorLight text-base',
+            },
+          ]
+
         }}
         toolbar={{
+          breadcrumbs: [
+            { label: translate('CR management.BREADCRUMB_CENTRAL_REPOSITORY'), link: '/learn/central-repository' }
+          ],
           buttonGroup: [
             {
               component: (
                 <OptionMenu
-                  menuProps={{ 
+                  menuProps={{
                     elevation: 2,
                     sx: { '& .MuiMenu-paper': { minWidth: 200 } }
                   }}
@@ -488,7 +256,7 @@ const selectionStatusSwitch = (
                     ...group.map(action => ({
                       text: action.label,
                       icon: action.icon,
-                      menuItemProps: { 
+                      menuItemProps: {
                         onClick: () => action.handler(),
                         sx: { py: 1.5 }
                       }
@@ -500,20 +268,20 @@ const selectionStatusSwitch = (
             }
           ]
         }}
+        datatablemulti
+        enableSelection
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         slots={{
-          filters,
-          setFilters,
-          globalFilter: materialsSearchQuery,
-          setGlobalFilter: setMaterialsSearchQuery,
+          globalFilter: learningUnitSearchQuery,
+          setGlobalFilter: setLearningUnitSearchQuery,
           sorting,
           setSorting,
           columnVisibility,
           setColumnVisibility,
           features: {
             search: true,
-            filter: true,
+            filter: false,
             navigation: true,
             columnVisibility: true,
             breadcrumbs: true
@@ -525,61 +293,92 @@ const selectionStatusSwitch = (
             icon: <i className="lucide-file-x" style={{ fontSize: '2rem' }} />
           }
         }}
-        onDeleteSelected={handleDeleteSelected}
-        actionGroups={actionGroups}
-      />
-
-      {/* Add Folder Drawer */}
-      {/* <AddFolderDrawer
-        open={addFolderDrawerOpen}
-        onClose={handleAddFolderDrawerClose}
-        parentFolderId={currentFolder?.folder_id}
-      /> */}
-
-      {/* Add Material Drawer
-      <AddMaterialDrawer
-        open={addMaterialDrawerOpen}
-        onClose={handleAddMaterialDrawerClose}
-        folderId={currentFolder?.folder_id}
-      /> */}
-
-      {/* Edit Material Drawer
-      <EditMaterialDrawer
-        open={materialDrawerOpen}
-        onClose={() => {
-          setMaterialDrawerOpen(false);
-          setMaterialId(null);
-        }}
-        materialId={materialId}
-      /> */}
-
-      {/* Move Materials Drawer
-      <MoveMaterialsDrawer
-        open={moveMaterialsDrawerOpen}
-        onClose={() => setMoveMaterialsDrawerOpen(false)}
-        selectedRows={selectedRows}
-      /> */}
-
-      {/* Batch delete confirmation dialog
-      <DeleteConfirmationDialog
-        open={batchDeleteConfirmation.open}
-        onClose={() => setBatchDeleteConfirmation({ open: false, materialIds: [] })}
-        data={{ ids: batchDeleteConfirmation.materialIds }}
-        title={`DELETE ${batchDeleteConfirmation.materialIds.length} MATERIALS`}
-        onSubmit={async () => {
-          try {
-            for (const id of batchDeleteConfirmation.materialIds) {
-              await deleteMaterialMutation.mutateAsync(id);
+        multiselectionActionBar={{
+          selectedRows,
+          total: learningUnits?.data?.count,
+          onClearSelection: () => setSelectedRows([]),
+          primaryActions: [
+            {
+              id: 'delete',
+              label: 'Delete',
+              color: 'error',
+              handler: () => { console.log('Delete') },
             }
-            setBatchDeleteConfirmation({ open: false, materialIds: [] });
-            setSelectedRows([]);
-          } catch (error) {
-            console.error('Error deleting materials:', error);
-          }
+          ]
         }}
-      /> */}
+      />
+      {
+        drawerState?.open && (drawerState?.type === 'edit_folder' || drawerState?.type === 'add_folder') && (
+          <FolderDrawer
+            open={drawerState.open}
+            onClose={() => setDrawerState({ open: false, data: null, type: null })}
+            data={drawerState.data}
+            translate={translate}
+          />
+        )
+      }
+      {
+        drawerState?.open && (drawerState?.type === 'edit_learning_unit' || drawerState?.type === 'add_learning_unit') && (
+          <LearningUnitDrawer
+            open={drawerState.open}
+            onClose={() => setDrawerState({ open: false, data: null, type: null })}
+            data={drawerState.data}
+            translate={translate}
+          />
+        )
+      }
+      {
+        drawerState?.open && drawerState?.type === 'assign_learning_unit_to_course' && (
+          <LearningUnitAssignmentToCourseDrawer
+            open={drawerState.open}
+            onClose={() => setDrawerState({ open: false, data: null, type: null })}
+            data={drawerState.data}
+            translate={translate}
+          />
+        )
+      }
+      {
+        drawerState?.open && drawerState?.type === 'preview_learning_unit' && (
+          <Previewer
+            open={drawerState.open}
+            onClose={() => setDrawerState({ open: false, data: null, type: null })}
+            data={drawerState.data}
+            translate={translate}
+          />
+        )
+      }
+      {
+        deleteConfirmation.open && <ConfirmationDialog
+          type='error'
+          isOpen={deleteConfirmation.open}
+          title={`Delete "${deleteConfirmation?.data?.title}"`}
+          message={deleteConfirmation?.type === 'delete_folder' ? 'Are you sure you want to delete the folder?' : `Are you sure you want to delete the the learning unit`}
+          onClose={() => setDeleteConfirmation({ open: false, data: null })}
+          actions={{
+            toast: {
+              success: deleteConfirmation?.type === 'delete_folder' ? 'Folder deleted successfully' : 'Learning unit deleted successfully',
+              error: deleteConfirmation?.type === 'delete_folder' ? 'Error deleting folder' : 'Error deleting learning unit',
+              show: false,
+            },
+            icons: {
+              confirm: null,
+              cancel: null
+            },
+            buttons: {
+              confirm: 'Delete',
+              cancel: 'Cancel',
+              processing: 'Deleting...',
+            },
+            onConfirm: handleDeleteSubmit,
+            isLoading: deleteFolder.isPending || deleteLearningUnit.isPending,
+          }}
+          confirmationWord={deleteConfirmation?.data?.title}
+          typingConfirmation
+          isAsync
+        />
+      }
     </>
   );
 };
 
-export default RepositoryPageWithMockData;
+export default page;

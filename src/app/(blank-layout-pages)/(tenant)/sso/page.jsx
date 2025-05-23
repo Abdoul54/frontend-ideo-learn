@@ -78,8 +78,12 @@ const Page = () => {
                     issue_refresh_token
                 });
 
+                console.log('Sign-in result:', result);
+
                 // Handle successful sign-in
                 if (result?.ok) {
+                    console.log('Sign-in successful:', result);
+
                     setSuccess(true);
                     setTimeout(() => {
                         // Redirect to home or another protected page after 3s

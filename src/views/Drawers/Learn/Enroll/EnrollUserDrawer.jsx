@@ -22,6 +22,7 @@ import SelectUsersStep from "@/views/Forms/Tenant/EnrollUserSteps/SelectUsersSte
 import SelectSessionStep from "@/views/Forms/Tenant/EnrollUserSteps/SelectSessionStep";
 import AdditionalInfoStep from "@/views/Forms/Tenant/EnrollUserSteps/AdditionalInfoStep";
 import NotificationsStep from "@/views/Forms/Tenant/EnrollUserSteps/NotificationsStep";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 // Create validation schema for single course enrollment
 const singleEnrollmentSchema = yup.object().shape({
@@ -47,6 +48,7 @@ const bulkEnrollmentSchema = yup.object().shape({
     users: yup.array().min(1, "Select at least one user").required("Users are required"),
     group_ids: yup.array(),
     branches: yup.array(),
+    includeDescendants: yup.boolean(), // Add this line to track the toggle state
     enrollmentType: yup.string().required("Please select an enrollment type"),
     session_id: yup.mixed().when('enrollmentType', {
         is: 'session',
@@ -98,6 +100,8 @@ export default function EnrollUserDrawer({
     selectedCourses = [],
     isBulkEnrollment = false
 }) {
+    const { translate } = useTranslation();
+
     // Determine if it's a classroom course (affects showing the session step)
     const isClassroomCourse = courseType === "classroom";
 
@@ -108,6 +112,7 @@ export default function EnrollUserDrawer({
             users: [],
             group_ids: [],
             branches: [],
+            includeDescendants: true, // Default to include descendants
             enrollmentType: 'course',
             session_id: null,
             course_sessions: [], // New field for tracking multiple course/session selections
@@ -129,6 +134,7 @@ export default function EnrollUserDrawer({
     const enrollmentType = watch("enrollmentType");
     const selectedGroups = watch("group_ids") || [];
     const selectedBranches = watch("branches") || [];
+    const includeDescendants = watch("includeDescendants"); // Watch this value to use when processing branches
 
     // API mutations
     const enrollUserMutation = useEnrollUser(onClose);
@@ -141,6 +147,7 @@ export default function EnrollUserDrawer({
                 users: [],
                 group_ids: [],
                 branches: [],
+                includeDescendants: true, // Reset to default
                 enrollmentType: 'course',
                 session_id: null,
                 level: 1,
@@ -273,12 +280,13 @@ export default function EnrollUserDrawer({
                     if (typeof branch === 'number') {
                         return {
                             branch_id: branch,
-                            selected_status: 1 // Default to include descendants
+                            selected_status: data.includeDescendants ? 1 : 2 // Use the tracked includeDescendants value
                         };
                     } else if (!branch.branch_id && branch.id) {
                         return {
                             branch_id: branch.id,
-                            selected_status: branch.selected_status || 1
+                            // Use branch.selected_status if available, otherwise use the form's includeDescendants value
+                            selected_status: branch.selected_status !== undefined ? branch.selected_status : (data.includeDescendants ? 1 : 2)
                         };
                     }
                     return branch;
@@ -423,8 +431,8 @@ export default function EnrollUserDrawer({
         <Box>
             <Typography variant="h6">
                 {isBulkEnrollment
-                    ? `Enroll Users to ${selectedCourses.length} Courses`
-                    : "Enroll Users"}
+                    ? translate('Course management.MODAL_TITLE_BULK_ENROLL', `Enroll Users to ${selectedCourses.length} Courses`)
+                    : translate('Course management.MODAL_TITLE_ENROLL_USERS', "Enroll Users")}
             </Typography>
             {!isBulkEnrollment && courseName && (
                 <Typography variant="body2" color="text.secondary">
@@ -436,13 +444,13 @@ export default function EnrollUserDrawer({
 
     // Generate step labels based on enrollment type
     const getStepLabels = () => {
-        const labels = ["Users"];
+        const labels = [translate('Course management.STEP_LABEL_1', "Users")];
 
         if (isClassroomCourse || (isBulkEnrollment && selectedCourses.some(course => course.course_type === "classroom"))) {
-            labels.push("Sessions");
+            labels.push(translate('Course management.STEP_LABEL_2', "Sessions"));
         }
 
-        labels.push("Additional Information", "Notifications");
+        labels.push(translate('Course management.STEP_LABEL_3', "Additional Information"), translate('Course management.STEP_LABEL_4', "Notifications"));
 
         return labels;
     };
@@ -495,12 +503,12 @@ export default function EnrollUserDrawer({
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
                     {activeStep > 0 && (
                         <Button onClick={handleBack}>
-                            Previous
+                            {translate('Course management.BUTTON_PREVIOUS', 'Previous')}
                         </Button>
                     )}
                     {activeStep < totalSteps - 1 && (
                         <Button variant="contained" onClick={handleNext}>
-                            Next
+                            {translate('Course management.BUTTON_NEXT', 'Next')}
                         </Button>
                     )}
                     {activeStep === totalSteps - 1 && (
@@ -510,8 +518,12 @@ export default function EnrollUserDrawer({
                             disabled={isBulkEnrollment ? bulkEnrollMutation.isPending : enrollUserMutation.isPending}
                         >
                             {isBulkEnrollment
-                                ? (bulkEnrollMutation.isPending ? 'Enrolling Users...' : 'Enroll Users')
-                                : (enrollUserMutation.isPending ? 'Enrolling Users...' : 'Enroll Users')
+                                ? (bulkEnrollMutation.isPending
+                                    ? translate('Course management.ENROLLING_USERS', 'Enrolling Users...')
+                                    : translate('Course management.BUTTON_ENROLL_USERS', 'Enroll Users'))
+                                : (enrollUserMutation.isPending
+                                    ? translate('Course management.ENROLLING_USERS', 'Enrolling Users...')
+                                    : translate('Course management.BUTTON_ENROLL_USERS', 'Enroll Users'))
                             }
                         </Button>
                     )}

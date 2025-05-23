@@ -463,3 +463,132 @@ export const useGetSelectedPrerequisites = ({ learningPlanId, courseId,
         retry: 2,
     });
 }
+
+
+// GET /tenant/taallum/v1/learningplans/{learningplan_id}/enrollments
+
+export const useEnrollments = (params) => {
+    return useQuery({
+        queryKey: ["enrollments", params],
+        queryFn: async () => {
+            try {
+                const url = urlParamsBuilder({
+                    prefix: `/tenant/taallum/v1/learningplans/${params?.learningPlanId}/enrollments`,
+                    ...params
+                });
+
+                const response = await axiosInstance.get(url);
+
+                if (!response.data || !response.data.success) {
+                    throw new Error("Invalid response structure");
+                }
+
+                return response.data?.data;
+            } catch (error) {
+                console.error("Enrollments Fetch Error:", error);
+                throw error;
+            }
+        },
+        staleTime: 5000,
+        retry: 2,
+    });
+}
+
+// POST /tenant/taallum/v1/learningplans/{learningplan_id}/enrollments
+
+export const useEnrollUsers = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async ({ learningPlanId, data }) => {
+            try {
+                const url = `/tenant/taallum/v1/learningplans/${learningPlanId}/enrollments`;
+
+                const response = await axiosInstance.post(url, data);
+
+                if (!response.data || !response.data.success) {
+                    throw new Error("Invalid response structure");
+                }
+
+                return response.data?.data;
+            } catch (error) {
+                console.error("Enroll Users Error:", error);
+                throw error;
+            }
+        },
+        onSuccess: () => {
+            toast.success("Users enrolled successfully");
+            queryClient.invalidateQueries(["enrollments"]);
+        },
+        onError: (error) => {
+            console.error("Enroll Users Error:", error);
+            toast.error("Error enrolling users");
+        },
+    });
+}
+
+// DELETE /tenant/taallum/v1/learningplans/{learningplan_id}/enrollments/{user_id}
+
+export const useUnenrollUser = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ learningPlanId, userId }) => {
+            try {
+                const url = `/tenant/taallum/v1/learningplans/${learningPlanId}/enrollments/${userId}`;
+
+                const response = await axiosInstance.delete(url);
+
+                if (!response.data || !response.data.success) {
+                    throw new Error("Invalid response structure");
+                }
+
+                return response.data?.data;
+            } catch (error) {
+                console.error("Unenroll User Error:", error);
+                throw error;
+            }
+        },
+        onSuccess: () => {
+            toast.success("User unenrolled successfully");
+            queryClient.invalidateQueries(["enrollments"]);
+        },
+        onError: (error) => {
+            console.error("Unenroll User Error:", error);
+            toast.error("Error unenrolling user");
+        },
+    });
+}
+
+
+// DELETE /tenant/taallum/v1/learningplans/{learningplan_id}/enrollments/bulk
+
+export const useUnenrollUsers = () => {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ learningPlanId, data }) => {
+            try {
+                const url = `/tenant/taallum/v1/learningplans/${learningPlanId}/enrollments/bulk`;
+
+                const response = await axiosInstance.delete(url, { data });
+
+                if (!response.data || !response.data.success) {
+                    throw new Error("Invalid response structure");
+                }
+
+                return response.data?.data;
+            } catch (error) {
+                console.error("Unenroll Users Error:", error);
+                throw error;
+            }
+        },
+        onSuccess: () => {
+            toast.success("Users unenrolled successfully");
+            queryClient.invalidateQueries(["enrollments"]);
+        },
+        onError: (error) => {
+            console.error("Unenroll Users Error:", error);
+            toast.error("Error unenrolling users");
+        },
+    });
+}

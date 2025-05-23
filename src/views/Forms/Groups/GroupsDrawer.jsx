@@ -2,68 +2,48 @@
 
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
 import {
     Button,
     Card,
     CardActions,
     CardContent,
-    Grid,
+    Grid2 as Grid,
     List,
     ListItem,
     ListItemText,
 } from "@mui/material";
 import DrawerFormContainer from "@/components/DrawerFormContainer";
-import { useEffect } from "react";
 import TextInput from "@/components/inputs/TextInput";
-import { usePostGroup, useUpdateGroup } from "@/hooks/api/tenant/useGroups";
+import { usePostGroup } from "@/hooks/api/tenant/useGroups";
 import RadioInput from "@/components/inputs/RadioInput";
 import { defaultValues, schema } from "@/constants/Groups";
 
-const GroupsDrawer = ({ open, onClose, data }) => {
+const GroupsDrawer = ({ open, onClose, translate }) => {
 
     const addGroup = usePostGroup()
-    const updateGroup = useUpdateGroup()
 
     const methods = useForm({
         resolver: yupResolver(schema),
         defaultValues: defaultValues
     });
 
-    useEffect(() => {
-        if (data) {
-            methods.reset(data)
-        }
-    }, [data])
-
     const { control, handleSubmit } = methods;
 
     const onSubmit = (formData) => {
-        if (data)
-            updateGroup.mutateAsync({ id: data?.id, data: formData })
-                .then(() => {
-                    onClose();
-                    methods.reset();
-                })
-                .catch(error => {
-                    console.error('Error updating user field:', error);
-                    // Optionally handle error state here
-                });
-        else
-            addGroup.mutateAsync(formData)
-                .then(() => {
-                    onClose();
-                    methods.reset();
-                })
-                .catch(error => {
-                    console.error('Error adding user field:', error);
-                    // Optionally handle error state here
-                });
+        addGroup.mutateAsync(formData)
+            .then(() => {
+                onClose();
+                methods.reset();
+            })
+            .catch(error => {
+                console.error('Error adding user field:', error);
+                // Optionally handle error state here
+            });
     };
 
     return (
         <DrawerFormContainer
-            title="User Field"
+            title={translate('Group management.MODAL_TITLE_CREATE_GROUP')}
             open={open}
             onClose={onClose}
         >
@@ -91,46 +71,50 @@ const GroupsDrawer = ({ open, onClose, data }) => {
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
                         {/* Field Type Selection */}
-                        <Grid item xs={12} component={ListItem}>
-                            <ListItemText primary='Details' primaryTypographyProps={{
-                                variant: 'h5',
-                                sx: {
-                                    fontWeight: 600,
-                                    fontSize: '1.2rem',
-                                }
-                            }} />                        </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
+                            <ListItemText primary={translate('Group management.SECTION_DETAILS')} secondary={translate('Group management.SECTION_SUBTITLE_GENERAL')}
+                                primaryTypographyProps={{
+                                    variant: 'h5',
+                                    sx: {
+                                        fontWeight: 600,
+                                        fontSize: '1.2rem',
+                                    }
+                                }} />
+                        </Grid>
+                        <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="name"
-                                label="Name"
+                                label={translate('common.FIELD_NAME')}
                                 control={control}
                                 type="text"
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="description"
-                                label="Description"
+                                label={translate('common.FIELD_DESCRIPTION')}
                                 control={control}
                                 type="text"
                                 multiline
                                 maxRows={5}
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <RadioInput
                                 control={control}
                                 name="type"
-                                label={<ListItemText primary='Group Type' secondary="Choose the group creation method" sx={{ mb: 4 }} primaryTypographyProps={{
-                                    variant: 'h5',
-                                    sx: {
-                                        fontWeight: 600,
-                                        fontSize: '1.2rem',
-                                    }
-                                }} />}
+                                label={<ListItemText primary={translate('Group management.SECTION_GROUP_TYPE')} secondary={translate('Group management.SECTION_SUBTITLE_GROUP_TYPE')}
+                                    sx={{ mb: 4 }}
+                                    primaryTypographyProps={{
+                                        variant: 'h5',
+                                        sx: {
+                                            fontWeight: 600,
+                                            fontSize: '1.2rem',
+                                        }
+                                    }} />}
                                 options={[
-                                    { label: <ListItemText primary='Manual creation' secondary="Add Users to your group manually" />, value: 'manual' },
-                                    { label: <ListItemText primary='Automatic creation' secondary="Use rules to automatically populate your group" />, value: 'automatic' },
+                                    { label: <ListItemText primary={translate('Group management.RADIO_MANUAL_CREATION')} secondary={translate('Group management.RADIO_DESCRIPTION_MANUAL')} />, value: 'manual' },
+                                    { label: <ListItemText primary={translate('Group management.RADIO_AUTOMATIC_CREATION')} secondary={translate('Group management.RADIO_DESCRIPTION_AUTOMATIC')} />, value: 'automatic' },
 
                                 ]}
                             />
@@ -139,8 +123,10 @@ const GroupsDrawer = ({ open, onClose, data }) => {
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={addGroup?.isPending || updateGroup?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={addGroup?.isPending || updateGroup?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={addGroup?.isPending}>{translate('common.cancel')}</Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={addGroup?.isPending} startIcon={addGroup?.isPending ? <i className="svg-spinners-90-ring" /> : null}>
+                        {addGroup?.isPending ? translate('common.creating') : translate('common.create')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer>

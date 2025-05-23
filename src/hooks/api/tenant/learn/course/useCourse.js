@@ -403,3 +403,267 @@ export const useDeleteCourseSession = () => {
     }
   });
 };
+
+/**
+ * Custom hook for fetching courses and learning plans with filtering and sorting
+ */
+export const useMyCoursesAndLearningPlans = ({
+  page = 1,
+  page_size = 20,
+  sort_attr = "enrollment_date",
+  sort_dir = "desc",
+  search_text = "",
+  type = [],
+  status = [],
+  deadline = "all",
+  duration_min = null,
+  duration_max = null,
+  language = [],
+  dateRange = null,
+  enabled = true,
+  extra_filters = null,
+  price = null
+}) => {
+  return useQuery({
+    queryKey: ["myCoursesAndLearningPlans", {
+      page,
+      page_size,
+      sort_attr,
+      sort_dir,
+      search_text,
+      type,
+      status,
+      deadline,
+      duration_min,
+      duration_max,
+      language,
+      dateRange,
+      price
+    }],
+    queryFn: async () => {
+      try {
+        // Prepare query parameters
+        const params = {
+          prefix: "/tenant/taallum/v1/learn/my-courses-and-learning-plans",
+          page,
+          page_size,
+          sort_attr,
+          sort_dir,
+          ...(search_text && { search_text }),
+          ...(Array.isArray(status) && status.length && { status }),
+          ...(Array.isArray(type) && type.length && { type }),
+          ...(deadline && deadline !== 'all' && { deadline }),
+          ...(duration_min && { duration_min }),
+          ...(duration_max && { duration_max }),
+          ...(Array.isArray(language) && language.length && { language }),
+          ...(price && price !== 'all' && { price }),
+        };
+
+        // Add extra_filters for date range if provided
+        if (dateRange) {
+          params.extra_filters = JSON.stringify({
+            date_range: {
+              start: dateRange.start,
+              end: dateRange.end
+            }
+          });
+        } else if (extra_filters) {
+          params.extra_filters = typeof extra_filters === 'string'
+            ? extra_filters
+            : JSON.stringify(extra_filters);
+        }
+
+        const url = urlParamsBuilder(params);
+        const response = await axiosInstance.get(url);
+
+        if (!response.data || !response.data.success) {
+          throw new Error("Failed to fetch courses and learning plans");
+        }
+
+        // Process the response to transform it into the format expected by the components
+        const items = response.data.data.map(item => ({
+          id: item.id,
+          title: item.name,
+          type: mapTypeToDisplayType(item.type, item.content_type),
+          rawType: item.type,
+          contentType: item.content_type,
+          thumbnail: item.image || '/images/courses/default.jpg',
+          lang_code: item.language,
+          enrollement_status: mapStatusToDisplayStatus(item.status, item.progress),
+          rawStatus: item.status,
+          // Add additional fields that might be needed
+          progress: item.progress,
+          courseCount: item.content_type === "LEARNING_PLAN" ? (item.course_count || 0) : undefined,
+          description: item.description,
+          startDate: item.validity_start_date,
+          endDate: item.validity_end_date,
+          enrollmentDate: item.enrollment_date,
+          canUnenroll: item.can_self_unenroll,
+          language: item.language,
+          duration: item.duration
+        }));
+
+        return {
+          items,
+          pagination: {
+            total: response.data.data.length,
+            per_page: page_size,
+            current_page: page,
+            last_page: Math.ceil(response.data.data.length / page_size),
+            has_more: response.data.data.length > page * page_size
+          }
+        };
+      } catch (error) {
+        console.error("Courses Fetch Error:", error.message);
+        toast.error("Failed to load your courses");
+        throw error;
+      }
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
+    enabled
+  });
+};
+
+/**
+ * Maps API type values to display-friendly values
+ */
+function mapTypeToDisplayType(type, contentType) {
+  if (contentType === "LEARNING_PLAN") {
+    return "Learning Plan";
+  }
+
+  switch (type) {
+    case "ELEARNING":
+      return "E-learning";
+    case "CLASSROOM":
+      return "ILT";
+    case "VIRTUAL_CLASSROOM":
+      return "VILT";
+    default:
+      return type;
+  }
+}
+
+/**
+ * Maps API status values to display-friendly status values
+ */
+function mapStatusToDisplayStatus(status, progress) {
+  if (status === "completed" || progress === 100) {
+    return "Terminé";
+  }
+  if (status === "enrolled") {
+    if (progress > 0) {
+      return "En cours";
+    }
+    return "Non débuté";
+  }
+  return status;
+}
+
+export const useMyCourses = ({
+  search_text = "",
+  page = 1,
+  page_size = 20,
+  sort_attr = "enrollment_date",
+  sort_dir = "desc",
+  status = [],
+  type = [],
+  deadline = "all",
+  duration_min = null,
+  duration_max = null,
+  language = [],
+  extra_filters = null
+}) => {
+  return useQuery({
+    queryKey: ["myCourses", {
+      search_text,
+      page,
+      page_size,
+      sort_attr,
+      sort_dir,
+      status: status.join(','),
+      type: type.join(','),
+      deadline,
+      duration_min,
+      duration_max,
+      language: language.join(','),
+      extra_filters
+    }],
+    queryFn: async () => {
+      try {
+        // Build query parameters manually to ensure correct array format
+        let params = new URLSearchParams();
+
+        // Add basic parameters
+        if (search_text) params.append('search_text', search_text);
+        params.append('page', page);
+        params.append('page_size', page_size);
+        params.append('sort_attr', sort_attr);
+        params.append('sort_dir', sort_dir);
+
+        // Add array parameters with proper indexing
+        if (status && status.length > 0) {
+          status.forEach((item, index) => {
+            params.append(`status[${index}]`, item);
+          });
+        }
+
+        if (type && type.length > 0) {
+          type.forEach((item, index) => {
+            params.append(`type[${index}]`, item);
+          });
+        }
+
+        if (language && language.length > 0) {
+          language.forEach((item, index) => {
+            params.append(`language[${index}]`, item);
+          });
+        }
+
+        // Add deadline if not default
+        if (deadline && deadline !== 'all') {
+          params.append('deadline', deadline);
+        }
+
+        // Explicitly add duration parameters if they exist
+        if (duration_min) {
+          params.append('duration_min', duration_min);
+          console.log('Adding duration_min:', duration_min);
+        }
+
+        if (duration_max) {
+          params.append('duration_max', duration_max);
+          console.log('Adding duration_max:', duration_max);
+        }
+
+        // Add extra filters if they exist
+        if (extra_filters) {
+          params.append('extra_filters', JSON.stringify(extra_filters));
+        }
+
+        // Log the complete URL for debugging
+        const url = `/tenant/taallum/v1/learn/my-courses-and-learning-plans`;
+        const fullUrl = `${url}?${params.toString()}`;
+        console.log('API Request URL:', fullUrl);
+
+        // Make the API request
+        const response = await axiosInstance.get(fullUrl);
+
+        if (!response.data || !response.data.success) {
+          throw new Error("Failed to fetch courses and learning plans");
+        }
+
+        // Transform the response to match the expected format in the application
+        return {
+          items: response.data.data || [],
+        };
+      } catch (error) {
+        console.error("My Courses Fetch Error:", error.message);
+        throw error;
+      }
+    },
+    staleTime: 5000, // Data will be considered fresh for 5 seconds
+    retry: 2, // Will retry failed requests 2 times
+  });
+};

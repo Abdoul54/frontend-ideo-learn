@@ -1,15 +1,14 @@
 'use client';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
-    Grid,
+    Grid2 as Grid,
     Tab,
     Box,
     Typography,
     CircularProgress,
     Paper,
-    Button,
-    IconButton
+    Button
 } from "@mui/material";
 import { TabContext, TabPanel } from "@mui/lab";
 import CustomTabList from "@/@core/components/mui/TabList";
@@ -19,6 +18,9 @@ import CourseProperties from '@/views/tabs/course/CourseProperties';
 import CourseSessionsTab from '@/views/tabs/session/CourseSessionsTab';
 import CourseEnrollmentsTab from '@/views/tabs/session/CourseEnrollmentsTab';
 import EnrollUserDrawer from '@/views/Drawers/Learn/Enroll/EnrollUserDrawer';
+import useUrlTabs from '@/hooks/useUrlTabs';
+import StatusCard from '@/components/StatusCard';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 export default function CourseEditPage() {
     const router = useRouter();
@@ -26,87 +28,44 @@ export default function CourseEditPage() {
     const searchParams = useSearchParams();
     const courseId = params.id;
 
+    // Translation hook
+    const { translate } = useTranslation();
+
+    const {
+        activeTab,
+        handleTabChange,
+    } = useUrlTabs({
+        defaultTab: 'properties',
+        validTabs: ['properties', 'training_material', 'sessions', 'enrollments', 'learning_plans', 'reports'],
+    });
+
     // Fetch course data
     const { data: courseData, isLoading, error } = useCourse(courseId);
 
-    // Add debug log to verify data loading
-    useEffect(() => {
-        if (courseData) {
-            console.log("Course data loaded:", courseData);
-        }
-    }, [courseData]);
-
-    // Set default tab to 'properties' or use the tab from URL
-    const [activeTab, setActiveTab] = useState(() => {
-        const tabParam = searchParams.get("tab");
-        return tabParam || "properties";
-    });
-
     // State for enrollment drawer
     const [enrollDrawerOpen, setEnrollDrawerOpen] = useState(false);
-
-    // Update tab when URL changes
-    useEffect(() => {
-        const tabParam = searchParams.get("tab");
-        if (tabParam) {
-            setActiveTab(tabParam);
-        }
-    }, [searchParams]);
-
-    // Handle tab change
-    const handleTabChange = (_, newValue) => {
-        setActiveTab(newValue);
-        router.push(`/learn/course/edit/${courseId}?tab=${newValue}`);
-    };
 
     // Toggle enrollment drawer
     const toggleEnrollDrawer = () => {
         setEnrollDrawerOpen(!enrollDrawerOpen);
     };
 
-    // If loading, show a loader
-    if (isLoading) {
-        return (
-            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '70vh' }}>
-                <CircularProgress />
-            </Box>
-        );
-    }
-
-    // // If error, show error message
-    // if (error) {
-    //     return (
-    //         <Box sx={{ p: 4 }}>
-    //             <Typography variant="h5" color="error">Error loading course</Typography>
-    //             <Typography variant="body1">{error.message}</Typography>
-    //             <Button
-    //                 variant="outlined"
-    //                 color="primary"
-    //                 sx={{ mt: 2 }}
-    //                 onClick={() => router.push('/learn/course')}
-    //             >
-    //                 Back to Courses
-    //             </Button>
-    //         </Box>
-    //     );
-    // }
-
     // Check if the course is a classroom course
     const isClassroomCourse = courseData?.course_type === "classroom";
 
     // Breadcrumbs for the toolbar
     const breadcrumbs = [
-        { label: 'Course Management', link: '/learn/course' },
-        { label: courseData?.name || 'Edit Course', link: '#' }
+        { label: translate('Course management.BREADCRUMB_COURSE_MANAGEMENT', 'Course Management'), link: '/learn/course' },
+        { label: courseData?.name || translate('Course management.EDIT_COURSE', 'Edit Course'), link: '#' }
     ];
 
     return (
         <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid item size={12}>
                 <ToolBar breadcrumbs={breadcrumbs} />
             </Grid>
 
-            <Grid item xs={12} sx={{
+            <Grid item size={12} sx={{
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
@@ -134,71 +93,83 @@ export default function CourseEditPage() {
                         zIndex: 1 // Ensure proper stacking
                     }}
                 >
-                    Enroll Users
+                    {translate('Course management.BUTTON_ENROLL_USERS', 'Enroll Users')}
                 </Button>
             </Grid>
 
-            <Grid item xs={12}>
+            <Grid item size={12}>
                 <TabContext value={activeTab}>
                     <CustomTabList
-                        pill='true'
                         onChange={handleTabChange}
-                        variant="fullWidth"
                         sx={{
                             '& .MuiTabs-flexContainer': {
                                 width: '100%'
                             }
                         }}
                     >
-                        <Tab value="properties" label="Properties" />
-                        <Tab value="training_material" label="Training Material" />
-                        {isClassroomCourse && <Tab value="sessions" label="Sessions" />}
-                        <Tab value="enrollments" label="Enrollments" />
-                        <Tab value="learning_plans" label="Learning Plans" />
-                        <Tab value="reports" label="Reports" />
+                        <Tab value="properties" label={translate('Course management.SIDEBAR_MENU_GENERAL', 'Properties')} disabled={error || isLoading} />
+                        <Tab value="training_material" label={translate('Course management.TAB_TRAINING_MATERIAL', 'Training Material')} disabled={error || isLoading} />
+                        {isClassroomCourse && <Tab value="sessions" label={translate('Course management.TAB_SESSIONS', 'Sessions')} disabled={error || isLoading} />}
+                        <Tab value="enrollments" label={translate('Course management.TAB_ENROLLMENTS', 'Enrollments')} disabled={error || isLoading} />
+                        <Tab value="learning_plans" label={translate('Course management.TAB_LEARNING_PLANS', 'Learning Plans')} disabled={error || isLoading} />
+                        <Tab value="reports" label={translate('Course management.TAB_REPORTS', 'Reports')} disabled={error || isLoading} />
                     </CustomTabList>
 
-                    {/* Tab Panels */}
-                    <TabPanel value="properties" sx={{ p: 0 }}>
-                        <CourseProperties course={courseData} />
-                    </TabPanel>
+                    {error || isLoading ?
+                        <Box mt={6}>
+                            <StatusCard
+                                type={isLoading ? 'loading' : 'error'}
+                                title={isLoading ? translate('common.loading', "Loading the course") : `${translate('common.error', 'Error')}: ${error?.message}`}
+                                message={
+                                    isLoading ? "Please wait while we load the course." : "An error occurred while loading the course."
+                                }
+                            />
+                        </Box>
+                        :
+                        <>
+                            {/* Tab Panels */}
+                            <TabPanel value="properties" sx={{ p: 0 }}>
+                                <CourseProperties course={courseData} />
+                            </TabPanel>
 
-                    <TabPanel value="training_material" sx={{ p: 0 }}>
-                        <Paper elevation={0} sx={{ p: 4, border: '1px solid', borderColor: 'divider' }}>
-                            <Typography variant="h6">Training Material</Typography>
-                            <Typography variant="body1" sx={{ mt: 2 }}>
-                                Training Material coming soon.
-                            </Typography>
-                        </Paper>
-                    </TabPanel>
+                            <TabPanel value="training_material" sx={{ p: 0 }}>
+                                <Paper elevation={0} sx={{ p: 4, border: '1px solid', borderColor: 'divider' }}>
+                                    <Typography variant="h6">{translate('Course management.TAB_TRAINING_MATERIAL', 'Training Material')}</Typography>
+                                    <Typography variant="body1" sx={{ mt: 2 }}>
+                                        Training Material coming soon.
+                                    </Typography>
+                                </Paper>
+                            </TabPanel>
 
-                    {isClassroomCourse && (
-                        <TabPanel value="sessions" sx={{ p: 0 }}>
-                            <CourseSessionsTab courseId={courseId} />
-                        </TabPanel>
-                    )}
+                            {isClassroomCourse && (
+                                <TabPanel value="sessions" sx={{ p: 0 }}>
+                                    <CourseSessionsTab courseId={courseId} />
+                                </TabPanel>
+                            )}
 
-                    <TabPanel value="enrollments" sx={{ p: 0 }}>
-                        <CourseEnrollmentsTab courseId={courseId} />
-                    </TabPanel>
+                            <TabPanel value="enrollments" sx={{ p: 0 }}>
+                                <CourseEnrollmentsTab courseId={courseId} />
+                            </TabPanel>
 
-                    <TabPanel value="learning_plans" sx={{ p: 0 }}>
-                        <Paper elevation={0} sx={{ p: 4, border: '1px solid', borderColor: 'divider' }}>
-                            <Typography variant="h6">Course Learning Plans</Typography>
-                            <Typography variant="body1" sx={{ mt: 2 }}>
-                                Learning Plans coming soon.
-                            </Typography>
-                        </Paper>
-                    </TabPanel>
+                            <TabPanel value="learning_plans" sx={{ p: 0 }}>
+                                <Paper elevation={0} sx={{ p: 4, border: '1px solid', borderColor: 'divider' }}>
+                                    <Typography variant="h6">{translate('Course management.TAB_LEARNING_PLANS', 'Course Learning Plans')}</Typography>
+                                    <Typography variant="body1" sx={{ mt: 2 }}>
+                                        Learning Plans coming soon.
+                                    </Typography>
+                                </Paper>
+                            </TabPanel>
 
-                    <TabPanel value="reports" sx={{ p: 0 }}>
-                        <Paper elevation={0} sx={{ p: 4, border: '1px solid', borderColor: 'divider' }}>
-                            <Typography variant="h6">Course Reports</Typography>
-                            <Typography variant="body1" sx={{ mt: 2 }}>
-                                Reports coming soon.
-                            </Typography>
-                        </Paper>
-                    </TabPanel>
+                            <TabPanel value="reports" sx={{ p: 0 }}>
+                                <Paper elevation={0} sx={{ p: 4, border: '1px solid', borderColor: 'divider' }}>
+                                    <Typography variant="h6">{translate('Course management.TAB_REPORTS', 'Course Reports')}</Typography>
+                                    <Typography variant="body1" sx={{ mt: 2 }}>
+                                        Reports coming soon.
+                                    </Typography>
+                                </Paper>
+                            </TabPanel>
+                        </>
+                    }
                 </TabContext>
             </Grid>
 

@@ -21,8 +21,11 @@ import { getCountryByCode, getCountryByDialCode } from "@/utils/getters/getCount
 import CountrySelectInput from "@/components/inputs/CountrySelectInput";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { locationsDefaultValues, locationsSchema } from "@/constants/ClassroomsLocations";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const LocationsDrawer = ({ open, onClose, data }) => {
+    const { translate } = useTranslation();
+    
     const {
         control,
         handleSubmit,
@@ -128,13 +131,13 @@ const LocationsDrawer = ({ open, onClose, data }) => {
         <DrawerFormContainer
             title={
                 data
-                    ? `Update Location: ${data?.name}`
-                    : "Create New Location"
+                    ? translate('CL management.MODAL_TITLE_UPDATE_LOCATION', 'Update location: ') + data?.name
+                    : translate('CL management.MODAL_TITLE_CREATE_LOCATION', 'Create New Location')
             }
             description={
                 data
-                    ? `Update the details of ${data?.name}`
-                    : "Fill in the details to create a new location"
+                    ? translate('CL management.MODAL_SUBTITLE_UPDATE_LOCATION', 'Update the details of ....') 
+                    : translate('CL management.MODAL_SUBTITLE_CREATE_LOCATION', 'Fill in the details to create a new location')
             }
             open={open}
             onClose={onClose}
@@ -165,7 +168,7 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="name"
-                                label="Name"
+                                label={translate('common.name', 'Name')}
                                 control={control}
                                 type="text"
                             />
@@ -173,7 +176,7 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="address"
-                                label="Address"
+                                label={translate('CL management.PLACEHOLDER_ADDRESS', 'Address')}
                                 control={control}
                                 type="text"
                             />
@@ -189,7 +192,7 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <CountrySelectInput
                                 name="country"
-                                label="Country"
+                                label={translate('CL management.PLACEHOLDER_COUNTRY', 'Country')}
                                 setCountryCode={setCountryCode}
                                 control={control}
                             />
@@ -199,13 +202,13 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                                 name="telephone"
                                 control={control}
                                 countryCode={countryCode}
+                                label={translate('CL management.PLACEHOLDER_PHONE', 'Phone Number')}
                             />
-
                         </Grid>
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="email"
-                                label="Email"
+                                label={translate('common.email', 'Email')}
                                 control={control}
                                 type='email'
                             />
@@ -213,7 +216,7 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="reaching_info"
-                                label="Reaching Info"
+                                label={translate('CL management.PLACEHOLDER_REACHING', 'Reaching Info')}
                                 control={control}
                                 type='text'
                             />
@@ -221,7 +224,7 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="accomodations"
-                                label="Accomodations"
+                                label={translate('CL management.PLACEHOLDER_ACCOMO', 'Accommodations')}
                                 control={control}
                                 type='text'
                             />
@@ -229,7 +232,7 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="other_info"
-                                label="Other Info"
+                                label={translate('CL management.PLACEHOLDER_OTHERINFO', 'Other Info')}
                                 control={control}
                                 type='text'
                             />
@@ -237,20 +240,30 @@ const LocationsDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <FileInput
                                 name="images"
-                                label="Images"
+                                label={translate('CL management.SECTION_IMAGES', 'Images')}
                                 control={control}
                                 setFormError={setError}
                                 accept="image/*"
                                 variant='multiple'
                                 maxSize={2} // 2048 kilobytes = 2MB
-                                helperText="Upload images of the location. Max size: 2MB each."
+                                helperText={translate('CL management.IMAGE_LOCATION_UPLOAD_MAX', 'Upload images of the location. Max size: 2MB each.')}
                             />
                         </Grid>
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={createLocation?.isPending || updateLocation?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={createLocation?.isPending || updateLocation?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={createLocation?.isPending || updateLocation?.isPending}>
+                        {translate('common.cancel', 'Cancel')}
+                    </Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={createLocation?.isPending || updateLocation?.isPending}>
+                        {data 
+                            ? updateLocation?.isPending 
+                                ? translate('common.saving', 'Saving...') 
+                                : translate('common.save', 'Save') 
+                            : createLocation?.isPending 
+                                ? translate('common.creating', 'Creating...') 
+                                : translate('common.create', 'Create')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer >

@@ -135,16 +135,7 @@ code {
 }
 
 
-.layout-content-box {
-  flex: 1;
-  margin-left: 4rem;
-  margin-right: unset;
-}
-
-[dir="rtl"] .layout-content-box {
-  margin-right: 4rem;
-  margin-left: unset;
-}
+/* Add these styles to your CSS file */
 
 .layout-sidebar-box {
   position: fixed;
@@ -152,7 +143,18 @@ code {
   left: 0;
   right: unset;
   height: calc(100vh - 4rem);
-  width: 4rem;
+  width: auto;
+  /* Changed from fixed width to auto */
+  transition: all 0.3s ease-in-out;
+  z-index: 20;
+  overflow: visible;
+  /* Allow overflow for expanded content */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}
+
+/* For smooth text appearance/disappearance when expanding/collapsing */
+.layout-sidebar-box aside {
+  overflow: hidden;
 }
 
 [dir="rtl"] .layout-sidebar-box {
@@ -160,17 +162,52 @@ code {
   right: 0;
 }
 
+.layout-content-box {
+  flex: 1;
+  margin-left: 4rem;
+  /* Default margin for collapsed sidebar */
+  margin-right: unset;
+  transition: all 0.3s ease-in-out;
+  will-change: margin-left;
+}
+
+[dir="rtl"] .layout-content-box {
+  margin-right: 4rem;
+  margin-left: unset;
+  transition: all 0.3s ease-in-out;
+  will-change: margin-right;
+}
+
+/* When sidebar is expanded */
+.sidebar-expanded .layout-content-box {
+  margin-left: 12rem;
+  /* Increased margin for expanded sidebar */
+}
+
+[dir="rtl"] .sidebar-expanded .layout-content-box {
+  margin-right: 12rem;
+  margin-left: unset;
+}
+
+/* Pin icon styles */
+.pin-icon {
+  transition: transform 0.3s ease;
+}
+
+.pin-icon.pinned {
+  transform: rotate(-45deg);
+  color: var(--primary-color);
+}
 
 @media screen and (max-width: 1200px) {
   .layout-content-box {
-    margin-left: unset;
-    margin-right: unset;
+    margin-left: unset !important;
+    margin-right: unset !important;
   }
 
   .layout-sidebar-box {
     display: none;
   }
-
 }
 
 /* scrollbar style */

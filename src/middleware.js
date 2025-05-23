@@ -1,134 +1,56 @@
-import { NextResponse } from 'next/server'
 import { withAuth } from 'next-auth/middleware'
-import { getToken } from 'next-auth/jwt'
+import { handler } from './utils/middleware/handler'
 
-const CENTRAL_PAGES = [
-    '/custom-domain-management',
-    '/dashboard',
-    '/email-smtp-configuration',
-    '/ssl-management',
-    '/tenant-management',
-    '/auth' // Added this to include /auth/login and other auth routes
-]
+/**
+ * Middleware Handler for Domain-Aware Routing and Authentication
+ * ---------------------------------------------------------------
+ * This middleware handles routing logic and access control for a multi-tenant Next.js app.
+ * It supports:
+ * - Central domain vs. tenant subdomain distinction
+ * - Route-based access restrictions
+ * - Token-based authentication using NextAuth
+ * - Redirection/rewrites for root and login paths
+ * - Public, shared, and protected route handling
+ *
+ * Request Flow:
+ * 1. Determine if request is from a central domain (vs. tenant)
+ * 2. Allow:
+ *    - Shared pages (`/signup`, `/verify-email`, etc.)
+ *    - Public tenant-only pages (like `/register`) if from tenant domain
+ *    - Tenant requests with valid SSO auth params
+ * 3. Handle special redirects/restrictions:
+ *    - `/` → redirects to `/dashboard` or `/home`
+ *    - Authenticated users are **not allowed** to access login pages again
+ *    - Incompatible routes (e.g., `/dashboard` on tenant domain) get rewritten to 404
+ * 4. Auth check:
+ *    - Unauthenticated users get redirected to the appropriate login page
+ * 5. Domain access rules:
+ *    - Central domains can only access central pages
+ *    - Tenant domains cannot access central-only pages
+ *
+ * Dependencies:
+ * - `@/utils/middleware/auth.js`: Domain + token utils
+ * - `@/utils/middleware/routes.js`: Route path definitions and matchers
+ *
+ * Assumptions:
+ * - `NEXTAUTH_SECRET` and `NEXT_PUBLIC_MAIN_DOMAINES` are correctly configured
+ * - Paths like `/auth/login` and `/login` are used appropriately per domain type
+ *
+ * Maintenance Notes:
+ * - Keep `CENTRAL_PAGES`, `SHARED_PAGES`, `PUBLIC_TENANT_PAGES` in `routes.js` synced with route file structure
+ * - If you add more login flows, update the loginPath logic
+ * - Any new public routes should be categorized properly to avoid over-restricting
+ */
 
-const SHARED_PAGES = [
-    '/signup',
-    '/verify-email',
-    '/error',
-    '/404',
-    '/500',
-]
 
-// Pages that need public access but only on tenant domains
-const PUBLIC_TENANT_PAGES = [
-    '/forgot-password',
-    '/reset-password',
-    '/sso',
-    '/register'
-]
-
-// First, define a standard middleware function
-async function middleware(request) {
-    const token = await getToken({ req: request, secret: process.env.NEXTAUTH_SECRET })
-    const host = request?.headers?.get('host') || ''
-    const mainDomains = (process.env.NEXT_PUBLIC_MAIN_DOMAINES?.split(',') || []).filter(Boolean)
-    // console.log('Main domains:', mainDomains)
-    // console.log('Current host:', host)
-    const isCentral = mainDomains.includes(host)
-    const currentPath = request.nextUrl.pathname
-
-    // console.log('is central:', isCentral);
-
-    // Check if URL has all required tenant auth params
-    const searchParams = request.nextUrl.searchParams
-    const hasTenantAuthParams =
-        searchParams.has('login_user') &&
-        searchParams.has('token') &&
-        searchParams.has('time') &&
-        searchParams.has('api_key') &&
-        searchParams.has('external_user_id')
-
-    // If all tenant auth params are present, proceed without authentication check
-    if (!isCentral && hasTenantAuthParams) {
-        return NextResponse.next()
-    }
-
-    // Allow access to shared pages regardless of authentication
-    if (SHARED_PAGES.some(page => currentPath.startsWith(page))) {
-        return NextResponse.next()
-    }
-
-    // Handle root path
-    if (currentPath === '/') {
-        const redirectPath = isCentral ? '/dashboard' : '/home'
-        // Check if the destination exists before redirecting
-        return NextResponse.redirect(new URL(redirectPath, request.url))
-    }
-
-    // Handle login page paths with redirection - redirect users to the appropriate login page based on domain type
-    if (isCentral && currentPath === '/login') {
-        return NextResponse.redirect(new URL('/auth/login', request.url))
-    }
-
-    if (!isCentral && currentPath === '/auth/login') {
-        return NextResponse.redirect(new URL('/login', request.url))
-    }
-
-    // Handle home page paths without redirection - show 404 if path doesn't match domain type
-    if (isCentral && currentPath === '/home') {
-        return NextResponse.rewrite(new URL('/404', request.url))
-    }
-
-    if (!isCentral && currentPath === '/dashboard') {
-        return NextResponse.rewrite(new URL('/404', request.url))
-    }
-
-    // Allow access to public tenant pages when NOT on central domains
-    if (!isCentral && PUBLIC_TENANT_PAGES.some(page => currentPath.startsWith(page))) {
-        return NextResponse.next()
-    }
-
-    // If the user is unauthenticated and not on the login page, redirect to login
-    const loginPath = isCentral ? '/auth/login' : '/login'
-    if (!token && !currentPath.startsWith(loginPath)) {
-        return NextResponse.redirect(new URL(loginPath, request.url))
-    }
-
-    // Prevent redirect loop - Allow access to login if user is unauthenticated
-    if (!token && currentPath.startsWith(loginPath)) {
-        return NextResponse.next()
-    }
-
-    // Central domain restrictions - only allow CENTRAL_PAGES
-    if (isCentral && !CENTRAL_PAGES.some(page => currentPath.startsWith(page))) {
-        return new NextResponse(null, {
-            status: 403,
-            statusText: 'Access Denied'
-        })
-    }
-
-    // Tenant domain restrictions - block access to CENTRAL_PAGES
-    if (!isCentral && CENTRAL_PAGES.some(page => currentPath.startsWith(page))) {
-        return new NextResponse(null, {
-            status: 403,
-            statusText: 'Access Denied'
-        })
-    }
-
-    return NextResponse.next()
-}
-
-// Then wrap it with withAuth
-export default withAuth(middleware, {
+export default withAuth(handler, {
     callbacks: {
-        authorized: () => true // Let our custom middleware handle the authorization
-    }
+        authorized: () => true,
+    },
 })
 
-// More precise matcher that avoids intercepting special App Router paths
 export const config = {
     matcher: [
-        // Exclude system files and API routes
         '/((?!api|_next/static|_next/image|_next/data|favicon.ico|images|.*\\.svg|docs).*)',
-    ]
+    ],
 }

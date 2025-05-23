@@ -5,7 +5,7 @@ import TextInput from "@/components/inputs/TextInput";
 import { defaultValues, schema } from "@/constants/LocalizationTool";
 import { useUpdateLocalizationSettings } from "@/hooks/api/tenant/useLocalization";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Button, Card, CardActions, CardContent, Grid } from "@mui/material";
+import { Button, Card, CardActions, CardContent, Grid2 as Grid, ListItemText } from "@mui/material";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 
@@ -27,12 +27,10 @@ const LocalizationToolDrawer = ({ open, onClose, localization }) => {
         updateLocalizationSettings.mutate({
             id: localization.id,
             data
-        }, {
-            onSuccess: () => {
-                reset();
-                onClose();
-            }
-        });
+        }).then(() => {
+            reset();
+            onClose();
+        })
     }
 
     const cancel = () => {
@@ -72,7 +70,7 @@ const LocalizationToolDrawer = ({ open, onClose, localization }) => {
                 }}
                 >
                     <Grid container rowSpacing={5} padding={2}>
-                        <Grid item xs={12}>
+                        <Grid item size={12}>
                             <TextInput
                                 control={control}
                                 name="name"
@@ -80,7 +78,7 @@ const LocalizationToolDrawer = ({ open, onClose, localization }) => {
                                 error={errors?.name?.message}
                             />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid item size={12}>
                             <SelectInput
                                 control={control}
                                 name="direction"
@@ -92,11 +90,14 @@ const LocalizationToolDrawer = ({ open, onClose, localization }) => {
                                 ]}
                             />
                         </Grid>
-                        <Grid item xs={12}>
+                        <Grid item size={12}>
                             <SwitchInput
                                 control={control}
                                 name="is_default"
-                                label="Default"
+                                label={<ListItemText
+                                    primary="Default Language"
+                                    secondary="This language will be used as the default for all users. If no other language is set, this will be the default."
+                                />}
                                 error={errors?.is_default?.message}
                             />
                         </Grid>
@@ -109,15 +110,16 @@ const LocalizationToolDrawer = ({ open, onClose, localization }) => {
                         p: 2
                     }}
                 >
-                    <Button onClick={cancel}>
+                    <Button onClick={cancel} disabled={updateLocalizationSettings.isPending}>
                         Cancel
                     </Button>
                     <Button
                         variant='contained'
                         color="primary"
                         type="submit"
+                        disabled={updateLocalizationSettings.isPending}
                     >
-                        Submit
+                        {updateLocalizationSettings.isPending ? 'Saving...' : 'Save'}
                     </Button>
                 </CardActions>
             </Card>

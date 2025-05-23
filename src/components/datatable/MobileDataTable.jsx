@@ -67,6 +67,8 @@ const MobileDataTable = ({
   rowsPerPageOptions = [5, 15, 25],
   columnVisibility = {},
   setColumnVisibility,
+  openRessources,
+  setOpenRessources,
   variant,
 }) => {
   const [detailDrawer, setDetailDrawer] = useState(false);
@@ -203,7 +205,14 @@ const MobileDataTable = ({
             <i className={`solar-folder-2-bold-duotone w-6 h-6 ${navigationOpen ? "text-primary" : ""}`} />
           </IconButton>
         )}
-
+        {features?.ressources && (
+          <IconButton
+            onClick={setOpenRessources}
+            className={`hover:bg-gray-100 ${openRessources ? "text-primary" : ""}`}
+          >
+            <i className="lucide-panel-left-open rotate- w-6 h-6" />
+          </IconButton>
+        )}
         <div className="flex items-center gap-2">
           {features?.search && (
             <IconButton

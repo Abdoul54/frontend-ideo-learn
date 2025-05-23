@@ -28,6 +28,7 @@ import CategorySelector from '@/components/CategorySelector';
 import { useForm } from 'react-hook-form';
 import { useRouter } from 'next/navigation';
 import TextEditorInput from '@/components/inputs/TextEditorInput';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 /**
  * Drawer component to add a new course
@@ -40,6 +41,9 @@ import TextEditorInput from '@/components/inputs/TextEditorInput';
 const AddCourseDrawer = ({ open, onClose, categoryId }) => {
   // Initialize Next.js router for navigation
   const router = useRouter();
+
+  // Translation hook
+  const { translate } = useTranslation();
 
   // Initialize react-hook-form to provide control to CategorySelector
   const { control, watch, setValue } = useForm();
@@ -261,7 +265,7 @@ const AddCourseDrawer = ({ open, onClose, categoryId }) => {
           borderColor: 'divider'
         }}
       >
-        <Typography variant="h6">Add New Course</Typography>
+        <Typography variant="h6">{translate('Course management.MODAL_TITLE_ADD_NEW_COURSE', 'Add New Course')}</Typography>
         <IconButton onClick={onClose} size="small">
           <i className="lucide-x" />
         </IconButton>
@@ -272,37 +276,37 @@ const AddCourseDrawer = ({ open, onClose, categoryId }) => {
           <Stack spacing={3} sx={{ mt: 2 }}>
 
             <Typography variant="subtitle1" fontWeight="bold" color="black">
-              Course Type
+              {translate('Course management.FIELD_COURSE_TYPE', 'Course Type')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Select the type of course you want to create
+              {translate('Course management.SECTION_SUBTITLE_COURSE_TYPE', 'Select the type of course you want to create')}
             </Typography>
             {/* Course Type Selector */}
 
             <FormControl fullWidth>
-              <InputLabel>Course Type</InputLabel>
+              <InputLabel>{translate('Course management.FIELD_COURSE_TYPE', 'Course Type')}</InputLabel>
               <Select
                 name="course_type"
                 value={formData.course_type}
                 onChange={handleChange}
-                label="Course Type"
+                label={translate('Course management.FIELD_COURSE_TYPE', 'Course Type')}
               >
-                <MenuItem value="elearning">E-Learning</MenuItem>
-                <MenuItem value="classroom">Classroom</MenuItem>
+                <MenuItem value="elearning">{translate('Course management.DROPDOWN_ELEARNING', 'E-Learning')}</MenuItem>
+                <MenuItem value="classroom">{translate('Course management.DROPDOWN_CLASSROOM', 'Classroom')}</MenuItem>
                 {/* <MenuItem value="webinar">Webinar</MenuItem> */}
               </Select>
             </FormControl>
 
             {/* Course Title and Code */}
             <Typography variant="subtitle1" fontWeight="bold" color="black">
-              Course Information
+              {translate('Course management.SECTION_COURSE_INFORMATION', 'Course Information')}
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Fill in the course details below.
+              {translate('Course management.SECTION_SUBTITLE_COURSE_INFO', 'Fill in the course details below.')}
             </Typography>
 
             <TextField
-              label="Course Title"
+              label={translate('Course management.FIELD_COURSE_NAME', 'Course Title')}
               name="title"
               value={formData.title}
               onChange={handleChange}
@@ -311,16 +315,16 @@ const AddCourseDrawer = ({ open, onClose, categoryId }) => {
             />
 
             <TextField
-              label="Course Code (optional)"
+              label={translate('Course management.PLACEHOLDER_COURSE_CODE', 'Course Code (optional)')}
               name="course_code"
               value={formData.course_code}
               onChange={handleChange}
               fullWidth
-              helperText="A unique identifier for this course"
+              helperText={translate('Course management.FIELD_CODE_DESCRIPTION', 'A unique identifier for this course')}
             />
 
             <Typography variant="subtitle1" fontWeight="bold" color="black" sx={{ mt: 2 }}>
-              Description
+              {translate('Course management.SECTION_DESCRIPTION', 'Description')}
             </Typography>
             <TextEditorInput
               content={description}
@@ -330,7 +334,7 @@ const AddCourseDrawer = ({ open, onClose, categoryId }) => {
             <Divider />
 
             <Typography variant="subtitle1" fontWeight="bold" color="black">
-              Skills suggestions
+              {translate('Course management.SECTION_SKILLS_SUGGESTIONS', 'Skills suggestions')}
             </Typography>
 
             {/* Display selected skills as chips */}
@@ -376,8 +380,8 @@ const AddCourseDrawer = ({ open, onClose, categoryId }) => {
               renderInput={(params) => (
                 <TextField
                   {...params}
-                  label="Search for skills"
-                  placeholder="Type to search..."
+                  label={translate('Course management.FIELD_SEARCH_SKILLS', 'Search for skills')}
+                  placeholder='Type to search...'
                   InputProps={{
                     ...params.InputProps,
                     endAdornment: (
@@ -402,14 +406,14 @@ const AddCourseDrawer = ({ open, onClose, categoryId }) => {
 
             {/* Category Selector */}
             <Typography variant="subtitle1" fontWeight="bold" color="black">
-              Category destination
+              {translate('Course management.SECTION_CATEGORY_DESTINATION', 'Category destination')}
             </Typography>
 
             {categoryDetails && (
               console.log('Category Details:', categoryDetails) ||
               <Box mb={2}>
                 <Typography variant="body1" fontWeight="medium">
-                  Selected Category: {categoryDetails.title}
+                  {translate('Course management.TEXT_SELECTED_CATEGORY', 'Selected category')}: {categoryDetails.title}
                 </Typography>
               </Box>
             )}
@@ -441,7 +445,7 @@ const AddCourseDrawer = ({ open, onClose, categoryId }) => {
                   onClose();
                 }}
               >
-                Cancel
+                {translate('common.cancel', 'Cancel')}
               </Button>
               <Button
                 variant="contained"

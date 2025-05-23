@@ -3,12 +3,14 @@
 import { useState } from "react";
 import DataView from "@/views/DataView";
 import { usePowerUsers, useRemovePowerUser, useUnassignPowerUserProfiles } from "@/hooks/api/tenant/usePowerUsers";
-import PowerUsersDrawer from "@/views/Forms/PowerUsers/PowerUsersDrawer";
 import { columns } from "@/constants/PowerUser";
 import GrantProfilesDrawer from "@/views/Forms/PowerUsers/GrantProfilesDrawer";
 import DeleteConfirmationDialog from "@/views/Dialogs/DeleteConfirmation";
+import { useRouter } from "next/navigation";
+import AssignRessourcesDrawer from "@/views/Forms/PowerUsers/AssignRessourcesDrawer";
 
-const PowerUsers = () => {
+const PowerUsers = ({ translate }) => {
+    const router = useRouter();
     const [filters, setFilters] = useState(null);
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
@@ -16,21 +18,16 @@ const PowerUsers = () => {
     const [selectedRows, setSelectedRows] = useState([]);
     const [selectAll, setSelectAll] = useState(false);
 
-    const [drawerState, setDrawerState] = useState({
-        open: false,
-        data: null
-    });
-
     const [deleteConfirmation, setDeleteConfirmation] = useState({
         open: false,
         data: null,
         type: null,
         variant: 'default'
     });
-
-    const [grantProfileDrawerState, setGrantProfileDrawerState] = useState({
+    const [drawerState, setDrawerState] = useState({
         open: false,
-        data: null
+        data: null,
+        type: null,
     });
 
     const [columnVisibility, setColumnVisibility] = useState({});
@@ -63,7 +60,7 @@ const PowerUsers = () => {
         <>
             <DataView
                 title="Power Users"
-                columns={columns(drawerState, setDrawerState, grantProfileDrawerState, setGrantProfileDrawerState, setDeleteConfirmation, unassignPowerUser)}
+                columns={columns(drawerState, setDrawerState, setDeleteConfirmation, router, translate)}
                 data={data?.items}
                 height="calc(100vh - 300px)"
                 isLoading={isLoading}
@@ -72,16 +69,7 @@ const PowerUsers = () => {
                 setPagination={setPagination}
                 selectedRows={selectedRows}
                 setSelectedRows={setSelectedRows}
-                toolbar={{
-                    breadcrumbs: [{ label: 'Power Users', path: '/power-users' }],
-                    buttonGroup: [{
-                        text: 'Add Profile',
-                        variant: 'contained',
-                        tooltip: 'Add new profile',
-                        icon: 'solar-add-circle-outline',
-                        onClick: () => setDrawerState({ open: true, data: null })
-                    }]
-                }}
+                noToolbar
                 selectAll={selectAll}
                 onSelectAllChange={setSelectAll}
                 slots={{
@@ -114,7 +102,7 @@ const PowerUsers = () => {
                         [
                             {
                                 id: 'unassign-profile',
-                                label: 'Unassign Profiles',
+                                label: translate('Power User & Profile Management.MENU_UNASSIGN_PROFILES'),
                                 handler: () => setDeleteConfirmation({ open: true, data: null, type: 'unassign-profile', variant: 'simple' }),
                             }
                         ],
@@ -133,13 +121,6 @@ const PowerUsers = () => {
                 enableSelection
             />
             {
-                drawerState?.open && <PowerUsersDrawer
-                    open={drawerState?.open}
-                    onClose={() => setDrawerState({ open: false, data: null })}
-                    data={drawerState?.data}
-                />
-            }
-            {
                 deleteConfirmation.open && <DeleteConfirmationDialog
                     open={deleteConfirmation.open}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
@@ -149,10 +130,19 @@ const PowerUsers = () => {
                     variant={deleteConfirmation?.variant}
                 />}
             {
-                grantProfileDrawerState?.open && <GrantProfilesDrawer
-                    open={grantProfileDrawerState?.open}
-                    onClose={() => setGrantProfileDrawerState({ open: false, data: null })}
-                    data={grantProfileDrawerState?.data}
+                drawerState?.open && drawerState.type === 'assign_profiles' && <GrantProfilesDrawer
+                    open={drawerState?.open}
+                    onClose={() => setDrawerState({ open: false, data: null })}
+                    data={drawerState?.data}
+                    translate={translate}
+                />
+            }
+            {
+                drawerState?.open && drawerState.type === 'assign_resources' && <AssignRessourcesDrawer
+                    open={drawerState?.open}
+                    onClose={() => setDrawerState({ open: false, data: null })}
+                    data={drawerState?.data}
+                    translate={translate}
                 />
             }
         </>

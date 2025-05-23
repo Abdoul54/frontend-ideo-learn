@@ -11,7 +11,7 @@ export const useHaykal = ({
   sort = [],
   filters = [],
   haykal_id = null,
-  lang = "en",
+  lang = null,
   search_type = 1,
   flattened = false,
   sort_attr = "name",
@@ -19,7 +19,7 @@ export const useHaykal = ({
 }) => {
   // Only include search_type in the queryKey if there's a search
   const searchTypeParam = search ? search_type : undefined;
-  
+
   return useQuery({
     queryKey: ["haykal", { page, page_size, search, sort, filters, haykal_id, lang, search_type: searchTypeParam, flattened, sort_attr, sort_dir }],
     queryFn: async () => {
@@ -55,7 +55,7 @@ export const useAddHaykal = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["haykal"] });
-      toast.success("Haykal added successfully");
+      toast.success("Branch added successfully");
     },
   });
 };
@@ -74,7 +74,7 @@ export const useMoveHaykal = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["haykal"] });
       queryClient.invalidateQueries({ queryKey: ["haykalUsers"] });
-      toast.success("Haykal moved successfully");
+      toast.success("Branch moved successfully");
     },
   });
 };
@@ -91,7 +91,7 @@ export const useUpdateHaykal = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["haykal"] });
-      toast.success("Haykal updated successfully");
+      toast.success("Branch updated successfully");
     }
   });
 };
@@ -106,7 +106,7 @@ export const useDeleteHaykal = () => {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["haykal"] });
-      toast.success("Haykal deleted successfully");
+      toast.success("Branch deleted successfully");
     }
   });
 }
@@ -120,7 +120,7 @@ export const useAssignUserToHaykal = () => {
       if (!id_users || id_users === '') {
         throw new Error('User IDs cannot be empty');
       }
-      
+
       const { data } = await axiosInstance.post(
         '/tenant/tanzim/v1/haykal/users/assign',
         { id_org, id_users, use_secondary_identifier }
@@ -130,12 +130,12 @@ export const useAssignUserToHaykal = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["haykal"] });
       queryClient.invalidateQueries({ queryKey: ["users"] });
-      toast.success('User assigned to Haykal successfully');
+      toast.success('User assigned to Branch successfully');
     }
   });
 }
 
-// Assign user fields to Haykal
+// Assign user fields to Branch
 export const useAssignUserFieldsToHaykal = () => {
   const queryClient = useQueryClient();
 
@@ -150,10 +150,37 @@ export const useAssignUserFieldsToHaykal = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["haykal"] });
       queryClient.invalidateQueries({ queryKey: ["userfields"] });
-      toast.success("User fields assigned to Haykal successfully");
+      toast.success("User fields assigned to Branch successfully");
     },
     onError: (error) => {
       console.error("Failed to assign user fields:", error);
     },
   });
 };
+
+
+// GET /tenant/tanzim/v1/haykal/{haykal_id}
+
+export const useGetHaykal = (haykal_id) => {
+  return useQuery({
+    queryKey: ["haykal", haykal_id],
+    queryFn: async () => {
+      try {
+        const url = `/tenant/tanzim/v1/haykal/${haykal_id}`;
+
+        const response = await axiosInstance.get(url);
+
+        if (!response.data || !response.data.success) {
+          throw new Error("Invalid response structure");
+        }
+
+        return response.data?.data;
+      } catch (error) {
+        console.error("Haykal Fetch Error:", error);
+        throw error;
+      }
+    },
+    retry: 2,
+    keepPreviousData: true,
+  });
+}

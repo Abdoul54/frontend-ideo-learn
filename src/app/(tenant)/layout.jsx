@@ -1,6 +1,3 @@
-// MUI Imports
-import Button from '@mui/material/Button'
-
 // Layout Imports
 import LayoutWrapper from '@layouts/LayoutWrapper'
 import VerticalLayout from '@layouts/VerticalLayout'
@@ -11,32 +8,24 @@ import Navigation from '@components/layout/vertical/Navigation'
 import Header from '@components/layout/horizontal/Header'
 import Navbar from '@components/layout/vertical/Navbar'
 import VerticalFooter from '@components/layout/vertical/Footer'
-import ScrollToTop from '@core/components/scroll-to-top'
 
 // Util Imports
-import { getMode, getSystemMode } from '@core/utils/serverHelpers'
 import NavbarContent from '@/components/layout/horizontal/NavbarContent'
 import TenantProviders from '@/components/TenantProviders'
 import { UserProvider } from '@/@core/contexts/userContext'
-// import { MetadataProvider } from '@/@core/contexts/metaDataContext'
-// import { TranslationProvider } from '@/@core/contexts/translationContext'
 
 
 const Layout = async ({ children }) => {
-  // Vars
-  const mode = getMode()
-  const systemMode = getSystemMode()
-
   return (
     <TenantProviders>
       <UserProvider>
         {/* <TranslationProvider>
           <MetadataProvider> */}
         <LayoutWrapper
-          systemMode={systemMode}
+          systemMode="light"
           verticalLayout={
             <VerticalLayout
-              navigation={<Navigation mode={mode} systemMode={systemMode} />}
+              navigation={<Navigation mode="light" systemMode="light" />}
               navbar={<Navbar />}
               footer={<VerticalFooter />}
             >

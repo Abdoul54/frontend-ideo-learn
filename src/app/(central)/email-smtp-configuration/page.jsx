@@ -30,8 +30,8 @@ const Page = () => {
       isLoading={isLoading}
       height="calc(100vh - 253px)"
       error={error}
-      pagination
-      setPagination
+      pagination={{ ...pagination, total: data?.pagination?.total }}
+      setPagination={setPagination}
       selectedRows={selectedRows}
       setSelectedRows={setSelectedRows}
       toolbar={{

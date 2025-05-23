@@ -1,10 +1,9 @@
-import { useSettings } from "@/@core/contexts/settingsContext";
-import AvatarInput from "@/components/inputs/AvatarInput";
 import FileInput from "@/components/inputs/FileInput";
 import TextInput from "@/components/inputs/TextInput";
 import UserFieldInput from "@/components/inputs/UserFieldInput";
 import { useUserFields } from "@/hooks/api/tenant/useUserFields";
 import { useGetUser, useUpdateUserWithFiles } from "@/hooks/api/useUsers";
+import { useLanguage } from "@/providers/LanguageProvider";
 import { stringAvatar } from "@/utils/avatarGenerator";
 import { Box, Button, Card, CardActions, CardContent, CardHeader, Divider, Grid, ListItemText, Stack, Typography } from "@mui/material";
 import { useSession } from "next-auth/react";
@@ -13,8 +12,9 @@ import { useForm } from "react-hook-form";
 
 const PersonalInfo = () => {
     const { data: session } = useSession();
-    const { settings } = useSettings();
-    const [currentLanguage, setCurrentLanguage] = useState(settings?.language?.locale || 'fr');
+    const { language } = useLanguage()
+
+    const [currentLanguage, setCurrentLanguage] = useState(language?.locale || 'fr');
     const {
         data: userFields
     } = useUserFields({

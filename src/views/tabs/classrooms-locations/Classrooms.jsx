@@ -2,26 +2,18 @@
 
 import { useState } from "react";
 import DataView from "@/views/DataView";
-import { useRemovePowerUser, useUnassignPowerUserProfiles } from "@/hooks/api/tenant/usePowerUsers";
 import { classroomColumns } from "@/constants/ClassroomsLocations";
-import ClassroomDrawer from "@/views/Forms/Classrooms/ClassroomDrawer";
 import { useClassrooms, useDeleteClassroom, useUnassignLocation } from "@/hooks/api/tenant/learn/classrooms-locations/useClassrooms";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
-import AssignLocationDrawer from "@/views/Forms/Classrooms/AssignLocationDrawer";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
-
-const Classrooms = () => {
-    const [filters, setFilters] = useState(null);
+const Classrooms = ({ setDrawerState }) => {
+    const { translate } = useTranslation();
+    
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
     const [selectedRows, setSelectedRows] = useState([]);
-
-    const [drawerState, setDrawerState] = useState({
-        open: false,
-        data: null,
-        type: null,
-    });
 
     const [deleteConfirmation, setDeleteConfirmation] = useState({
         open: false,
@@ -37,7 +29,6 @@ const Classrooms = () => {
         page_size: pagination.pageSize,
         search: globalFilter,
         sort: sorting,
-        filters
     })
 
 
@@ -59,10 +50,10 @@ const Classrooms = () => {
     return (
         <>
             <DataView
-                title="Classrooms"
-                columns={classroomColumns(setDrawerState, setDeleteConfirmation,unassignLocation)}
+                title={translate('CL management.TAB_CLASSROOMS', "Classrooms")}
+                columns={classroomColumns(setDrawerState, setDeleteConfirmation, unassignLocation)}
                 data={data?.items}
-                height="calc(100vh - 300px)"
+                height="calc(100vh - 325px)"
                 isLoading={isLoading}
                 error={error}
                 pagination={{ ...pagination, total: data?.pagination?.total }}
@@ -70,21 +61,8 @@ const Classrooms = () => {
                 selectedRows={selectedRows}
                 setSelectedRows={setSelectedRows}
                 enableSelection={false}
-
-                toolbar={{
-                    buttonGroup: [
-                        {
-                            text: "Add Classroom",
-                            variant: "contained",
-                            tooltip: "Create a new classroom",
-                            icon: "lucide-plus",
-                            onClick: () => setDrawerState({ open: true, data: null, type: 'add' }),
-                        },
-                    ]
-                }}
+                noToolbar
                 slots={{
-                    filters,
-                    setFilters,
                     globalFilter,
                     setGlobalFilter,
                     sorting,
@@ -95,38 +73,27 @@ const Classrooms = () => {
                         search: true,
                         filter: false,
                         columnVisibility: true
-                    }, emptyState: {
-                        height: 'calc(100vh - 455px)'
+                    }, 
+                    emptyState: {
+                        message: translate('CL management.NO_CLASSROOMS_FOUND', 'No classrooms found'),
+                        description: translate('CL management.TRY_CREATING', 'Try creating a new classroom'),
+                        height: 'calc(100vh - 465px)'
                     }
                 }}
-
                 datatablemulti={false}
             />
-            {
-                drawerState?.open && (drawerState?.type === 'edit' || drawerState?.type === 'add') && <ClassroomDrawer
-                    open={drawerState?.open}
-                    onClose={() => setDrawerState({ open: false, data: null })}
-                    data={drawerState?.data}
-                />
-            }
-            {
-                drawerState?.open && drawerState?.type === 'assign' && <AssignLocationDrawer
-                    open={drawerState?.open}
-                    onClose={() => setDrawerState({ open: false, data: null })}
-                    data={drawerState?.data}
-                />
-            }
+
             {
                 deleteConfirmation.open && <ConfirmationDialog
                     type='error'
                     isOpen={deleteConfirmation.open}
-                    title={`Delete "${deleteConfirmation?.data?.name}"`}
-                    message={`Are you sure you want to delete "${deleteConfirmation?.data?.name}"?`}
+                    title={translate('CL management.DIALOG_TITLE_DELETE_CLASSROOM', {name: deleteConfirmation?.data?.name})}
+                    message={translate('CL management.DIALOG_MESSAGE_DELETE_CLASSROOM', {name: deleteConfirmation?.data?.name})}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
                     actions={{
                         toast: {
-                            success: 'Classroom deleted successfully',
-                            error: 'Error deleting classroom',
+                            success: translate('CL management.CLASSROOM_DELETED', 'Classroom deleted successfully'),
+                            error: translate('CL management.CLASSROOM_DELETE_ERROR', 'Error deleting classroom'),
                             show: false,
                         },
                         icons: {
@@ -134,9 +101,9 @@ const Classrooms = () => {
                             cancel: null
                         },
                         buttons: {
-                            confirm: 'Delete',
-                            cancel: 'Cancel',
-                            processing: 'Deleting...',
+                            confirm: translate('common.delete', 'Delete'),
+                            cancel: translate('common.cancel', 'Cancel'),
+                            processing: translate('common.deleting', 'Deleting...'),
                         },
                         onConfirm: handleDeleteSubmit,
                         isLoading: deleteClassroom.isPending,
@@ -150,4 +117,4 @@ const Classrooms = () => {
     );
 };
 
-export default Classrooms
+export default Classrooms;

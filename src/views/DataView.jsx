@@ -160,7 +160,7 @@ const DataView = ({
                         overflowX: 'hidden',
                         border: 1,
                         borderColor: 'divider',
-                        borderRadius: 2,
+                        borderRadius: 1,
                     }}
                 >
                     <Grid item xs={12}>
@@ -176,7 +176,14 @@ const DataView = ({
                             onColumnVisibilityChange={slots?.setColumnVisibility}
                             navigationOpen={navigationOpen}
                             features={slots?.features}
-                            isColumnsLoading={isColumnsLoading} // Pass isColumnsLoading prop here
+                            isColumnsLoading={isColumnsLoading}
+                            breadcrumbs={slots?.breadcrumbs}
+                            goBack={slots?.goBack}
+                            module={slots?.module}
+                            comparedTo={slots?.comparedTo}
+                            language={slots?.language}
+                            openRessources={slots?.openRessources}
+                            setOpenRessources={slots?.setOpenRessources}
                         />
                     </Grid>
                     <Grid item xs={12} sx={{ position: 'relative', width: '100%' }}>
@@ -255,6 +262,8 @@ const DataView = ({
                                             enableSearchType={navigation?.enableSearchType || false}
                                             pagination={navigation?.pagination}
                                             footerComponent={navigation?.footerComponent}
+                                            actions={navigation?.actions}
+
                                         />
                                     )}
                                 </Grid>
@@ -335,6 +344,9 @@ const DataView = ({
                                                 features={slots?.features}
                                                 enableRowSelection={enableSelection}
                                                 isColumnsLoading={isColumnsLoading} // Pass isColumnsLoading prop here
+                                                openRessources={slots?.openRessources}
+                                                setOpenRessources={slots?.setOpenRessources}
+
                                             />
                                         </>
                                     ) : (

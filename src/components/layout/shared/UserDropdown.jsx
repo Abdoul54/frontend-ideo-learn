@@ -169,10 +169,10 @@ const UserDropdown = ({ advancedSettings = null }) => {
                       <Typography color='text.primary'>My Profile</Typography>
                     </MenuItem>
                   )}
-                  <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e)}>
+                  {/* <MenuItem className='gap-3 pli-4' onClick={e => handleDropdownClose(e)}>
                     <i className='solar-settings-bold-duotone' />
                     <Typography color='text.primary'>Settings</Typography>
-                  </MenuItem>
+                  </MenuItem> */}
                   <div className='flex items-center plb-1.5 pli-4'>
                     <Button
                       fullWidth

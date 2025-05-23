@@ -8,6 +8,7 @@ import SwitchInput from "@/components/inputs/SwitchInput";
 import { useUseAllUserFields } from "@/hooks/api/tenant/useUserFields";
 import React from "react";
 import { useAdvancedSettings } from "@/hooks/api/tenant/useAdvancedSettings";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 const renderFieldByType = (field, control) => {
     const commonProps = {
@@ -54,6 +55,7 @@ const renderFieldByType = (field, control) => {
 };
 
 const StepThree = ({ control }) => {
+    const { translate } = useTranslation();
     const { data: userFieldsData, isLoading, error } = useUseAllUserFields();
     const { data: advancedSettings } = useAdvancedSettings();
 
@@ -70,7 +72,7 @@ const StepThree = ({ control }) => {
         return (
             <Grid item xs={12}>
                 <Typography variant="body2" color="text.secondary">
-                    Additional fields are disabled in system settings.
+                    {translate('User Management.ADDITIONAL_FIELDS_DISABLED', 'Additional fields are disabled in system settings.')}
                 </Typography>
             </Grid>
         );
@@ -79,7 +81,7 @@ const StepThree = ({ control }) => {
     if (isLoading) {
         return (
             <Grid item xs={12}>
-                <Typography>Loading additional fields...</Typography>
+                <Typography>{translate('User Management.LOADING_ADDITIONAL_FIELDS', 'Loading additional fields...')}</Typography>
             </Grid>
         );
     }
@@ -87,9 +89,11 @@ const StepThree = ({ control }) => {
     if (error || userFields.length === 0) {
         return (
             <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>Additional Information</Typography>
+                <Typography variant="h6" gutterBottom>{translate('User Management.RIGHT_MENU_ADDITIONAL_FIELDS', 'Additional Information')}</Typography>
                 <Typography color={error ? "error" : "text.secondary"}>
-                    {error ? "Error loading additional fields." : "No additional fields found."}
+                    {error ? 
+                        translate('User Management.ERROR_LOADING_FIELDS', 'Error loading additional fields.') : 
+                        translate('User Management.NO_ADDITIONAL_FIELDS', 'No additional fields found.')}
                 </Typography>
             </Grid>
         );
@@ -99,7 +103,7 @@ const StepThree = ({ control }) => {
         <>
             <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                    Additional Information
+                    {translate('User Management.RIGHT_MENU_ADDITIONAL_FIELDS', 'Additional Information')}
                 </Typography>
             </Grid>
 

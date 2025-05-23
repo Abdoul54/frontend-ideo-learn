@@ -2,9 +2,9 @@ import * as yup from "yup";
 import OptionMenu from "@/@core/components/option-menu";
 import { Chip, Link } from "@mui/material";
 
-export const columns = (setDeleteConfirmation, router) => [
+export const columns = (setDeleteConfirmation, router, translate) => [
     {
-        header: 'Name',
+        header: translate('Group management.TABLE_HEADER_NAME'),
         accessorKey: 'name',
         cell: ({ row }) => {
             return <Link href={`/manage/groups/${row?.original?.id}`} underline="false" className="text-textPrimary hover:text-primary transition-colors ease-in-out delay-100">{row?.original?.name}</Link>
@@ -13,13 +13,13 @@ export const columns = (setDeleteConfirmation, router) => [
         enableSorting: true
     },
     {
-        header: 'Description',
+        header: translate('Group management.TABLE_HEADER_DESCRIPTION_GROUPS'),
         accessorKey: 'description',
         flex: 1,
         enableSorting: true
     },
     {
-        header: 'Type',
+        header: translate('Group management.TABLE_HEADER_RELATION_TYPE'),
         accessorKey: 'type',
         cell: ({ row }) => <Chip variant='tonal' label={row?.original?.type === 'manual' ? 'Manual' : 'Automatic'} color="info" />,
         flex: 1,
@@ -32,7 +32,7 @@ export const columns = (setDeleteConfirmation, router) => [
             <OptionMenu
                 options={[
                     {
-                        text: 'Edit',
+                        text: translate('common.edit'),
                         icon: <i className="lucide-pen-line text-base" />,
                         menuItemProps: {
                             onClick: (e) => {
@@ -56,7 +56,7 @@ export const columns = (setDeleteConfirmation, router) => [
                     //     }
                     // },
                     {
-                        text: 'Delete',
+                        text: translate('common.delete'),
                         icon: <i className="lucide-trash  text-base" />,
                         menuItemProps: {
                             onClick: (e) => {

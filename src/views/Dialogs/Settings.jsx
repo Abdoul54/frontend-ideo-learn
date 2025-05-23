@@ -1,228 +1,285 @@
-import { Masonry } from "@mui/lab";
+"use client"
+
+import { useState } from "react"
 import {
     Dialog,
     DialogTitle,
-    DialogContent,
-    Typography,
-    List,
-    ListItem,
-    ListItemText,
-    Box,
     Tabs,
     Tab,
-    IconButton
-} from "@mui/material";
-import { usePathname, useRouter } from "next/navigation";
-import { useState, useCallback } from "react";
+    Button,
+    IconButton,
+    Box
+} from "@mui/material"
+import { usePathname, useRouter } from "next/navigation"
+import { useTranslation } from "@/@core/contexts/translationContext"
 
-const DialogsSettings = ({
+export default function DialogsSettings({
     open,
-    onClose,
-    initialTab = 0,
-}) => {
-    const [activeTab, setActiveTab] = useState(initialTab);
-    const currentPath = usePathname()
-    const router = useRouter();
+    onClose
+}) {
+    const [activeTab, setActiveTab] = useState(0)
+    const pathname = usePathname()
+    const { translate } = useTranslation()
+    const router = useRouter()
 
-    const adminMenu = {
-        'MANAGE': [
-            { title: 'Users', link: '/manage/users-management', icon: 'solar-user-bold' },
-            { title: 'Power Users', link: '/powerusers', icon: 'solar-user-bold-duotone' },
-            { title: 'Groups', link: '/manage/groups', icon: 'solar-users-group-rounded-bold-duotone' },
+    const menuItems = {
+        manage: [
+            { id: "users", label: translate('Administration System.MENU_USERS'), icon: <i className="lucide-users h-4 w-4" />, link: "/manage/users-management" },
+            { id: "power-users", label: translate('Administration System.MENU_POWER_USERS'), icon: <i className="lucide-user-cog h-4 w-4" />, link: "/powerusers" },
+            { id: "groups", label: translate('Administration System.MENU_GROUPS'), icon: <i className="lucide-user-round h-4 w-4" />, link: "/manage/groups" },
         ],
-        "E-LEARNING": [
-            { title: 'Courses Management', link: '/learn/course', icon: 'solar-book-2-bold-duotone' },
-            { title: 'Course Catalog', link: '/manage/course-catalog', icon: 'solar-library-bold-duotone' },
-            { title: 'Learning Plans', link: '/learn/learning-plans', icon: 'solar-clipboard-list-bold-duotone' },
-            { title: 'Skill Management', link: '/skills', icon: 'solar-star-circle-bold-duotone' },
-            { title: 'Classroom Locations', link: '/learn/classroom-locations', icon: 'solar-buildings-2-bold-duotone' },
-            { title: 'Central Repository', link: '/manage/central-repository', icon: 'solar-folder-with-files-bold-duotone' },
-            { title: 'Reports', link: '/manage/reports', icon: 'solar-chart-2-bold-duotone' },
+        settings: [
+            { id: "domain", label: translate('Administration System.MENU_DOMAIN_MANAGEMENT'), icon: <i className="lucide-globe h-4 w-4" />, link: "/settings/domain-management" },
+            { id: "localization", label: translate('Administration System.MENU_LOCALIZATION_TOOL'), icon: <i className="lucide-languages h-4 w-4" />, link: "/settings/localization-tool" },
+            { id: "advanced", label: translate('Administration System.MENU_ADVANCED_SETTINGS'), icon: <i className="lucide-settings-2 h-4 w-4" />, link: "/settings/advanced-settings" },
+            { id: "branding", label: translate('Administration System.MENU_CONFIGURE_BRANDING'), icon: <i className="lucide-palette h-4 w-4" />, link: "/settings/branding" },
+            { id: "widget", label: translate('Administration System.MENU_WIDGET'), icon: <i className="lucide-layout-template h-4 w-4" />, link: "/settings/widget" },
         ],
-        'SETTINGS': [
-            { title: 'Domain management', link: '/settings/domain-management', icon: 'solar-global-bold-duotone' },
-            { title: 'Localization tool', link: '/settings/localization-tool', icon: 'solar-gps-bold-duotone' },
-            { title: 'Advanced settings', link: '/settings/advanced-settings', icon: 'solar-settings-bold-duotone' },
-            { title: 'Configure branding and look', link: '/settings/branding', icon: 'solar-palette-bold-duotone' }
+        elearning: [
+            { id: "courses", label: translate('Administration System.MENU_COURSES_MANAGEMENT'), icon: <i className="lucide-file-text h-4 w-4" />, link: "/learn/course" },
+            { id: "catalog", label: translate('Administration System.MENU_CATALOG'), icon: <i className="lucide-bookmark h-4 w-4" />, link: "/learn/course-catalog" },
+            { id: "plans", label: translate('Administration System.MENU_LEARNING_PLANS'), icon: <i className="lucide-graduation-cap h-4 w-4" />, link: "/learn/learning-plans" },
+            { id: "skills", label: translate('Administration System.MENU_SKILL_MANAGEMENT'), icon: <i className="lucide-target h-4 w-4" />, link: "/skills" },
+            { id: "locations", label: translate('Administration System.MENU_CLASSROOM_LOCATIONS'), icon: <i className="lucide-building h-4 w-4" />, link: "/learn/classroom-locations" },
+            { id: "repository", label: translate('Administration System.MENU_CENTRAL_REPOSITORY'), icon: <i className="lucide-archive h-4 w-4" />, link: "/learn/central-repository" },
+            { id: "reports", label: translate('Administration System.MENU_REPORTS'), icon: <i className="lucide-bar-chart-3 h-4 w-4" />, link: "/manage/reports" },
+            { id: "channels", label: translate('Administration System.MENU_CHANNELS'), icon: <i className="lucide-tv-minimal-play h-4 w-4" />, link: "/learn/channels" },
         ],
-    };
+    }
 
-    const appsFeatures = {
+    const appItems = {
         '': [
-            { title: 'AGIRH Connector', link: '/manage/partners/agirh', icon: 'solar-users-group-two-rounded-line-duotone' }
-        ],
-        // 'API AND SSO': ['Manage'],
-        // 'ARTIFICIAL INTELLIGENCE': ['Manage'],
-        // 'AUTHO': ['Settings'],
-        // 'AUTOMATION': ['Manage'],
-        // 'BLOG': ['Manage'],
-        // 'CERTIFICATIONS AND RETRAINING': ['Manage'],
-        // 'CUSTOM DOMAIN': ['Manage'],
-        // 'E-COMMERCE': ['Manage', 'Transactions', 'Coupons'],
-        // 'E-SIGNATURE': ['Manage'],
-        // 'ENROLLMENT CODES': ['Manage'],
-        // 'ENROLLMENT RULES': ['Manage'],
-        // 'EXTENDED ENTERPRISE': ['Manage', 'Settings'],
-        // 'GAMIFICATION': ['Badges', 'Leaderboards', 'Contests', 'Settings'],
-        // 'GOOGLE ANALYTICS': ['Manage'],
-        // 'GOOGLE DRIVE': ['Manage'],
-        // 'GOTOMEETING': ['Manage'],
-        // 'GOTOMEETING V2': ['Manage'],
-        // 'LDAP': ['Manage'],
-        // 'LABELS': ['Manage'],
-        // 'NOTIFICATIONS': ['Manage'],
-        // 'OPENID CONNECT': ['Manage'],
-        // 'PAYMENT METHOD - AUTHORIZE.NET ACCEPT HOSTED': ['Manage'],
-        // 'PAYMENT METHOD - STRIPE SCA': ['Manage'],
-        // 'PAYMENT METHOD - WIRE TRANSFER': ['Manage']
-    };
+            { id: "agirh", label: "AGIRH Connector", icon: <i className="lucide-unplug h-4 w-4" />, link: '/manage/partners/agirh' },
+        ]
+    }
 
-    const currentData = activeTab === 0 ? adminMenu : appsFeatures;
+    const handleItemClick = (item) => {
+        router.push(item.link)
+        handleClose()
+    }
 
-    const handleClose = useCallback(() => {
-        onClose();
-    }, [onClose]);
+    const handleTabChange = (event, newValue) => {
+        setActiveTab(newValue)
+    }
+
+    const handleClose = () => {
+        onClose()
+    }
+
+    function TabPanel(props) {
+        const { children, value, index, ...other } = props;
+
+        return (
+            <div
+                role="tabpanel"
+                hidden={value !== index}
+                id={`settings-tabpanel-${index}`}
+                aria-labelledby={`settings-tab-${index}`}
+                {...other}
+                className="m-0 p-0"
+            >
+                {value === index && (
+                    <Box>{children}</Box>
+                )}
+            </div>
+        );
+    }
 
     return (
         <Dialog
             open={open}
             onClose={handleClose}
-            maxWidth="lg"
             fullWidth
-            aria-labelledby="settings-dialog-title"
+            maxWidth="md"
             PaperProps={{
-                sx: { minHeight: '80vh' }
+                sx: {
+                    maxWidth: '900px',
+                    borderRadius: '8px',
+                    m: 0,
+                    p: 0,
+                    overflow: 'hidden'
+                }
             }}
         >
-            <DialogTitle
-                id="settings-dialog-title"
-                sx={{
-                    px: 3,
-                    py: 2,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 2
-                }}
-            >
-                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                    <Typography variant="h6" component="span">
-                        Settings Configuration
-                    </Typography>
-                    <IconButton onClick={handleClose} aria-label="close">
-                        <i className="lucide-x" />
-                    </IconButton>
+            <Box className="flex justify-between items-center p-4 border-b">
+                <DialogTitle sx={{ p: 0, m: 0 }} className="text-xl font-semibold">
+                    {translate('Administration System.SETTINGS_CONFIGURATION_TITLE')}
+                </DialogTitle>
+                <IconButton
+                    onClick={handleClose}
+                    size="medium"
+                    sx={{ p: 1 }}
+                >
+                    <i className="lucide-x h-5 w-5" />
+                </IconButton>
+            </Box>
+
+            <Box sx={{ width: '100%' }}>
+                <Box className="border-b">
+                    <Tabs
+                        value={activeTab}
+                        onChange={handleTabChange}
+                        aria-label="settings tabs"
+                        sx={{
+                            minHeight: '48px',
+                            height: '48px',
+                            '& .MuiTabs-indicator': {
+                                backgroundColor: 'primary.main',
+                                height: '2px',
+                            },
+                            '& .Mui-selected': {
+                                color: 'primary.main',
+                                fontWeight: 600,
+                            },
+                            '& .MuiTab-root': {
+                                textTransform: 'none',
+                                minHeight: '48px',
+                                height: '48px',
+                                padding: '0 24px',
+                            }
+                        }}
+                    >
+                        <Tab label={translate('Administration System.ADMIN_MENU_TAB')} />
+                        <Tab label={translate('Administration System.APPS_FEATURES_TAB')} />
+                    </Tabs>
                 </Box>
 
-                <Tabs
-                    value={activeTab}
-                    onChange={(_, val) => setActiveTab(val)}
-                    aria-label="settings categories"
-                >
-                    <Tab label="Admin menu" id="tab-0" aria-controls="tabpanel-0" />
-                    <Tab label="Apps & features" id="tab-1" aria-controls="tabpanel-1" />
-                </Tabs>
-            </DialogTitle>
-
-            <DialogContent
-                sx={{
-                    p: 3,
-                    '&::-webkit-scrollbar': {
-                        width: '.4em',
-                        height: '.4em',
-                    },
-                    '&::-webkit-scrollbar-track': {
-                        background: 'var(--mui-palette-background-paper)',
-                    },
-                    '&::-webkit-scrollbar-thumb': {
-                        backgroundColor: 'var(--mui-palette-primary-main)',
-                        borderRadius: 2,
-                    },
-
-                }}
-                role="tabpanel"
-                id={`tabpanel-${activeTab}`}
-                aria-labelledby={`tab-${activeTab}`}
-            >
-                <Masonry columns={{
-                    xs: 1,
-                    sm: 1,
-                    md: 2,
-                    lg: 2,
-                    xl: 2
-                }} spacing={4}>
-                    {Object.entries(currentData).map(([section, items]) => (
-                        <Box key={section}>
-                            <Typography variant="h6" sx={{ mb: 2 }}>
-                                {section}
-                            </Typography>
-                            <List sx={{
-                                display: 'flex',
-                                flexDirection: 'column',
-                                gap: 2
-                            }}>
-                                {items.map((item, index) => (
-                                    <ListItem
-                                        key={index}
-                                        sx={{
-                                            borderRadius: 1,
-                                            boxShadow: 1,
-                                            transition: 'all 0.3s ease',
-                                            cursor: 'pointer',
-                                            ...(currentPath === item.link && {
-                                                bgcolor: 'primary.light',
-                                                '& .item-text': {
-                                                    color: 'common.white',
-                                                },
-                                                '& .item-icon': {
-                                                    color: 'common.white',
-                                                }
-                                            }),
-
-                                            '&:hover': {
-                                                transform: 'translateY(-2px)',
-                                                boxShadow: 3,
-                                                bgcolor: 'primary.light',
-                                                '& .item-text': {
-                                                    color: 'common.white',
-                                                },
-                                                '& .item-icon': {
-                                                    color: 'common.white',
-                                                }
-                                            }
-                                        }}
-                                        onClick={() => {
-                                            router.push(item.link)
-                                            onClose()
-                                        }}
-                                    >
-                                        <ListItemText
-                                            primary={
-                                                <Typography
+                <TabPanel value={activeTab} index={0}>
+                    <div className="grid grid-cols-2 h-[500px]">
+                        <div className="border-r">
+                            <Box sx={{ height: '500px', overflowY: 'auto' }}>
+                                <div className="p-4">
+                                    <div className="mb-6">
+                                        <h3 className="text-sm font-semibold text-muted-foreground tracking-wider mb-2">{translate('Administration System.SECTION_MANAGE')}</h3>
+                                        <div className="space-y-1">
+                                            {menuItems.manage.map((item) => (
+                                                <Button
+                                                    key={item.id}
+                                                    variant={pathname === item.link ? "contained" : "text"}
+                                                    onClick={() => handleItemClick(item)}
+                                                    startIcon={item.icon}
                                                     sx={{
-                                                        display: 'flex',
-                                                        alignItems: 'center',
-                                                        gap: 2,
-                                                        py: 1,
-                                                        fontWeight: 500,
-                                                        '& i': {
-                                                            fontSize: '1.2rem'
+                                                        justifyContent: 'flex-start',
+                                                        textTransform: 'none',
+                                                        width: '100%',
+                                                        textAlign: 'left',
+                                                        padding: '8px 16px',
+                                                        backgroundColor: pathname === item.link ? 'primary.main' : 'transparent',
+                                                        color: pathname === item.link ? 'primary.contrastText' : 'inherit',
+                                                        '&:hover': {
+                                                            backgroundColor: pathname === item.link ? 'primary.main' : 'action.hover',
                                                         }
                                                     }}
                                                 >
-                                                    <i className={`${item?.icon} item-icon`} />
-                                                    <span className="item-text">{item?.title}</span>
-                                                </Typography>
-                                            }
-                                        />
-                                    </ListItem>
-                                ))}
-                            </List>
-                        </Box>
-                    ))}
-                </Masonry>
-            </DialogContent>
-        </Dialog >
-    );
-};
+                                                    {item.label}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
 
-export default DialogsSettings;
+                                    <div>
+                                        <h3 className="text-sm font-semibold text-muted-foreground tracking-wider mb-2">{translate('Administration System.SECTION_SETTINGS')}</h3>
+                                        <div className="space-y-1">
+                                            {menuItems.settings.map((item) => (
+                                                <Button
+                                                    key={item.id}
+                                                    variant={pathname === item.link ? "contained" : "text"}
+                                                    onClick={() => handleItemClick(item)}
+                                                    startIcon={item.icon}
+                                                    sx={{
+                                                        justifyContent: 'flex-start',
+                                                        textTransform: 'none',
+                                                        width: '100%',
+                                                        textAlign: 'left',
+                                                        padding: '8px 16px',
+                                                        backgroundColor: pathname === item.link ? 'primary.main' : 'transparent',
+                                                        color: pathname === item.link ? 'primary.contrastText' : 'inherit',
+                                                        '&:hover': {
+                                                            backgroundColor: pathname === item.link ? 'primary.main' : 'action.hover',
+                                                        }
+                                                    }}
+                                                >
+                                                    {item.label}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Box>
+                        </div>
+
+                        <div>
+                            <Box sx={{ height: '500px', overflowY: 'auto' }}>
+                                <div className="p-4">
+                                    <h3 className="text-sm font-semibold text-muted-foreground tracking-wider mb-2">{translate('Administration System.SECTION_ELEARNING')}</h3>
+                                    <div className="space-y-1">
+                                        {menuItems.elearning.map((item) => (
+                                            <Button
+                                                key={item.id}
+                                                variant={pathname === item.link ? "contained" : "text"}
+                                                onClick={() => handleItemClick(item)}
+                                                startIcon={item.icon}
+                                                sx={{
+                                                    justifyContent: 'flex-start',
+                                                    textTransform: 'none',
+                                                    width: '100%',
+                                                    textAlign: 'left',
+                                                    padding: '8px 16px',
+                                                    backgroundColor: pathname === item.link ? 'primary.main' : 'transparent',
+                                                    color: pathname === item.link ? 'primary.contrastText' : 'inherit',
+                                                    '&:hover': {
+                                                        backgroundColor: pathname === item.link ? 'primary.main' : 'action.hover',
+                                                    }
+                                                }}
+                                            >
+                                                {item.label}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </Box>
+                        </div>
+                    </div>
+                </TabPanel>
+
+                <TabPanel value={activeTab} index={1}>
+                    <div className="grid grid-cols-2 h-[500px]">
+                        <div className="border-r">
+                            <Box sx={{ height: '500px', overflowY: 'auto' }}>
+                                <div className="p-4">
+                                    <div className="mb-6">
+                                        {/* <h3 className="text-sm font-semibold text-muted-foreground tracking-wider mb-2">MANAGE</h3> */}
+                                        <div className="space-y-1">
+                                            {appItems['']?.map((item) => (
+                                                <Button
+                                                    key={item.id}
+                                                    variant={pathname === item.link ? "contained" : "text"}
+                                                    onClick={() => handleItemClick(item)}
+                                                    startIcon={item.icon}
+                                                    sx={{
+                                                        justifyContent: 'flex-start',
+                                                        textTransform: 'none',
+                                                        width: '100%',
+                                                        textAlign: 'left',
+                                                        padding: '8px 16px',
+                                                        backgroundColor: pathname === item.link ? 'primary.main' : 'transparent',
+                                                        color: pathname === item.link ? 'primary.contrastText' : 'inherit',
+                                                        '&:hover': {
+                                                            backgroundColor: pathname === item.link ? 'primary.main' : 'action.hover',
+                                                        }
+                                                    }}
+                                                >
+                                                    {item.label}
+                                                </Button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </Box>
+                        </div>
+                    </div>
+                </TabPanel>
+            </Box>
+        </Dialog>
+    )
+}

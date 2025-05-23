@@ -37,7 +37,6 @@ export const SettingsProvider = ({ children, type }) => {
   const [isCentral, setIsCentral] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const initialSettingsApplied = useRef(false);
-  const currentFavicon = useRef(null);
 
   // Handle central check
   useEffect(() => {
@@ -60,21 +59,21 @@ export const SettingsProvider = ({ children, type }) => {
     queryKey: ['settings', { isCentral, type }],
     queryFn: async () => {
       try {
-        if (!localStorage.getItem(STORAGE_KEY)) {
-          const url = isCentral
-            ? '/api/getters/central-settings'
-            : `/tenant/helpers/v1/settings${type ? `?type=${type}` : ''}`;
+        // if (!localStorage.getItem(STORAGE_KEY)) {
+        const url = isCentral
+          ? '/api/getters/central-settings'
+          : `/tenant/helpers/v1/settings${type ? `?type=${type}` : ''}`;
 
-          const { data } = await axiosInstance.get(url);
-          if (!data) {
-            throw new Error('No data received from settings endpoint');
-          }
-
-          const mergedSettings = settingsMerger(data?.data);
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedSettings));
-          return mergedSettings;
+        const { data } = await axiosInstance.get(url);
+        if (!data) {
+          throw new Error('No data received from settings endpoint');
         }
-        return null;
+
+        const mergedSettings = settingsMerger(data?.data);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(mergedSettings));
+        return mergedSettings;
+        // }
+        // return null;
       } catch (error) {
         throw new Error(`Failed to fetch settings: ${error.message}`);
       }
@@ -144,9 +143,7 @@ export const SettingsProvider = ({ children, type }) => {
   // Route change listener to reapply favicon
   useEffect(() => {
     const handleRouteChange = () => {
-      if (settings?.header?.favicon && currentFavicon.current) {
-        updateFavicon(currentFavicon.current);
-      }
+
     };
 
     // Next.js App Router doesn't have an event system like pages router
@@ -161,32 +158,10 @@ export const SettingsProvider = ({ children, type }) => {
     return () => observer.disconnect();
   }, [settings]);
 
-  const updateFavicon = useCallback((faviconUrl) => {
-    if (!faviconUrl) return;
-
-    const faviconElement = document.querySelector("link[rel*='icon']") || document.createElement('link');
-    faviconElement.type = 'image/x-icon';
-    faviconElement.rel = 'shortcut icon';
-    faviconElement.href = faviconUrl;
-
-    if (!document.querySelector("link[rel*='icon']")) {
-      document.head.appendChild(faviconElement);
-    }
-  }, []);
-
   const applySettings = useCallback((newSettings) => {
     if (!newSettings) return;
 
-    // Apply language and direction settings
-    document.documentElement.lang = newSettings.language?.locale;
-    document.documentElement.dir = newSettings.language?.direction;
-
-    // Update favicon if provided
-    if (newSettings.header?.favicon) {
-      currentFavicon.current = newSettings.header.favicon;
-      updateFavicon(newSettings.header.favicon);
-    }
-  }, [updateFavicon]);
+  }, []);
 
   const updateSettings = useCallback((updates) => {
     setSettings(prevSettings => {
@@ -210,19 +185,6 @@ export const SettingsProvider = ({ children, type }) => {
     });
   }, []);
 
-  const saveAndUpdateLanguage = useCallback((locale, direction = 'ltr') => {
-    setSettings(prevSettings => {
-      const newSettings = {
-        ...prevSettings,
-        language: {
-          locale: locale || prevSettings.language?.locale,
-          direction: direction || prevSettings.language?.direction
-        }
-      };
-      saveSettings(newSettings);
-      return newSettings;
-    });
-  }, []);
 
   const resetSettings = useCallback(() => {
     setSettings(defaultThemeConfig);
@@ -267,7 +229,7 @@ export const SettingsProvider = ({ children, type }) => {
   const value = {
     settings,
     updateSettings,
-    saveAndUpdateLanguage,
+    // saveAndUpdateLanguage,
     resetSettings,
     refreshSettings,
     isInitialized,

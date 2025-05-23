@@ -28,98 +28,6 @@ const Courses = ({ learningPlanId }) => {
     });
 
 
-    // const data = {
-    //     "items": [
-    //         {
-    //             "id_course": 4,
-    //             "uid": "300ff2e4-0419-4475-be75-8c65694b29dc",
-    //             "code": "E-AABJUC",
-    //             "title": "f",
-    //             "type": "elearning",
-    //             "language": {
-    //                 "code": "fr",
-    //                 "name": "French",
-    //                 "browser_code": null
-    //             },
-    //             "create_date": "2025-04-11",
-    //             "is_published": false,
-    //             "prerequisites_count": 1,
-    //             "prerequisites_completion": {
-    //                 "all_courses": true,
-    //                 "courses_to_be_completed": null,
-    //                 "postpone_access": false,
-    //                 "time": null,
-    //                 "time_unit": null
-    //             },
-    //             "is_required": false,
-    //             "category": null,
-    //             "sequence": 1
-    //         },
-    //         {
-    //             "id_course": 5,
-    //             "uid": "059e5bc9-8a3b-4839-83e4-5403b22713ea",
-    //             "code": "E-TXZ8PZ",
-    //             "title": "teest lp",
-    //             "type": "elearning",
-    //             "language": {
-    //                 "code": "fr",
-    //                 "name": "French",
-    //                 "browser_code": null
-    //             },
-    //             "create_date": "2025-04-11",
-    //             "is_published": false,
-    //             "prerequisites_count": 2,
-    //             "prerequisites_completion": {
-    //                 "all_courses": false,
-    //                 "courses_to_be_completed": 1,
-    //                 "postpone_access": false,
-    //                 "time": null,
-    //                 "time_unit": null
-    //             },
-    //             "is_required": true,
-    //             "category": null,
-    //             "sequence": 2
-    //         },
-    //         {
-    //             "id_course": 6,
-    //             "uid": "0328a721-5157-48c2-aca2-8a2bce73c28e",
-    //             "code": "E-XVM9GR",
-    //             "title": "lp test course 001",
-    //             "type": "elearning",
-    //             "language": {
-    //                 "code": "fr",
-    //                 "name": "French",
-    //                 "browser_code": null
-    //             },
-    //             "create_date": "2025-04-11",
-    //             "is_published": false,
-    //             "prerequisites_count": 1,
-    //             "prerequisites_completion": {
-    //                 "all_courses": true,
-    //                 "courses_to_be_completed": null,
-    //                 "postpone_access": false,
-    //                 "time": null,
-    //                 "time_unit": null
-    //             },
-    //             "is_required": true,
-    //             "category": null,
-    //             "sequence": 3
-    //         }
-    //     ],
-    //     "pagination": {
-    //         "total": 3,
-    //         "per_page": 15,
-    //         "current_page": 1,
-    //         "last_page": 1,
-    //         "has_more": false
-    //     }
-    // }
-
-    // const isLoading = false;
-    // const error = null;
-
-
-
     const [deleteConfirmation, setDeleteConfirmation] = useState({
         open: false,
         data: null,
@@ -170,7 +78,7 @@ const Courses = ({ learningPlanId }) => {
                 title="Courses"
                 columns={columns(setDeleteConfirmation, changeAssignedCoursesStatus, learningPlanId, setDrawerState)}
                 data={data?.items}
-                height="calc(100vh - 328px)"
+                height="calc(100vh - 302px)"
                 isLoading={isLoading}
                 error={error}
                 selectedRows={selectedRows}
@@ -191,7 +99,7 @@ const Courses = ({ learningPlanId }) => {
                         columnVisibility: true
                     },
                     emptyState: {
-                        height: 'calc(100vh - 484px)'
+                        height: 'calc(100vh - 460px)'
                     }
                 }}
                 noToolBar

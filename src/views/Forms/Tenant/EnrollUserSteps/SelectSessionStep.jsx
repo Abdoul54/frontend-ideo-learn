@@ -25,6 +25,7 @@ import {
 } from "@mui/material";
 import dayjs from "dayjs";
 import { useCourseSessions } from "@/hooks/api/tenant/learn/course/useCourse";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 export default function SelectSessionStep({ control, errors, courseId, selectedCourses = [], isBulkEnrollment = false, setValue, getValues, watch }) {
     // State for search text
@@ -159,16 +160,17 @@ export default function SelectSessionStep({ control, errors, courseId, selectedC
         setPagination(prev => ({ ...prev, pageIndex: 0 }));
     };
 
+    const { translate } = useTranslation();
+
     return (
         <Grid container spacing={3}>
         <Grid item xs={12} sx={{ mb: 2, mt: 2 }}>
             <Typography variant="subtitle1">
-                Enrolling users to {isBulkEnrollment ? 'courses or sessions' : 'course or session'}
+                {translate('Course management.SECTION_TITLE_ENROLLMENT_TYPE', 'Enrolling users to')} {isBulkEnrollment ? translate('Course management.COURSES_OR_SESSIONS', 'courses or sessions') : translate('Course management.COURSE_OR_SESSION', 'course or session')}
             </Typography>
             {isBulkEnrollment && classroomCourses.length > 0 && (
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                    You've selected {classroomCourses.length} classroom courses. 
-                    You can enroll users either directly to all courses or to a single session.
+                    {translate('Course management.SELECTED_CLASSROOM_COURSES', { count: classroomCourses.length })}
                 </Typography>
             )}
         </Grid>
@@ -191,12 +193,16 @@ export default function SelectSessionStep({ control, errors, courseId, selectedC
                                 <FormControlLabel
                                     value="course"
                                     control={<Radio />}
-                                    label={`I want to enroll users to ${isBulkEnrollment ? 'all selected courses' : 'the course'}`}
+                                    label={isBulkEnrollment 
+                                        ? translate('Course management.RADIO_ENROLL_TO_COURSE', 'I want to enroll users to all selected courses')
+                                        : translate('Course management.RADIO_ENROLL_TO_COURSE', 'I want to enroll users to the course')}
                                 />
                                 <FormControlLabel
                                     value="session"
                                     control={<Radio />}
-                                    label={`I want to enroll users to a session${isBulkEnrollment ? ' of one course' : ''}`}
+                                    label={isBulkEnrollment 
+                                        ? translate('Course management.RADIO_ENROLL_TO_SESSION', 'I want to enroll users to a session of one course')
+                                        : translate('Course management.RADIO_ENROLL_TO_SESSION', 'I want to enroll users to a session')}
                                 />
                             </RadioGroup>
                         )}
@@ -325,11 +331,13 @@ const handleSearchChange = (e) => {
     setPagination(prev => ({ ...prev, pageIndex: 0 }));
 };
 
+const { translate } = useTranslation();
+
 return (
     <>
         <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
             <TextField
-                placeholder="Search sessions..."
+                placeholder={translate('Course management.PLACEHOLDER_SEARCH_SESSIONS', 'Search sessions...')}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 fullWidth
@@ -354,17 +362,17 @@ return (
                         <TableHead>
                             <TableRow>
                                 <TableCell width="5%"></TableCell>
-                                <TableCell>NAME</TableCell>
-                                <TableCell>SESSION CODE</TableCell>
-                                <TableCell>CAPACITY</TableCell>
-                                <TableCell>ENROLLMENT</TableCell>
-                                <TableCell>STATUS</TableCell>
+                                <TableCell>{translate('Course management.TABLE_HEADER_SESSION_NAME', 'NAME')}</TableCell>
+                                <TableCell>{translate('Course management.TABLE_HEADER_SESSION_CODE', 'SESSION CODE')}</TableCell>
+                                <TableCell>{translate('Course management.TABLE_HEADER_CAPACITY', 'CAPACITY')}</TableCell>
+                                <TableCell>{translate('Course management.TABLE_HEADER_ENROLLMENT', 'ENROLLMENT')}</TableCell>
+                                <TableCell>{translate('Course management.FIELD_STATUS', 'STATUS')}</TableCell>
                             </TableRow>
                         </TableHead>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={6} align="center">Loading sessions...</TableCell>
+                                    <TableCell colSpan={6} align="center">{translate('common.loading', 'Loading sessions...')}</TableCell>
                                 </TableRow>
                             ) : sessions.length === 0 ? (
                                 <TableRow>
@@ -500,11 +508,13 @@ const handleSessionSelect = (sessionId) => {
     }
 };
 
+const { translate } = useTranslation();
+
 return (
     <>
         <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
             <TextField
-                placeholder="Search sessions..."
+                placeholder={translate('Course management.PLACEHOLDER_SEARCH_SESSIONS', 'Search sessions...')}
                 value={searchQuery}
                 onChange={handleSearchChange}
                 fullWidth
@@ -525,21 +535,21 @@ return (
                 <TableHead>
                     <TableRow>
                         <TableCell width="5%"></TableCell>
-                        <TableCell>NAME</TableCell>
-                        <TableCell>SESSION CODE</TableCell>
-                        <TableCell>CAPACITY</TableCell>
-                        <TableCell>ENROLLMENT</TableCell>
-                        <TableCell>STATUS</TableCell>
+                        <TableCell>{translate('Course management.TABLE_HEADER_SESSION_NAME', 'NAME')}</TableCell>
+                        <TableCell>{translate('Course management.TABLE_HEADER_SESSION_CODE', 'SESSION CODE')}</TableCell>
+                        <TableCell>{translate('Course management.TABLE_HEADER_CAPACITY', 'CAPACITY')}</TableCell>
+                        <TableCell>{translate('Course management.TABLE_HEADER_ENROLLMENT', 'ENROLLMENT')}</TableCell>
+                        <TableCell>{translate('Course management.FIELD_STATUS', 'STATUS')}</TableCell>
                     </TableRow>
                 </TableHead>
                 <TableBody>
                     {isLoading ? (
                         <TableRow>
-                            <TableCell colSpan={6} align="center">Loading sessions...</TableCell>
+                            <TableCell colSpan={6} align="center">{translate('Course management.LOADING_SESSIONS', 'Loading sessions...')}</TableCell>
                         </TableRow>
                     ) : sessions.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={6} align="center">No sessions found</TableCell>
+                            <TableCell colSpan={6} align="center">{translate('Course management.NO_SESSIONS_FOUND', 'No sessions found')}</TableCell>
                         </TableRow>
                     ) : (
                         sessions.map((session) => {

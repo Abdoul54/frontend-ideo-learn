@@ -1,4 +1,3 @@
-
 import { skillSetsColumns } from "@/constants/Skills";
 import { useDeleteSkillGroup, useSkillGroups } from "@/hooks/api/tenant/skills/useSkillGroups";
 import DataView from "@/views/DataView";
@@ -6,8 +5,10 @@ import DeleteConfirmationDialog from "@/views/Dialogs/DeleteConfirmation";
 import SkillAssignmentDrawer from "@/views/Forms/Skills/SkillAssignmentDrawer";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const SkillSets = () => {
+    const { translate } = useTranslation();
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
@@ -49,7 +50,7 @@ const SkillSets = () => {
     return (
         <>
             <DataView
-                title="Skill Sets"
+                title={translate('Skill management.TAB_SKILL_SETS', 'Skill Sets')}
                 columns={skillSetsColumns(setDeleteConfirmation, setSkillSetDrawerState, router)}
                 data={data?.items}
                 height="calc(100vh - 328px)"
@@ -88,7 +89,7 @@ const SkillSets = () => {
                     primaryActions: [
                         {
                             id: 'delete',
-                            label: 'Delete',
+                            label: translate('common.delete', 'Delete'),
                             color: 'error',
                             handler: () => setDeleteConfirmation({ open: true, data: selectedRows, type: 'deleteMany', variant: 'simple' }),
                         }
@@ -100,7 +101,6 @@ const SkillSets = () => {
                         },
                     }
                 }}
-
                 datatablemulti
                 enableSelection
             />
@@ -109,10 +109,9 @@ const SkillSets = () => {
                     open={deleteConfirmation.open}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
                     data={deleteConfirmation?.data}
-                    title={deleteConfirmation?.data?.name || "Skill sets"}
+                    title={deleteConfirmation?.data?.name || translate('Skill management.TAB_SKILL_SETS', 'Skill sets')}
                     onSubmit={handleDeleteSubmit}
                     variant={deleteConfirmation?.variant}
-
                 />
             }
             {

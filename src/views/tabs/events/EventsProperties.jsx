@@ -326,6 +326,7 @@ const EventProperties = ({ event, sessionId }) => {
                             pill='false'
                             onChange={(e, newValue) => handleTabChange(newValue)}
                             orientation='vertical'
+                            vertical="true"
                             variant="fullWidth"
                             sx={{ width: '100%', '& .MuiTabs-flexContainer': { width: '100%' } }}
                         >

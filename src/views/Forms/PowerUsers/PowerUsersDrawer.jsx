@@ -6,7 +6,7 @@ import {
     Card,
     CardActions,
     CardContent,
-    Grid,
+    Grid2 as Grid,
     InputAdornment,
     List,
     ListItem,
@@ -20,13 +20,14 @@ import { usePostPowerUser, useUpdatePowerUser } from "@/hooks/api/tenant/usePowe
 import DataTable from "@/components/datatable/DataTable";
 import { useUsers } from "@/hooks/api/tenant/useUsers";
 import * as yup from 'yup';
+import { common } from "lowlight";
 
 
 const schema = yup.object().shape({
     user_ids: yup.array().min(1, 'Please select at least one user'),
 });
 
-const PowerUsersDrawer = ({ open, onClose, data }) => {
+const PowerUsersDrawer = ({ open, onClose, data, translate }) => {
 
     const addPowerUser = usePostPowerUser()
     const updatePowerUser = useUpdatePowerUser()
@@ -42,19 +43,19 @@ const PowerUsersDrawer = ({ open, onClose, data }) => {
 
     const columns = [
         {
-            header: 'Username',
+            header: translate('Power User & Profile Management.TABLE_HEADER_USERNAME'),
             accessorKey: 'username',
             flex: 1,
             enableSorting: true
         },
         {
-            header: 'Full Name',
+            header: translate('Power User & Profile Management.TABLE_HEADER_FULL_NAME'),
             accessorKey: 'fullname',
             flex: 1,
             enableSorting: true
         },
         {
-            header: 'Email',
+            header: translate('Power User & Profile Management.TABLE_HEADER_EMAIL'),
             accessorKey: 'email',
             flex: 1,
             enableSorting: true
@@ -98,7 +99,7 @@ const PowerUsersDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title="Profiles"
+            title={data ? data?.username : translate('Power User & Profile Management.CREATE_POWER_USER')}
             open={open}
             onClose={onClose}
         >
@@ -125,12 +126,12 @@ const PowerUsersDrawer = ({ open, onClose, data }) => {
                     }
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <ListItemText primary='Select users to be promoted to power users' secondary={errors?.user_ids?.message} secondaryTypographyProps={{
                                 color: 'error',
                             }} />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <TextField
                                 name="search"
                                 placeholder="Search .."
@@ -143,7 +144,7 @@ const PowerUsersDrawer = ({ open, onClose, data }) => {
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <DataTable
                                 variant='outlined'
                                 columns={columns}
@@ -174,8 +175,10 @@ const PowerUsersDrawer = ({ open, onClose, data }) => {
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={addPowerUser?.isPending || updatePowerUser?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={addPowerUser?.isPending || updatePowerUser?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={addPowerUser?.isPending || updatePowerUser?.isPending}>{translate('common.cancel')}</Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={addPowerUser?.isPending || updatePowerUser?.isPending}>
+                        {data ? addPowerUser?.isPending || updatePowerUser?.isPending ? translate('common.saving') : translate('common.save') : addPowerUser?.isPending || updatePowerUser?.isPending ? translate('common.creating') : translate('common.create')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer>

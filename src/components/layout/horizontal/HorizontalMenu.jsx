@@ -19,8 +19,9 @@ import menuRootStyles from '@core/styles/horizontal/menuRootStyles'
 import verticalMenuItemStyles from '@core/styles/vertical/menuItemStyles'
 import verticalNavigationCustomStyles from '@core/styles/vertical/navigationCustomStyles'
 import { useSettings } from '@/@core/contexts/settingsContext'
-import { use, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import centralChecker from '@/utils/workers/centralChecker'
+import { useTranslation } from '@/@core/contexts/translationContext'
 
 const RenderExpandIcon = ({ level }) => (
   <StyledHorizontalNavExpandIcon level={level}>
@@ -41,6 +42,7 @@ const HorizontalMenu = () => {
   const { settings } = useSettings()
 
   const [navigation, setNavigation] = useState(null)
+  const { translate } = useTranslation()
 
   useEffect(() => {
     centralChecker().then((res) => {
@@ -79,11 +81,10 @@ const HorizontalMenu = () => {
         setNavigation(
           {
             items: [
-              {
-                icon: 'solar-home-2-bold-duotone',
-                label: 'Home',
-                path: '/home'
-              },
+              { icon: "lucide-house", label: translate('metadata.path/home-title'), path: "/home" },
+              { icon: "lucide-graduation-cap", label: "Mes Formations", path: "/learn/mycourses" },
+              { icon: "lucide-activity", label: "Mes Activités", path: "/learn/activities" },
+              { icon: "lucide-book-open-text", label: "Course Catalog", path: "/learn/catalog" },
             ]
           }
         )

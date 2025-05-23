@@ -13,7 +13,6 @@ import {
     ListItemText,
 } from "@mui/material";
 import DrawerFormContainer from "@/components/DrawerFormContainer";
-import { useEffect } from "react";
 import TextInput from "@/components/inputs/TextInput";
 import TextEditorInput from "@/components/inputs/TextEditorInput";
 import FileInput from "@/components/inputs/FileInput";
@@ -21,10 +20,10 @@ import SelectInput from "@/components/inputs/SelectInput";
 import { useActiveLanguages } from "@/hooks/api/tenant/useLocalization";
 import SwitchInput from "@/components/inputs/SwitchInput";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useCreateLearningPlan, useUpdateLearningPlan } from "@/hooks/api/tenant/learn/useLearningPlan";
-import { defaultValues, schema, statusTypes, validityTimeTypes } from "@/constants/LearningPlan";
+import { useCreateLearningPlan } from "@/hooks/api/tenant/learn/useLearningPlan";
+import { defaultValues, schema } from "@/constants/LearningPlan";
 
-const LearningPlansDrawer = ({ open, onClose, data }) => {
+const LearningPlansDrawer = ({ open, onClose, data, translate }) => {
     const {
         control,
         handleSubmit,
@@ -37,30 +36,10 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
     });
 
     const createLearningPlan = useCreateLearningPlan();
-    const updateLearningPlan = useUpdateLearningPlan();
 
     const { data: activeLanguages, isLoading: isLoadingActiveLanguages, error: errorActiveLanguages } = useActiveLanguages();
 
     const description = watch("description");
-
-    useEffect(() => {
-        // If data is provided, populate the form
-        if (data) {
-            reset({
-                title: data?.title,
-                code: data?.code,
-                status: data?.status,
-                short_description: data?.short_description,
-                description: data?.description,
-                image: data?.image,
-                language: data?.lang_code,
-                enable_deep_link: data?.enrollment_options?.enable_deep_link,
-                validity_time: data?.time_options?.validity_time,
-                validity_time_type: data?.time_options?.validity_time_type,
-                validity_time_update_existing: data?.time_options?.validity_time_update_existing
-            });
-        }
-    }, [data, reset]);
 
     const onSubmit = (submittedData) => {
 
@@ -75,23 +54,12 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
             formData.append(key, submittedData[key]);
         });
 
-        if (data) {
-            updateLearningPlan.mutateAsync({
-                learningPlanId: data.id,
-                data: { ...formData, _method: 'PUT' }
-            })
-                .then(() => {
-                    onClose();
-                    reset();
-                })
-        } else {
-            createLearningPlan.mutateAsync({
-                data: formData
-            }).then(() => {
-                onClose();
-                reset();
-            })
-        }
+        createLearningPlan.mutateAsync({
+            data: formData
+        }).then(() => {
+            onClose();
+            reset();
+        })
     };
 
     // This function will update the form state when the editor content changes
@@ -101,8 +69,8 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title="Create a Learning Plan"
-            description="Create a new learning plan"
+            title={translate('LP management.MODAL_TITLE_CREATE_LEARNING_PLAN')}
+            description={translate('LP management.MODAL_SUBTITLE_CREATE_LEARNING_PLAN')}
             open={open}
             onClose={onClose}
         >
@@ -130,7 +98,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
                         <Grid item size={12} component={ListItem}>
-                            <ListItemText primary='Details' primaryTypographyProps={{
+                            <ListItemText primary={translate('LP management.SECTION_DETAILS')} primaryTypographyProps={{
                                 variant: 'h5',
                                 sx: {
                                     fontWeight: 600,
@@ -141,7 +109,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="code"
-                                label="Code"
+                                label={translate('common.FIELD_CODE')}
                                 control={control}
                                 type="text"
                             />
@@ -149,7 +117,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="title"
-                                label="Title"
+                                label={translate('common.FIELD_TITLE')}
                                 control={control}
                                 type="text"
                             />
@@ -157,9 +125,12 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <SelectInput
                                 name="status"
-                                label="Status"
+                                label={translate('common.FIELD_STATUS')}
                                 control={control}
-                                options={statusTypes}
+                                options={[
+                                    { value: "published", label: translate('common.PUBLISHED') },
+                                    { value: "unpublished", label: translate('common.UNPUBLISHED') },
+                                ]}
                                 labelKey="label"
                                 valueKey="value"
                             />
@@ -167,7 +138,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="short_description"
-                                label="Short Description"
+                                label={translate('common.FIELD_SHORT_DESCRIPTION')}
                                 control={control}
                                 type="text"
                                 multiline
@@ -176,7 +147,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         </Grid>
                         <Grid item size={12} component={ListItem} sx={{ display: 'block', width: '100%' }}>
                             <ListItemText
-                                primary="Description"
+                                primary={translate('common.FIELD_DESCRIPTION')}
                                 primaryTypographyProps={{
                                     variant: 'body1',
                                     sx: { mb: 1 }
@@ -191,14 +162,14 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                             <FileInput
                                 name="image"
                                 control={control}
-                                label="Thumbnail"
+                                label={translate('common.FIELD_THUMBNAIL')}
                                 accept="image/*"
                             />
                         </Grid>
                         <Grid item size={12} component={ListItem}>
                             <SelectInput
                                 name="language"
-                                label="Language"
+                                label={translate('common.FIELD_LANGUAGE')}
                                 control={control}
                                 options={activeLanguages}
                                 labelKey="name"
@@ -209,7 +180,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <SwitchInput
                                 name="enable_deep_link"
-                                label="Enable Deep Link"
+                                label={translate('common.FIELD_ENABLE_DEEP_LINK')}
                                 control={control}
                                 checkedValue={true}
                                 uncheckedValue={false}
@@ -218,7 +189,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="validity_time"
-                                label="Validity Time"
+                                label={translate('common.FIELD_VALIDITY_TIME')}
                                 control={control}
                                 type='number'
 
@@ -228,16 +199,19 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                                             min: 0
                                         }
                                     },
-                                    endAdornment: <InputAdornment position="end">Days</InputAdornment>,
+                                    endAdornment: <InputAdornment position="end">{translate('common.days')}</InputAdornment>,
                                 }}
                             />
                         </Grid>
                         <Grid item size={12} component={ListItem}>
                             <SelectInput
                                 name="validity_time_type"
-                                label="Validity Time Type"
+                                label={translate('LP management.FIELD_VALIDITY_TIME_TYPE')}
                                 control={control}
-                                options={validityTimeTypes}
+                                options={[
+                                    { value: 0, label: translate('LP management.DROPDOWN_FROM_ENROLLMENT') },
+                                    { value: 1, label: translate('LP management.DROPDOWN_FROM_FIRST_ACCESS') }
+                                ]}
                                 labelKey="label"
                                 valueKey="value"
                             />
@@ -245,7 +219,7 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <SwitchInput
                                 name="validity_time_update_existing"
-                                label="Update Existing Enrollments"
+                                label={translate('LP management.TOGGLE_UPDATE_EXISTING_ENROLLMENTS')}
                                 control={control}
                                 checkedValue={true}
                                 uncheckedValue={false}
@@ -254,8 +228,12 @@ const LearningPlansDrawer = ({ open, onClose, data }) => {
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit">Submit</Button>
+                    <Button onClick={onClose} disabled={createLearningPlan.isPending}>{translate('common.CANCEL')}</Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={createLearningPlan.isPending}
+                        startIcon={createLearningPlan.isPending ? <i className="svg-spinners-90-ring" /> : null}
+                    >
+                        {createLearningPlan.isPending ? translate('common.saving') : translate('common.save')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer >

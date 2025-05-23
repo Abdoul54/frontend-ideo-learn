@@ -1,37 +1,38 @@
 'use client';
 
 import CustomTabList from "@/@core/components/mui/TabList";
+import StatusCard from "@/components/StatusCard";
 import ToolBar from "@/components/ToolBar";
+import { useProfile } from "@/hooks/api/tenant/useProfiles";
+import useUrlTabs from "@/hooks/useUrlTabs";
 import GrantPowerUsersDrawer from "@/views/Forms/Profiles/GrantPowerUsersDrawer";
 import PowerUsers from "@/views/tabs/profiles/PowerUsers";
 import Properties from "@/views/tabs/profiles/Properties";
 import { TabContext, TabPanel } from "@mui/lab";
-import { Grid, Paper, Tab } from "@mui/material";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { Grid2 as Grid, Paper, Tab } from "@mui/material";
+import { useParams } from "next/navigation";
+import { useState } from "react";
 
 const Page = () => {
     const { id } = useParams();
-    const [value, setValue] = useState("0");
     const [drawerState, setDrawerState] = useState({ open: false });
-    const searchParams = useSearchParams();
+    const { data: profile, isLoading, error } = useProfile({ id });
 
-
-    const handleChange = (_, newValue) => {
-        setValue(newValue);
-    };
-
-    useEffect(() => {
-        const tabParam = searchParams.get("tab");
-        setValue(tabParam === "profiles" ? "1" : "0");
-    }, [searchParams]);
+    const { activeTab, handleTabChange } = useUrlTabs({
+        defaultTab: 'properties',
+        validTabs: ['properties', 'powerusers'],
+    });
 
     return (
         <>
             <Grid container spacing={4}>
-                <Grid item xs={12} >
+                <Grid item size={12} >
                     <ToolBar
-                        breadcrumbs={[{ label: 'Profiles', link: `/powerusers?tab=profiles` }, { label: id }]}
+                        breadcrumbs={[
+                            { label: 'Profiles', link: `/powerusers?tab=profiles` },
+                            ...(!error && !isLoading ? [{ label: profile?.name }] : []),
+                            ...(activeTab === 'powerusers' && (!error && !isLoading) ? [{ label: "Power Users" }] : []),
+                        ]}
                         buttonGroup={[
                             {
                                 text: 'Grant Power Users',
@@ -44,38 +45,47 @@ const Page = () => {
                         ]}
                     />
                 </Grid>
-                <Grid item xs={12}>
-                    <TabContext value={value}>
+                <Grid item size={12}>
+                    <TabContext value={activeTab}>
                         <Grid container spacing={4}>
-                            <Grid item xs={12}>
+                            <Grid item size={12}>
                                 <Paper elevation={0} sx={{
                                     bgcolor: 'background.default',
                                 }}>
                                     <CustomTabList
-                                        pill='true'
-                                        onChange={handleChange}
-                                        variant="fullWidth"
+                                        onChange={handleTabChange}
                                         sx={{
                                             '& .MuiTabs-flexContainer': {
                                                 width: '100%'
                                             }
                                         }}
                                     >
-                                        <Tab value="0" label="Properties" />
-                                        <Tab value="1" label="Power Users" />
+                                        <Tab value="properties" label="Properties" disabled={error || isLoading} />
+                                        <Tab value="powerusers" label="Power Users" disabled={error || isLoading} />
                                     </CustomTabList>
                                 </Paper>
                             </Grid>
-                            <Grid item xs={12}>
-                                <Paper elevation={0} sx={{ border: 1, borderColor: 'divider', padding: 3 }}>
-                                    <TabPanel value="0">
-                                        {value === "0" && <Properties profileId={id} />}
-                                    </TabPanel>
-                                    <TabPanel value="1">
-                                        {value === "1" && <PowerUsers profileId={id} />}
-                                    </TabPanel>
-                                </Paper>
-                            </Grid>
+                            {
+                                error || isLoading ?
+                                    <Grid item size={12}>
+                                        <StatusCard
+                                            type={isLoading ? 'loading' : 'error'}
+                                            title={isLoading ? "Loading the profile" : `Error: ${error?.message}`}
+                                            message={
+                                                isLoading ? "Please wait while we load the profile." : "An error occurred while loading the profile."
+                                            }
+                                        />
+                                    </Grid>
+                                    :
+                                    <Grid item size={12}>
+                                        <TabPanel value="properties">
+                                            {activeTab === "properties" && <Properties profile={profile} />}
+                                        </TabPanel>
+                                        <TabPanel value="powerusers">
+                                            {activeTab === "powerusers" && <PowerUsers profileId={id} />}
+                                        </TabPanel>
+                                    </Grid>
+                            }
                         </Grid>
                     </TabContext>
                 </Grid>

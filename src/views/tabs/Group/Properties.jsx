@@ -2,7 +2,7 @@ import SwitchInput from "@/components/inputs/SwitchInput";
 import TextInput from "@/components/inputs/TextInput";
 import {
     Button,
-    Grid,
+    Grid2 as Grid,
     List,
     ListItem,
     ListItemText,
@@ -12,8 +12,6 @@ import {
     Paper,
     Chip,
     Tooltip,
-    CircularProgress,
-    Stack,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
@@ -26,10 +24,7 @@ import {
 import { yupResolver } from "@hookform/resolvers/yup";
 import SelectInput from "@/components/inputs/SelectInput";
 import RuleSetsDrawer from "@/views/Forms/Groups/RuleSetsDrawer";
-import Error from "@/components/illustrations/Error";
-import ErrorState from "@/components/states/ErrorState";
 import { useRouter } from "next/navigation";
-import LoadingState from "@/components/states/LoadingState";
 
 const Properties = ({ groupId }) => {
     const { data, isLoading, error } = useGroup(groupId);
@@ -70,7 +65,7 @@ const Properties = ({ groupId }) => {
     useEffect(() => {
         if (!sets.length) {
             setValue('ruleset.sets', [{
-                id: `new-set-${Date.now()}`,
+                // id: `new-set-${Date.now()}`,
                 rules_operator: 'AND',
                 rules: []
             }]);
@@ -114,7 +109,6 @@ const Properties = ({ groupId }) => {
         return `${rules.length} rules defined`;
     };
 
-    // Helper function to get a description of a rule
     // Helper function to get a description of a rule
     const getRuleDescription = (rule) => {
         if (!rule || !rule.type) return 'Invalid rule';
@@ -206,43 +200,15 @@ const Properties = ({ groupId }) => {
         setActiveSetIndex(null);
     };
 
-    // Render loading state
-    if (isLoading) {
-        return (
-            <LoadingState message="Loading group data..." />
-        );
-    }
-
-    // Render error state
-    if (error) {
-        return <ErrorState error={error} actions={{
-            retry: {
-                label: 'Retry',
-                action: () => {
-                    router.reload();
-                },
-                icon: 'solar-refresh-outline'
-            },
-            back: {
-                label: 'Go Back To Groups',
-                action: () => {
-                    router.push('/manage/groups');
-                },
-                icon: 'solar-round-arrow-left-outline'
-            },
-
-        }} />;
-    }
-
 
     return (
         <>
             <Grid container spacing={3} component="form" onSubmit={handleSubmit(onSubmit)}>
-                <Grid item xs={12}>
+                <Grid item size={12}>
                     <Typography variant="h4">General</Typography>
                     <Typography variant='subtitle1'>Customize the name and the description of the group</Typography>
                 </Grid>
-                <Grid item xs={12}>
+                <Grid item size={12}>
                     <List>
                         <ListItem>
                             <ListItemText
@@ -273,10 +239,10 @@ const Properties = ({ groupId }) => {
                 {
                     data?.type === 'automatic' && (
                         <>
-                            <Grid item xs={12}>
+                            <Grid item size={12}>
                                 <Typography variant="h4">Options</Typography>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item size={12}>
                                 <List>
                                     <ListItem>
                                         <ListItemText
@@ -298,11 +264,11 @@ const Properties = ({ groupId }) => {
                                     </ListItem>
                                 </List>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item size={12}>
                                 <Typography variant="h4">Eligibility</Typography>
                                 <Typography variant='subtitle1'>Create conditions to automatically organize users into groups</Typography>
                             </Grid>
-                            <Grid item xs={12}>
+                            <Grid item size={12}>
                                 <Paper elevation={0} sx={{ p: 3, bgcolor: 'background.paper' }}>
                                     <Box sx={{ mb: 3 }}>
                                         <Typography variant="h5" gutterBottom>Group Rules</Typography>
@@ -415,7 +381,7 @@ const Properties = ({ groupId }) => {
                     )}
 
                 {/* Form Actions */}
-                <Grid item xs={12}
+                <Grid item size={12}
                     sx={{
                         display: 'flex',
                         justifyContent: 'flex-end'

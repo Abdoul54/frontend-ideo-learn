@@ -5,8 +5,11 @@ import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { Chip } from '@mui/material';
 import OptionMenu from '@/@core/components/option-menu';
 import { useEnrollments, useUnenrollUsers } from '@/hooks/api/tenant/learn/enrollment/UseEnrollments';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const CourseEnrollmentsTab = ({ courseId }) => {
+    const { translate } = useTranslation();
+
     const [filters, setFilters] = useState(null);
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
@@ -58,18 +61,39 @@ const CourseEnrollmentsTab = ({ courseId }) => {
         },
         {
             accessorKey: 'status_label',
-            header: 'Enrollment Status',
+            header: translate('Course management.TABLE_HEADER_ENROLLMENT_STATUS', 'Enrollment Status'),
             cell: ({ row }) => {
-                const status = row?.original?.status_label;
+                const status = row?.original?.status;
+                const label = row?.original?.status_label;
+                const color = () => {
+                    switch (status) {
+                        case 'enrolled':
+                            return 'info';
+                        case 'in_progress':
+                            return 'warning';
+                        case 'waiting':
+                            return 'warning';
+                        case 'to_confirm':
+                            return 'warning';
+                        case 'completed':
+                            return 'success';
+                        case 'suspended':
+                            return 'error';
+                        case 'overbooking':
+                            return 'error';
+                        default:
+                            return 'default';
+                    }
+                };
                 return (
-                    <Chip label={status} variant='outlined' />
+                    <Chip label={label} variant='outlined' size="small" color={color()} />
                 );
             },
             flex: 1
         },
         {
             accessorKey: 'enrollment_date',
-            header: 'Enrollment Date',
+            header: translate('Course management.TABLE_HEADER_ENROLLMENT_DATE', 'Enrollment Date'),
             cell: ({ row }) => {
                 const date = new Date(row?.original?.enrollment_date);
                 return (
@@ -85,7 +109,7 @@ const CourseEnrollmentsTab = ({ courseId }) => {
                 <OptionMenu
                     options={[
                         {
-                            text: 'Unenroll',
+                            text: translate('Course management.BUTTON_UNENROLL', 'Unenroll'),
                             icon: <i className="solar-list-cross-minimalistic-outline" />,
                             menuItemProps: {
                                 onClick: (e) => {
@@ -141,15 +165,13 @@ const CourseEnrollmentsTab = ({ courseId }) => {
         }
     }
 
-
-
     return (
         <>
             <DataView
-                title="Enrollments"
+                title={translate('Course management.TAB_ENROLLMENTS', 'Enrollments')}
                 columns={columns}
                 data={data?.items}
-                height="calc(100vh - 358px)"
+                height="calc(100vh - 372px)"
                 isLoading={isLoading}
                 error={error}
                 pagination={{ ...pagination, total: data?.pagination?.total }}
@@ -172,7 +194,7 @@ const CourseEnrollmentsTab = ({ courseId }) => {
                         filter: false,
                         columnVisibility: true
                     }, emptyState: {
-                        height: 'calc(100vh - 515px)'
+                        height: 'calc(100vh - 528px)'
                     }
                 }}
 
@@ -183,7 +205,7 @@ const CourseEnrollmentsTab = ({ courseId }) => {
                     primaryActions: [
                         {
                             id: 'delete',
-                            label: 'Unenroll',
+                            label: translate('Course management.BUTTON_UNENROLL', 'Unenroll'),
                             color: 'error',
                             handler: () => setDeleteConfirmation({ open: true, data: selectedRows, type: 'deleteMany', variant: 'simple' }),
                         }
@@ -195,8 +217,12 @@ const CourseEnrollmentsTab = ({ courseId }) => {
                 deleteConfirmation.open && <ConfirmationDialog
                     type='error'
                     isOpen={deleteConfirmation.open}
-                    title={deleteConfirmation?.type === 'deleteOne' ? `Unenroll "${deleteConfirmation?.data?.user?.username}"` : 'Unenroll all selected users'}
-                    message={deleteConfirmation?.type === 'deleteOne' ? `Are you sure you want to un "${deleteConfirmation?.data?.user?.username}?"` : 'Are you sure you want to unenroll all selected users?'}
+                    title={deleteConfirmation?.type === 'deleteOne'
+                        ? translate('Course management.MODAL_TITLE_UNENROLL_USER', {name: deleteConfirmation?.data?.user?.username}, 'Unenroll {name} from this course?')
+                        : translate('Course management.MODAL_TITLE_UNENROLL_ALL_USERS', 'Unenroll all selected users')}
+                    message={deleteConfirmation?.type === 'deleteOne'
+                        ? translate('Course management.TEXT_CONFIRMATION_QUESTION', {name: deleteConfirmation?.data?.user?.username}, `Are you sure you want to un "${deleteConfirmation?.data?.user?.username}?"`)
+                        : translate('Course management.CONFIRM_UNENROLL_ALL_USERS', 'Are you sure you want to unenroll all selected users?')}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
                     actions={{
                         toast: {
@@ -209,8 +235,8 @@ const CourseEnrollmentsTab = ({ courseId }) => {
                             cancel: null
                         },
                         buttons: {
-                            confirm: 'Unenroll',
-                            cancel: 'Cancel',
+                            confirm: translate('Course management.BUTTON_UNENROLL', 'Unenroll'),
+                            cancel: translate('common.cancel', 'Cancel'),
                             processing: 'Unenrolling...',
                         },
                         onConfirm: handleDeleteSubmit,

@@ -9,7 +9,13 @@ import {
     Button
 } from "@mui/material";
 import { useCallback } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
+import * as yup from "yup";
+import { yupResolver } from "@hookform/resolvers/yup";
+
+const schema = yup.object({
+    recipient: yup.string().email('Invalid email address').required('Recipient email is required')
+})
 
 const EmailSenderDialog = ({
     open,
@@ -20,10 +26,11 @@ const EmailSenderDialog = ({
         onClose();
     }, [onClose]);
 
-    const { control, handleSubmit, formState: { errors } } = useForm({
+    const { control, handleSubmit, watch } = useForm({
         defaultValues: {
             recipient: ''
-        }
+        },
+        resolver: yupResolver(schema)
     });
 
     const testEmailSender = useTestEmailSender();
@@ -49,37 +56,22 @@ const EmailSenderDialog = ({
                         p: 2
                     }}
                 >
-                    <Controller
+                    <TextInput
                         name="recipient"
-                        rules={{
-                            required: 'Recipient is required',
-                            // pattern: {
-                            //     value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i, // Updated regex for more flexible TLDs
-                            //     message: 'Invalid email address'
-                            // }
-                        }}
+                        label="Recipient Email Address"
                         control={control}
-                        render={({ field }) => (
-                            <TextInput
-                                {...field}
-                                label="Recipient"
-                                control={control}
-                                size="small"
-                                error={errors?.recipient?.message}
-                                helperText={errors?.recipient?.message}
-                            />
-                        )}
                     />
                 </Box>
             </DialogContent>
             <DialogActions>
-                <Button onClick={handleClose}>Cancel</Button>
+                <Button onClick={handleClose} disabled={testEmailSender.isPending}>Cancel</Button>
                 <Button
                     onClick={handleSubmit(onSubmit)}
                     color="primary"
                     variant="contained"
+                    disabled={testEmailSender.isPending || watch('recipient') === ''}
                 >
-                    Send
+                    {testEmailSender.isPending ? 'Sending...' : 'Send'}
                 </Button>
             </DialogActions>
         </Dialog>

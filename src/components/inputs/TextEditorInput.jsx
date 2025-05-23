@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Popover, TextField, Button, Paper, Divider, Tooltip, IconButton } from '@mui/material';
 import 'prismjs/themes/prism-tomorrow.css';
 
@@ -258,7 +258,6 @@ const extensions = [
     StarterKit.configure({
         bulletList: { keepMarks: true, keepAttributes: false },
         orderedList: { keepMarks: true, keepAttributes: false },
-        heading: { levels: [1, 2, 3] },
         codeBlock: false, // we override this
     }),
     Heading.configure({ levels: [1, 2, 3] }),
@@ -275,7 +274,33 @@ const extensions = [
     }),
 ];
 
-const TextEditorInput = ({ content, onUpdate, sx }) => {
+// Custom component that uses the current editor context to ensure content is properly set
+const ContentSynchronizer = ({ content }) => {
+    const { editor } = useCurrentEditor();
+
+    useEffect(() => {
+        if (editor && content !== undefined) {
+            const currentHtml = editor.getHTML();
+            if (currentHtml !== content) {
+                editor.commands.setContent(content);
+            }
+        }
+    }, [content, editor]);
+
+    return null;
+};
+
+const TextEditorInput = ({ content, onUpdate, sx, key }) => {
+    // Track initial content to ensure it's set properly
+    const [initialContent, setInitialContent] = useState(content || '<p></p>');
+
+    // Update initialContent if content prop changes
+    useEffect(() => {
+        if (content !== undefined) {
+            setInitialContent(content);
+        }
+    }, [content]);
+
     return (
         <Paper
             elevation={0}
@@ -314,6 +339,7 @@ const TextEditorInput = ({ content, onUpdate, sx }) => {
             }}
         >
             <EditorProvider
+                key={key} // This allows for forcing remounts when key changes
                 slotBefore={
                     <>
                         <EditorToolbar />
@@ -321,12 +347,15 @@ const TextEditorInput = ({ content, onUpdate, sx }) => {
                     </>
                 }
                 extensions={extensions}
-                content={content}
+                content={initialContent} // Use initialContent for first render
                 onUpdate={({ editor }) => {
                     const html = editor.getHTML();
                     onUpdate(html);
                 }}
-            />
+            >
+                {/* This component ensures the editor content stays in sync with props */}
+                <ContentSynchronizer content={content} />
+            </EditorProvider>
         </Paper>
     );
 };

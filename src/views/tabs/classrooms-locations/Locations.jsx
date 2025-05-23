@@ -2,24 +2,17 @@
 
 import { useState } from "react";
 import DataView from "@/views/DataView";
-import { useRemovePowerUser, useUnassignPowerUserProfiles } from "@/hooks/api/tenant/usePowerUsers";
 import { locationsColumns } from "@/constants/ClassroomsLocations";
-import LocationsDrawer from "@/views/Forms/Locations/LocationsDrawer";
 import { useDeleteLocation, useLocations } from "@/hooks/api/tenant/learn/classrooms-locations/useLocations";
 import ConfirmationDialog from "@/components/ConfirmationDialog";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
-
-const Locations = () => {
+const Locations = ({ setDrawerState }) => {
+    const { translate } = useTranslation();
+    
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
-    const [selectedRows, setSelectedRows] = useState([]);
-    const [selectAll, setSelectAll] = useState(false);
-
-    const [drawerState, setDrawerState] = useState({
-        open: false,
-        data: null
-    });
 
     const [deleteConfirmation, setDeleteConfirmation] = useState({
         open: false,
@@ -51,28 +44,20 @@ const Locations = () => {
         }
     }
 
+     const deleteConfirmationName = deleteConfirmation?.data?.name;
+
     return (
         <>
             <DataView
-                title="Locations"
+                title={translate('CL management.TAB_LOCATIONS', "Locations")}
                 columns={locationsColumns(setDrawerState, setDeleteConfirmation)}
                 data={data?.items}
-                height="calc(100vh - 300px)"
+                height="calc(100vh - 325px)"
                 isLoading={isLoading}
                 error={error}
                 pagination={{ ...pagination, total: data?.pagination?.total }}
                 setPagination={setPagination}
-                toolbar={{
-                    buttonGroup: [
-                        {
-                            text: "Add Location",
-                            variant: "contained",
-                            tooltip: "Create a new location",
-                            icon: "lucide-plus",
-                            onClick: () => setDrawerState({ open: true, data: null }),
-                        },
-                    ]
-                }}
+                noToolbar
                 slots={{
                     globalFilter,
                     setGlobalFilter,
@@ -84,31 +69,27 @@ const Locations = () => {
                         search: true,
                         filter: false,
                         columnVisibility: true
-                    }, emptyState: {
-                        height: 'calc(100vh - 455px)'
+                    }, 
+                    emptyState: {
+                        message: translate('CL management.NO_LOCATION_FOUND', 'No locations found'),
+                        description: translate('CL management.TRY_CREATING', 'Try creating a new location'),
+                        height: 'calc(100vh - 466px)'
                     }
                 }}
-
                 enableSelection={false}
             />
-            {
-                drawerState?.open && <LocationsDrawer
-                    open={drawerState?.open}
-                    onClose={() => setDrawerState({ open: false, data: null })}
-                    data={drawerState?.data}
-                />
-            }
+
             {
                 deleteConfirmation.open && <ConfirmationDialog
                     type='error'
                     isOpen={deleteConfirmation.open}
-                    title={`Delete "${deleteConfirmation?.data?.name}"`}
-                    message={`Are you sure you want to delete "${deleteConfirmation?.data?.name}"?`}
+                    title={translate('CL management.DIALOG_TITLE_DELETE_LOCATION', { name: deleteConfirmationName })}
+                    message={translate('CL management.DIALOG_MESSAGE_DELETE_LOCATION', { name: deleteConfirmationName })}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
                     actions={{
                         toast: {
-                            success: 'Location deleted successfully',
-                            error: 'Error deleting location',
+                            success: translate('CL management.TOAST_SUCCESS_LOCATION_DELETED', 'Location deleted successfully'),
+                            error: translate('CL management.TOAST_ERROR_LOCATION_DELETED', 'Error deleting location'),
                             show: false,
                         },
                         icons: {
@@ -116,9 +97,9 @@ const Locations = () => {
                             cancel: null
                         },
                         buttons: {
-                            confirm: 'Delete',
-                            cancel: 'Cancel',
-                            processing: 'Deleting...',
+                            confirm: translate('common.delete', 'Delete'),
+                            cancel: translate('common.cancel', 'Cancel'),
+                            processing: translate('common.deleting', 'Deleting...'),
                         },
                         onConfirm: handleDeleteSubmit,
                         isLoading: deleteLocation.isPending,
@@ -132,4 +113,4 @@ const Locations = () => {
     );
 };
 
-export default Locations
+export default Locations;

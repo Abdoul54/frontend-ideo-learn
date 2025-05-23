@@ -20,8 +20,11 @@ import { useEffect, useState } from "react";
 import DataView from "@/views/DataView";
 import { useLocations } from "@/hooks/api/tenant/learn/classrooms-locations/useLocations";
 import { useAssignLocation } from "@/hooks/api/tenant/learn/classrooms-locations/useClassrooms";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const AssignLocationDrawer = ({ open, onClose, data }) => {
+    const { translate } = useTranslation();
+
     const {
         control,
         handleSubmit,
@@ -68,7 +71,7 @@ const AssignLocationDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title={"Assign Location"}
+            title={translate('CL management.DRAWER_TITLE_ASSIGN_LOCATION', 'Assign Location')}
             open={open}
             onClose={onClose}
         >
@@ -96,7 +99,9 @@ const AssignLocationDrawer = ({ open, onClose, data }) => {
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
                         <Grid item size={12} component={ListItem}>
-                            <ListItemText primary='Choose a location' secondary='Select a location to assign to this classroom'
+                            <ListItemText
+                                primary={translate('CL management.TEXT_CHOOSE_LOCATION', 'Choose a location')}
+                                secondary={translate('CL management.TEXT_SELECT_LOCATION', 'Select a location to assign to this classroom')}
                                 slotProps={{
                                     primary: {
                                         variant: 'h5',
@@ -114,12 +119,11 @@ const AssignLocationDrawer = ({ open, onClose, data }) => {
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <FormControl error={!!error} fullWidth>
-                                        {/* <FormLabel>Select a location</FormLabel> */}
                                         <RadioGroup
                                             {...field}
                                         >
                                             <DataView
-                                                title="Groups"
+                                                title={translate('CL management.TAB_LOCATIONS', 'Locations')}
                                                 columns={[
                                                     {
                                                         accessorKey: "id",
@@ -132,17 +136,17 @@ const AssignLocationDrawer = ({ open, onClose, data }) => {
                                                     },
                                                     {
                                                         accessorKey: "name",
-                                                        header: "Name",
+                                                        header: translate('common.name', 'Name'),
                                                         flex: 1
                                                     },
                                                     {
                                                         accessorKey: "address",
-                                                        header: "Address",
+                                                        header: translate('CL management.PLACEHOLDER_ADDRESS', 'Address'),
                                                         flex: 1
                                                     },
                                                     {
                                                         accessorKey: "country",
-                                                        header: "Country",
+                                                        header: translate('CL management.TABLE_HEADER_COUNTRY', 'Country'),
                                                         flex: 1
                                                     }
                                                 ]}
@@ -166,6 +170,8 @@ const AssignLocationDrawer = ({ open, onClose, data }) => {
                                                         columnVisibility: true
                                                     },
                                                     emptyState: {
+                                                        message: translate('CL management.NO_LOCATION_FOUND', 'No locations found'),
+                                                        description: translate('CL management.TRY_SEARCHING', 'Try searching with different criteria'),
                                                         height: 'calc(100vh - 506px)'
                                                     }
                                                 }}
@@ -182,8 +188,14 @@ const AssignLocationDrawer = ({ open, onClose, data }) => {
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={assignLocation?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={assignLocation?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={assignLocation?.isPending}>
+                        {translate('common.cancel', 'Cancel')}
+                    </Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={assignLocation?.isPending}>
+                        {assignLocation?.isPending
+                            ? translate('common.submitting', 'Submitting...')
+                            : translate('common.submit', 'Submit')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer >

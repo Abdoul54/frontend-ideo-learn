@@ -1,5 +1,6 @@
 'use client'
 import { useSettings } from "@/@core/contexts/settingsContext"
+import { useLanguage } from "@/providers/LanguageProvider"
 import { Box, IconButton, Paper, Portal, Slide, Stack, Typography } from "@mui/material"
 import { useRouter } from "next/navigation"
 import { memo, useEffect, useRef, useState } from "react"
@@ -65,7 +66,8 @@ const useTooltip = () => {
 
 // Fixed NavTooltip Component
 const NavTooltip = memo(function NavTooltip({ show, position, icon, label }) {
-    const { settings } = useSettings()
+    const { language } = useLanguage()
+
     const [isMounted, setIsMounted] = useState(false)
 
     // Move useEffect after all other hooks to maintain consistent order
@@ -77,7 +79,7 @@ const NavTooltip = memo(function NavTooltip({ show, position, icon, label }) {
         return null
     }
 
-    const isRTL = settings?.language?.direction === 'rtl'
+    const isRTL = language?.direction === 'rtl'
 
     return (
         <Portal container={document.body}>

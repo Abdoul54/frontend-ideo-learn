@@ -1,18 +1,43 @@
 'use client'
 
-import { useEffect } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useEffect } from 'react'
+import { useSession, signOut } from 'next-auth/react'
+import { usePathname, useRouter } from 'next/navigation'
+import { PUBLIC_TENANT_PAGES } from '@/utils/middleware/routes'
+import { hasTenantAuthParams } from '@/utils/middleware/auth'
 
-export default function AuthWrapper({ children, redirectPath }) {
-  const { data: session, status } = useSession();
-  const router = useRouter();
+export default function AuthWrapper({ children, redirectPath = '/login' }) {
+  const { data: session, status } = useSession()
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const isPublicTenantPage = (path) =>
+    PUBLIC_TENANT_PAGES.some(p => path.startsWith(p))
+  const isPublicPage = isPublicTenantPage(pathname)
 
   useEffect(() => {
-    if (session?.error === 'SessionExpired') {
-      router.push(redirectPath);
-    }
-  }, [session, router]);
+    const isExpired = session?.error === 'SessionExpired' || !session?.user
 
-  return <div>{children}</div>;
+    if (isPublicPage) {
+      return
+    }
+
+    if ((status === 'unauthenticated' && isExpired) && hasTenantAuthParams(new URLSearchParams(window.location.search))) {
+      return
+    }
+
+    if (status === 'authenticated' && isExpired) {
+
+      console.warn('Session expired or invalid. Logging out...')
+      signOut({ redirect: false }).then(() => {
+        router.push(redirectPath)
+      })
+    }
+
+    if (status === 'unauthenticated') {
+      router.push(redirectPath)
+    }
+  }, [session, status, router, redirectPath])
+
+  return <>{children}</>
 }

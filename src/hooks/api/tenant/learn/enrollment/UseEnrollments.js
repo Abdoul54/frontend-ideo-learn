@@ -139,9 +139,12 @@ export const useBulkEnroll = (onSuccess) => {
                             if (!branch.branch_id && branch.id) {
                                 return {
                                     branch_id: branch.id,
-                                    selected_status: branch.selected_status || 1
+                                    // Make sure selected_status is explicitly set and kept as provided
+                                    // Don't default to 1 if it's already set in the branch data
+                                    selected_status: branch.selected_status !== undefined ? branch.selected_status : 1
                                 };
                             }
+                            // Keep the branch as is, preserving its selected_status
                             return branch;
                         });
 

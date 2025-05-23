@@ -1,6 +1,6 @@
 'use client';
 
-import { InputAdornment, MenuItem, Select, TextField } from "@mui/material";
+import { InputAdornment, MenuItem, Select, TextField, Tooltip } from "@mui/material";
 import { Controller, useFormContext } from "react-hook-form";
 import { useState, useEffect } from "react";
 
@@ -20,8 +20,9 @@ export default function MultilingualTextInput({
 }) {
     // Access form context - will be available because we wrapped with FormProvider
     const formContext = useFormContext();
-    const { watch, getValues, formState } = formContext || {};
+    const { watch, getValues, setValue, formState } = formContext || {};
     const [disableOtherLanguages, setDisableOtherLanguages] = useState(false);
+    const [showWarning, setShowWarning] = useState(false);
 
     // Use provided languages or fallback to empty array - don't use hardcoded defaults
     const languagesToDisplay = languages.length > 0 ? languages : [];
@@ -29,9 +30,9 @@ export default function MultilingualTextInput({
     // Identify the system default language (if any)
     const systemDefaultLanguage = defaultLocale;
     // Use systemDefaultLanguage as the actual default if provided, otherwise use defaultLanguage or first language in list
-    const actualDefaultLang = systemDefaultLanguage || 
-                              defaultLanguage || 
-                              (languagesToDisplay.length > 0 ? languagesToDisplay[0].code : null);
+    const actualDefaultLang = systemDefaultLanguage ||
+        defaultLanguage ||
+        (languagesToDisplay.length > 0 ? languagesToDisplay[0].code : null);
 
     // Check if default language has value
     useEffect(() => {
@@ -39,26 +40,45 @@ export default function MultilingualTextInput({
 
         const defaultValue = getValues(`${name}.${actualDefaultLang}`);
         const isDefaultEmpty = !defaultValue || defaultValue.trim() === '';
-        setDisableOtherLanguages(isDefaultEmpty && currentLang !== actualDefaultLang);
-
-        // If default is empty and user is on a different language, force back to default
-        if (isDefaultEmpty && currentLang !== actualDefaultLang) {
-            onLanguageChange(actualDefaultLang);
-        }
-    }, [watch ? watch(`${name}.${actualDefaultLang}`) : null, currentLang, actualDefaultLang, name, formContext]);
+        setDisableOtherLanguages(isDefaultEmpty && currentLang !== actualDefaultLang && currentLang !== 'all');
+    }, [watch ? watch(`${name}.${actualDefaultLang}`) : null, currentLang, actualDefaultLang, name, formContext, getValues]);
 
     const handleLanguageChange = (event) => {
         const newLang = event.target.value;
+        const prevLang = currentLang;
+
         if (!formContext) {
             onLanguageChange(newLang);
             return;
         }
 
-        const defaultValue = getValues(`${name}.${actualDefaultLang}`);
+        // Critical fix: When switching FROM "all" TO a specific language
+        if (prevLang === 'all' && newLang !== 'all') {
+            const allValue = getValues(`${name}.all`);
 
-        // Only allow changing if default language has content or user is selecting default language
-        if (!defaultValue && newLang !== actualDefaultLang) {
-            return; // Prevent language change
+            // Copy "all" value to the specific language if it has a value
+            if (allValue && allValue.trim() !== '') {
+                setValue(`${name}.${newLang}`, allValue);
+
+                // IMPORTANT: Clear the "all" field to ensure we get a multi_lang payload
+                setTimeout(() => {
+                    setValue(`${name}.all`, '');
+                }, 100);
+
+                setShowWarning(true);
+                setTimeout(() => setShowWarning(false), 5000);
+            }
+        }
+
+        // When switching TO "all" FROM a specific language
+        if (prevLang !== 'all' && newLang === 'all') {
+            const specificValue = getValues(`${name}.${prevLang}`);
+
+            // If "all" is empty but the specific language has content, copy it to "all"
+            if ((!getValues(`${name}.all`) || getValues(`${name}.all`).trim() === '') &&
+                specificValue && specificValue.trim() !== '') {
+                setValue(`${name}.all`, specificValue);
+            }
         }
 
         onLanguageChange(newLang);
@@ -91,22 +111,41 @@ export default function MultilingualTextInput({
                 render={({ field: { onChange, value, ...field }, fieldState }) => (
                     <TextField
                         {...field}
-                        onChange={onChange}
+                        onChange={(e) => {
+                            onChange(e);
+                            // If we're editing "all" and it was previously cleared, make sure other languages are reset
+                            if (currentLang === 'all' && e.target.value && e.target.value.trim() !== '') {
+                                // Optionally auto-fill all languages with the same value
+                                // This is commented out as it may not be desired behavior
+                                // languagesToDisplay.forEach(lang => {
+                                //     if (lang.code !== 'all') {
+                                //         setValue(`${name}.${lang.code}`, e.target.value);
+                                //     }
+                                // });
+                            }
+                        }}
                         value={value || ''}
                         {...props}
                         label={
                             currentLang === actualDefaultLang && systemDefaultLanguage
                                 ? `${label} (Default Language)`
-                                : label
+                                : currentLang === 'all'
+                                    ? `${label} (All Languages)`
+                                    : `${label} (${currentLang.toUpperCase()})`
                         }
                         fullWidth
                         error={!!getError(fieldState, name, applyToAllLanguages, currentLang)}
                         helperText={
                             getError(fieldState, name, applyToAllLanguages, currentLang) ||
-                            (currentLang === actualDefaultLang && disableOtherLanguages ?
-                                "You must fill this field before switching languages" : "") ||
-                            (currentLang === systemDefaultLanguage && required && !value ?
-                                "This field is required when 'All Languages' is not provided" : "")
+                            (showWarning && currentLang !== 'all'
+                                ? "Switched to multilingual mode. 'All Languages' field was cleared."
+                                : "") ||
+                            (currentLang === actualDefaultLang && disableOtherLanguages
+                                ? "You must fill this field before switching languages"
+                                : "") ||
+                            (currentLang === 'all'
+                                ? "Setting text here will use the same value for all languages"
+                                : "")
                         }
                         InputProps={{
                             ...props.InputProps,
@@ -122,11 +161,13 @@ export default function MultilingualTextInput({
                                             <MenuItem
                                                 key={lang.code}
                                                 value={lang.code}
-                                                disabled={lang.code !== actualDefaultLang && disableOtherLanguages}
+                                                disabled={lang.code !== actualDefaultLang &&
+                                                    lang.code !== 'all' &&
+                                                    disableOtherLanguages}
                                             >
-                                                {lang.code === systemDefaultLanguage ?
-                                                    `${lang.label} (Default)` :
-                                                    lang.label}
+                                                {lang.code === systemDefaultLanguage && lang.code !== 'all'
+                                                    ? `${lang.label} (Default)`
+                                                    : lang.label}
                                             </MenuItem>
                                         ))}
                                     </Select>
@@ -137,11 +178,13 @@ export default function MultilingualTextInput({
                     />
                 )}
             />
-            {currentLang !== actualDefaultLang && disableOtherLanguages && (
-                <div style={{ color: 'red', fontSize: '0.75rem', marginTop: '3px' }}>
-                    You must fill the {languagesToDisplay.find(l => l.code === actualDefaultLang)?.label} field first
-                </div>
-            )}
+            {currentLang !== actualDefaultLang &&
+                currentLang !== 'all' &&
+                disableOtherLanguages && (
+                    <div style={{ color: 'red', fontSize: '0.75rem', marginTop: '3px' }}>
+                        You must fill the {languagesToDisplay.find(l => l.code === actualDefaultLang)?.label} field first
+                    </div>
+                )}
         </>
     );
 }

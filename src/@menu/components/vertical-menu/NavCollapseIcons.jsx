@@ -1,16 +1,14 @@
 'use client'
 
+import { IconButton } from '@mui/material'
 // Hook Imports
 import useVerticalNav from '../../hooks/useVerticalNav'
 
 // Icon Imports
 import CloseIcon from '../../svg/Close'
-import RadioCircleIcon from '../../svg/RadioCircle'
-import RadioCircleMarkedIcon from '../../svg/RadioCircleMarked'
-
 const NavCollapseIcons = props => {
   // Props
-  const { closeIcon, lockedIcon, unlockedIcon, onClick, onClose, ...rest } = props
+  const { closeIcon, lockedIcon, unlockedIcon, onClick, onClose, IconClassName, ...rest } = props
 
   // Hooks
   const { isCollapsed, collapseVerticalNav, isBreakpointReached, toggleVerticalNav } = useVerticalNav()
@@ -39,32 +37,16 @@ const NavCollapseIcons = props => {
   return (
     <>
       {isBreakpointReached ? (
-        <span role='button' tabIndex={0} style={{ display: 'flex', cursor: 'pointer' }} onClick={handleClose} {...rest}>
+        <IconButton onClick={handleClose} {...rest}>
           {closeIcon ?? <CloseIcon />}
-        </span>
-      ) : isCollapsed ? (
-        <span
-          role='button'
-          tabIndex={0}
-          style={{ display: 'flex', cursor: 'pointer' }}
-          onClick={() => handleClick('lock')}
-          {...rest}
-        >
-          {unlockedIcon ?? <RadioCircleIcon />}
-        </span>
-      ) : (
-        <span
-          role='button'
-          tabIndex={0}
-          style={{ display: 'flex', cursor: 'pointer' }}
-          onClick={() => handleClick('unlock')}
-          {...rest}
-        >
-          {lockedIcon ?? <RadioCircleMarkedIcon />}
-        </span>
-      )}
+        </IconButton>
+      ) : <IconButton onClick={() => isCollapsed ? handleClick('lock') : handleClick('unlock')} {...rest}>
+        <i className={IconClassName} />
+      </IconButton>
+      }
     </>
   )
+
 }
 
 export default NavCollapseIcons

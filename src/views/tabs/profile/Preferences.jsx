@@ -4,6 +4,7 @@ import SelectInput from "@/components/inputs/SelectInput";
 import { useActiveLanguages } from "@/hooks/api/tenant/useLocalization";
 import { useTimezonesTenant } from "@/hooks/api/tenant/useTimeLangSettings";
 import { useGetPreferences, usePostPreferences } from "@/hooks/api/tenant/useUsers";
+import { useLanguage } from "@/providers/LanguageProvider";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { Button, Card, CardActions, CardContent, CardHeader, Grid, ListItemText } from "@mui/material";
 import { useEffect } from "react";
@@ -20,6 +21,7 @@ const Preferences = () => {
     const { data: activeLanguages, isLoading: isLoadingActiveLanguages, error: errorActiveLanguages } = useActiveLanguages();
     const { data: timezones, isLoading: isLoadingTimezones, error: errorTimezones } = useTimezonesTenant();
     const { data: preferences } = useGetPreferences();
+    const { refreshLanguage } = useLanguage();
     const updatePreferences = usePostPreferences();
 
     const { control, handleSubmit, setError, setValue } = useForm({
@@ -53,7 +55,9 @@ const Preferences = () => {
     }
 
     const onSubmit = (data) => {
-        updatePreferences.mutateAsync({ data })
+        updatePreferences.mutateAsync({ data }).then(() => {
+            refreshLanguage()
+        });
     };
 
     return (

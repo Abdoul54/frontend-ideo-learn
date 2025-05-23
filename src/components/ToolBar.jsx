@@ -73,7 +73,7 @@ ToolbarButton.propTypes = {
 
 ToolbarButton.displayName = 'ToolbarButton'
 
-const ToolBar = ({ breadcrumbs = [], buttonGroup = [] }) => {
+const ToolBar = ({ component, breadcrumbs = [], buttonGroup = [] }) => {
   // Memoize button group length
   const totalButtons = useMemo(() => buttonGroup.length, [buttonGroup])
   const router = useRouter()
@@ -98,35 +98,46 @@ const ToolBar = ({ breadcrumbs = [], buttonGroup = [] }) => {
         gap: 1,
       }}
     >
-      <Stack
-        direction='row'
-        gap={1}
-        alignItems='center'
-      >
-        <Breadcrumbs
-          aria-label='breadcrumb'
-          sx={{
-            flexGrow: 1,
-            display: 'flex',
-            alignItems: 'center',
-            gap: 1,
-          }}
-        >
-          {breadcrumbs.map((breadcrumb, index) => (
-            <Typography
-              key={`breadcrumb-${index}-${breadcrumb?.label}`}
-              variant='h5'
-              fontWeight='bold'
-              color={breadcrumb?.link && currentPath !== breadcrumb?.link ? 'primary.main' : 'text.primary'}
-              className={`${breadcrumb?.link && currentPath !== breadcrumb?.link ? 'cursor-pointer' : 'cursor-auto'}`}
-              component={'span'}
-              onClick={() => breadcrumb?.link && goTo(breadcrumb.link)}
+      {
+        component ?
+          <Stack
+            direction='row'
+            gap={1}
+            alignItems='center'
+          >
+            {component}
+          </Stack>
+          :
+          <Stack
+            direction='row'
+            gap={1}
+            alignItems='center'
+          >
+            <Breadcrumbs
+              aria-label='breadcrumb'
+              sx={{
+                flexGrow: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              }}
             >
-              {breadcrumb?.label || 'Unlabeled'}
-            </Typography>
-          ))}
-        </Breadcrumbs>
-      </Stack>
+              {breadcrumbs.map((breadcrumb, index) => (
+                <Typography
+                  key={`breadcrumb-${index}-${breadcrumb?.label}`}
+                  variant='h5'
+                  fontWeight='bold'
+                  color={breadcrumb?.link && currentPath !== breadcrumb?.link ? 'primary.main' : 'text.primary'}
+                  className={`${breadcrumb?.link && currentPath !== breadcrumb?.link ? 'cursor-pointer' : 'cursor-auto'}`}
+                  component={'span'}
+                  onClick={() => breadcrumb?.link && goTo(breadcrumb.link)}
+                >
+                  {breadcrumb?.label || 'Unlabeled'}
+                </Typography>
+              ))}
+            </Breadcrumbs>
+          </Stack>
+      }
 
       {buttonGroup.length > 0 && (
         <Stack

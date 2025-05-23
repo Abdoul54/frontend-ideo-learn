@@ -93,7 +93,6 @@ export const useCreateSkill = () => {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries(["skills"]);
-            console.log("Skill Created Successfully:", data);
             toast.success("Skill Created successfully");
         },
         onError: (error) => {
@@ -127,7 +126,6 @@ export const useUpdateSkill = () => {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries(["skills"]);
-            console.log("Skill Updated Successfully:", data);
             toast.success("skill updated successfully");
         },
         onError: (error) => {
@@ -162,7 +160,6 @@ export const useDeleteSkill = () => {
         },
         onSuccess: (data) => {
             queryClient.invalidateQueries(["skills"]);
-            console.log("Skill Deleted Successfully:", data);
             toast.success("Skill deleted successfully");
         },
         onError: (error) => {

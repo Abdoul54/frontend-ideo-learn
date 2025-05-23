@@ -15,8 +15,10 @@ import { useHaykal } from "@/hooks/api/tenant/useHaykal";
 import CheckboxesGroup from "@/components/inputs/CheckboxesGroup";
 import { useHistoryNavigation } from "@/hooks/useHistoryNavigation";
 import { useWatch } from "react-hook-form";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 const StepTwo = ({ control }) => {
+    const { translate } = useTranslation();
     // State management
     const [searchInput, setSearchInput] = useState('');
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
@@ -77,7 +79,7 @@ const StepTwo = ({ control }) => {
         <>
             <Grid item xs={12}>
                 <Typography variant="h6" gutterBottom>
-                    Assign to Branches
+                    {translate('User Management.SECTION_ASSIGN_BRANCHES', 'Assign to Branches')}
                 </Typography>
             </Grid>
 
@@ -109,7 +111,7 @@ const StepTwo = ({ control }) => {
             <Grid item xs={12}>
                 <TextField
                     fullWidth
-                    placeholder="Search branches..."
+                    placeholder={translate('User Management.PLACEHOLDER_SEARCH_BRANCHES', 'Search branches...')}
                     value={searchInput}
                     onChange={(e) => handleSearchChange(e.target.value)}
                     InputProps={{
@@ -133,7 +135,7 @@ const StepTwo = ({ control }) => {
                     <Box display="flex" justifyContent="center" py={4}>
                         <CircularProgress size={24} />
                         <Typography variant="body2" ml={2}>
-                            Loading branches...
+                            {translate('User Management.LOADING_BRANCHES', 'Loading branches...')}
                         </Typography>
                     </Box>
                 </Grid>
@@ -151,7 +153,9 @@ const StepTwo = ({ control }) => {
                     >
                         <i className="lucide-folder" style={{ fontSize: 40, opacity: 0.5 }} />
                         <Typography mt={2}>
-                            {searchInput ? 'No branches found' : 'This branch is empty'}
+                            {searchInput ? 
+                                translate('User Management.NO_BRANCHES_FOUND', 'No branches found') : 
+                                translate('User Management.BRANCH_EMPTY', 'This branch is empty')}
                         </Typography>
                     </Box>
                 </Grid>

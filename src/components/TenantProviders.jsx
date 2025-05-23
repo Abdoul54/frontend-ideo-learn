@@ -14,6 +14,7 @@ import { SSOProvider } from '@/providers/SSOProvider'
 import LanguageProvider from '@/providers/LanguageProvider'
 import { UserProvider } from '@/@core/contexts/userContext'
 import { TranslationProvider } from '@/@core/contexts/translationContext'
+
 export default function TenantProviders({ children }) {
   const [isClient, setIsClient] = useState(false)
 
@@ -29,29 +30,28 @@ export default function TenantProviders({ children }) {
   return (
     <QueryProvider>
       <VerticalNavProvider>
-        <SettingsProvider>
-          <TranslationProvider>
-
-            <AdvancedSettingsProvider>
-              <ThemeProviderWrapper>
-                <LanguageProvider>
-                  <MuiLocalizationProvider>
-                    <NextAuthProvider>
-                      <AuthWrapper redirectPath='/login'>
-                        <UserProvider>
+        <NextAuthProvider>
+          <AuthWrapper redirectPath='/login'>
+            <SettingsProvider>
+              <AdvancedSettingsProvider>
+                <UserProvider>
+                  <LanguageProvider>
+                    <TranslationProvider>
+                      <ThemeProviderWrapper>
+                        <MuiLocalizationProvider>
                           <SSOProvider>
                             {children}
                             <Toaster />
                           </SSOProvider>
-                        </UserProvider>
-                      </AuthWrapper>
-                    </NextAuthProvider>
-                  </MuiLocalizationProvider>
-                </LanguageProvider>
-              </ThemeProviderWrapper>
-            </AdvancedSettingsProvider>
-          </TranslationProvider>
-        </SettingsProvider>
+                        </MuiLocalizationProvider>
+                      </ThemeProviderWrapper>
+                    </TranslationProvider>
+                  </LanguageProvider>
+                </UserProvider>
+              </AdvancedSettingsProvider>
+            </SettingsProvider>
+          </AuthWrapper>
+        </NextAuthProvider>
       </VerticalNavProvider>
     </QueryProvider>
   )

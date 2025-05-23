@@ -19,9 +19,10 @@ import DrawerFormContainer from "@/components/DrawerFormContainer";
 import { useEffect } from "react";
 import TextInput from "@/components/inputs/TextInput";
 import { useCreateSkill, useUpdateSkill } from "@/hooks/api/tenant/skills/useSkills";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const SkillDrawer = ({ open, onClose, data }) => {
-
+    const { translate } = useTranslation();
     const createSkill = useCreateSkill();
     const updateSkill = useUpdateSkill();
 
@@ -81,23 +82,27 @@ const SkillDrawer = ({ open, onClose, data }) => {
         };
 
         if (data) {
-            updateSkill.mutateAsync({ id: data.id, data: formattedData });
-            onClose();
-            reset();
+            updateSkill.mutateAsync({ id: data.id, data: formattedData }).then(() => {
+                onClose();
+                reset();
+            })
         } else {
-            createSkill.mutateAsync(formattedData);
-            onClose();
-            reset();
+            createSkill.mutateAsync(formattedData).then(() => {
+                onClose();
+                reset();
+            });
         }
     };
 
     const handleAddAlternativeName = () => {
         append({ value: '' });
     };
+
     return (
         <DrawerFormContainer
-            title="Create Skill"
-            description="Create a new skill to be used in your skill set."
+            title={data ? data?.name : translate('Skill management.MODAL_TITLE_CREATE_SKILL', "Create Skill")}
+            description={data ? translate('Skill management.EDIT_SKILL_DETAILS', "Edit skill details") : 
+                translate('Skill management.MODAL_SUBTITLE_CREATE_SKILL', "Create a new skill to be used in your skill set.")}
             open={open}
             onClose={onClose}
         >
@@ -125,18 +130,21 @@ const SkillDrawer = ({ open, onClose, data }) => {
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
                         <Grid item xs={12} component={ListItem}>
-                            <ListItemText primary='Details' primaryTypographyProps={{
-                                variant: 'h5',
-                                sx: {
-                                    fontWeight: 600,
-                                    fontSize: '1.2rem',
-                                }
-                            }} />
+                            <ListItemText 
+                                primary={translate('Skill management.DETAILS', 'Details')} 
+                                primaryTypographyProps={{
+                                    variant: 'h5',
+                                    sx: {
+                                        fontWeight: 600,
+                                        fontSize: '1.2rem',
+                                    }
+                                }} 
+                        />
                         </Grid>
                         <Grid item xs={12} component={ListItem}>
                             <TextInput
                                 name="name"
-                                label="Name"
+                                label={translate('common.name', 'Name')}
                                 control={control}
                                 type="text"
                             />
@@ -144,7 +152,7 @@ const SkillDrawer = ({ open, onClose, data }) => {
                         <Grid item xs={12} component={ListItem}>
                             <TextInput
                                 name="description"
-                                label="Description"
+                                label={translate('common.description', 'Description')}
                                 control={control}
                                 type="text"
                                 multiline
@@ -155,7 +163,7 @@ const SkillDrawer = ({ open, onClose, data }) => {
                         {/* Alternative Names Section */}
                         <Grid item xs={12} component={ListItem}>
                             <ListItemText
-                                primary='Alternative Names'
+                                primary={translate('Skill management.SECTION_ALTERNATIVE_NAMES', 'Alternative Names')}
                                 primaryTypographyProps={{
                                     variant: 'h5',
                                     sx: {
@@ -163,7 +171,7 @@ const SkillDrawer = ({ open, onClose, data }) => {
                                         fontSize: '1.2rem',
                                     }
                                 }}
-                                secondary="Add other ways this skill might be referenced"
+                                secondary={translate('Skill management.SECTION_SUBTITLE_ALTERNATIVE', 'Add other ways this skill might be referenced')}
                             />
                             <IconButton
                                 onClick={handleAddAlternativeName}
@@ -178,7 +186,7 @@ const SkillDrawer = ({ open, onClose, data }) => {
                                 <Box sx={{ flexGrow: 1 }}>
                                     <TextInput
                                         name={`alternative_names.${index}.value`}
-                                        label={`Alternative Name ${index + 1}`}
+                                        label={`${translate('Skill management.PLACEHOLDER_ALTERNATIVE_NAME', 'Alternative Name')} ${index + 1}`}
                                         control={control}
                                         type="text"
                                     />
@@ -197,8 +205,14 @@ const SkillDrawer = ({ open, onClose, data }) => {
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={createSkill?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={createSkill?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={createSkill?.isPending || updateSkill?.isPending}>
+                        {translate('common.cancel', 'Cancel')}
+                    </Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={createSkill?.isPending || updateSkill?.isPending}>
+                        {data ? 
+                            updateSkill?.isPending ? translate('common.saving', 'Saving...') : translate('common.save', 'Save') : 
+                            createSkill?.isPending ? translate('common.creating', 'Creating...') : translate('common.create', 'Create')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer >

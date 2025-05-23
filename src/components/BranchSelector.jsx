@@ -112,12 +112,14 @@ const BranchSelector = ({
 
   // Selection handler for checkboxes (multi-select mode)
   const handleCheckboxSelectionChange = (newSelectedValues) => {
+    const validValues = newSelectedValues.filter(id => id !== null && id !== undefined);
+
     if (typeof onChange === 'function') {
-      onChange(newSelectedValues);
+      onChange(validValues);
     }
 
     if (typeof onBranchSelect === 'function') {
-      if (newSelectedValues.length === 1) {
+      if (validValues.length === 1) {
         const selectedItem = items.find(item => item.id === newSelectedValues[0]);
         if (selectedItem) {
           onBranchSelect(selectedItem);

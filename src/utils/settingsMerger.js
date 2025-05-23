@@ -4,7 +4,7 @@ export const settingsMerger = (newSettings) => {
 
     const settings = {
         templateName: newSettings?.templateName || settingConfig?.templateName,
-        settingsCookieName: newSettings?.settingsCookieName || settingConfig?.settingsCookieName,
+        // settingsCookieName: newSettings?.settingsCookieName || settingConfig?.settingsCookieName,
         mode: newSettings?.mode || settingConfig?.mode,
         skin: newSettings?.skin || settingConfig?.skin,
         semiDark: newSettings?.semiDark || settingConfig?.semiDark,
@@ -26,10 +26,10 @@ export const settingsMerger = (newSettings) => {
         },
         disableRipple: newSettings?.disableRipple || settingConfig?.disableRipple,
         toastPosition: newSettings?.toastPosition || settingConfig?.toastPosition,
-        language: {
-            locale: newSettings?.language?.locale || settingConfig?.language?.locale,
-            direction: newSettings?.language?.direction || settingConfig?.language?.direction
-        },
+        // language: {
+        //     locale: newSettings?.language?.locale || settingConfig?.language?.locale,
+        //     direction: newSettings?.language?.direction || settingConfig?.language?.direction
+        // },
         navigation: {
             items: newSettings?.navigation?.items || settingConfig?.navigation?.items
         },

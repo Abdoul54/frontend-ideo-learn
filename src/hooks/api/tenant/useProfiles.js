@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient, useQueries } from "@tanstack/react-query";
 import { axiosInstance } from "@/lib/axios";
 import { urlParamsBuilder } from "@/utils/urlParamsBuilder";
 import toast from "react-hot-toast";
@@ -228,3 +228,49 @@ export const useUnassignProfilePowerUsers = () => {
     });
 }
 
+export const useProfileByIds = ({ ids = [] }) => {
+    // Filter out any null/undefined/empty IDs
+    const validIds = ids?.filter(Boolean) || [];
+
+    const queries = useQueries({
+        queries: validIds.map(id => ({
+            queryKey: ["profile", { id }],
+            queryFn: async () => {
+                try {
+                    const response = await axiosInstance.get(`/tenant/hakimuser/v1/profiles/${id}`);
+
+                    if (!response.data || !response.data.success) {
+                        throw new Error("Invalid response structure");
+                    }
+
+                    return response.data?.data;
+                } catch (error) {
+                    console.error(`Profile Fetch Error for ID ${id}:`, error);
+                    throw error;
+                }
+            },
+            staleTime: 5000,
+            retry: 2,
+            enabled: !!id,
+        }))
+    });
+
+    // Combine results into a friendly format matching what's used in your component
+    const isLoading = queries.some(query => query.isLoading);
+    const isError = queries.some(query => query.isError);
+    const error = queries.find(query => query.error)?.error;
+
+    // Only return data when all queries are finished and successful
+    const data = !isLoading && !isError
+        ? queries.map(query => query.data).filter(Boolean)
+        : undefined;
+
+    return {
+        data,
+        isLoading,
+        isError,
+        error,
+        // Include the raw queries in case advanced usage is needed
+        queries
+    };
+};

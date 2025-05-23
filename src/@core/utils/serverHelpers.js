@@ -15,7 +15,6 @@ export const getDemoName = () => {
 
 export const getSettingsFromCookie = () => {
   const cookieStore = cookies()
-  const demoName = getDemoName()
 
   const cookieName = settingConfig.settingsCookieName
 

@@ -4,8 +4,10 @@ import ConfirmationDialog from '@/components/ConfirmationDialog';
 import { Chip } from '@mui/material';
 import OptionMenu from '@/@core/components/option-menu';
 import { useSessionEnrollments, useUnEnrollSessionUser, useUnEnrollSessionUsers, useUnenrollUsers } from '@/hooks/api/tenant/learn/enrollment/UseEnrollments';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const SessionEnrollments = ({ sessionId }) => {
+    const { translate } = useTranslation();
     const [filters, setFilters] = useState(null);
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
@@ -31,31 +33,31 @@ const SessionEnrollments = ({ sessionId }) => {
     const columns = [
         {
             accessorKey: 'user.username',
-            header: 'Username',
+            header: translate('common.username', 'Username'),
             flex: 1
         },
         {
             accessorKey: 'user.first_name',
-            header: 'First Name',
+            header: translate('common.firstname', 'First Name'),
             flex: 1
         },
         {
             accessorKey: 'user.last_name',
-            header: 'Last Name',
+            header: translate('common.lastname', 'Last Name'),
             flex: 1
         },
         {
             accessorKey: 'user.email',
-            header: 'Email',
+            header: translate('common.email', 'Email'),
             flex: 1
         },
         {
             accessorKey: 'course.title',
-            header: 'Course',
+            header: translate('Course management.TEXT_COURSE', 'Course'),
         },
         {
             accessorKey: 'status_label',
-            header: 'Enrollment Status',
+            header: translate('Course management.TABLE_HEADER_ENROLLMENT_STATUS', 'Enrollment Status'),
             cell: ({ row }) => {
                 const status = row?.original?.status_label;
                 return (
@@ -66,7 +68,7 @@ const SessionEnrollments = ({ sessionId }) => {
         },
         {
             accessorKey: 'enrollment_date',
-            header: 'Enrollment Date',
+            header: translate('Course management.TABLE_HEADER_ENROLLMENT_DATE', 'Enrollment Date'),
             cell: ({ row }) => {
                 const date = new Date(row?.original?.enrollment_date);
                 return (
@@ -82,7 +84,7 @@ const SessionEnrollments = ({ sessionId }) => {
                 <OptionMenu
                     options={[
                         {
-                            text: 'Unenroll',
+                            text: translate('Course management.ACTION_UNENROLL', 'Unenroll'),
                             icon: <i className="solar-list-cross-minimalistic-outline" />,
                             menuItemProps: {
                                 onClick: (e) => {
@@ -146,7 +148,7 @@ const SessionEnrollments = ({ sessionId }) => {
     return (
         <>
             <DataView
-                title="Enrollments"
+                title={translate('Course management.SECTION_ENROLLMENTS', 'Enrollments')}
                 columns={columns}
                 data={data?.items}
                 height="calc(100vh - 358px)"
@@ -183,7 +185,7 @@ const SessionEnrollments = ({ sessionId }) => {
                     primaryActions: [
                         {
                             id: 'delete',
-                            label: 'Unenroll',
+                            label: translate('Course management.ACTION_UNENROLL', 'Unenroll'),
                             color: 'error',
                             handler: () => setDeleteConfirmation({ open: true, data: selectedRows, type: 'deleteMany', variant: 'simple' }),
                         }
@@ -195,13 +197,17 @@ const SessionEnrollments = ({ sessionId }) => {
                 deleteConfirmation.open && <ConfirmationDialog
                     type='error'
                     isOpen={deleteConfirmation.open}
-                    title={deleteConfirmation?.type === 'deleteOne' ? `Unenroll "${deleteConfirmation?.data?.user?.username}"` : 'Unenroll all selected users'}
-                    message={deleteConfirmation?.type === 'deleteOne' ? `Are you sure you want to un "${deleteConfirmation?.data?.user?.username}?"` : 'Are you sure you want to unenroll all selected users?'}
+                    title={deleteConfirmation?.type === 'deleteOne' 
+                        ? translate('Course management.TITLE_UNENROLL_USER', `Unenroll "${deleteConfirmation?.data?.user?.username}"`) 
+                        : translate('Course management.TITLE_UNENROLL_SELECTED', 'Unenroll all selected users')}
+                    message={deleteConfirmation?.type === 'deleteOne' 
+                        ? translate('Course management.MESSAGE_UNENROLL_USER', `Are you sure you want to unenroll "${deleteConfirmation?.data?.user?.username}?"`) 
+                        : translate('Course management.MESSAGE_UNENROLL_SELECTED', 'Are you sure you want to unenroll all selected users?')}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
                     actions={{
                         toast: {
-                            success: 'Enrollment removed',
-                            error: 'Error removing enrollment',
+                            success: translate('Course management.TOAST_ENROLLMENT_REMOVED', 'Enrollment removed'),
+                            error: translate('Course management.TOAST_ENROLLMENT_ERROR', 'Error removing enrollment'),
                             show: false,
                         },
                         icons: {
@@ -209,9 +215,9 @@ const SessionEnrollments = ({ sessionId }) => {
                             cancel: null
                         },
                         buttons: {
-                            confirm: 'Unenroll',
-                            cancel: 'Cancel',
-                            processing: 'Unenrolling...',
+                            confirm: translate('Course management.BUTTON_UNENROLL', 'Unenroll'),
+                            cancel: translate('common.cancel', 'Cancel'),
+                            processing: translate('Course management.BUTTON_UNENROLLING', 'Unenrolling...'),
                         },
                         onConfirm: handleDeleteSubmit,
                         isLoading: unEnrollSessionUsers.isPending,

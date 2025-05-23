@@ -24,6 +24,7 @@ import EditCourseDrawer from '@/views/Drawers/Learn/course/EditCourseDrawer';
 import MoveCoursesDrawer from '@/views/Drawers/Learn/course/MoveCoursesDrawer';
 import { findRootCategory } from '@/utils/categoryUtils';
 import EnrollUserDrawer from '@/views/Drawers/Learn/Enroll/EnrollUserDrawer';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const CourseManagementPage = () => {
   // State management
@@ -49,6 +50,8 @@ const CourseManagementPage = () => {
   const [initialHistoryForDrawer, setInitialHistoryForDrawer] = useState([]);
 
   const [bulkEnrollDrawerOpen, setBulkEnrollDrawerOpen] = useState(false);
+
+  const { translate, language } = useTranslation();
 
   // Dialog states
   const [deleteCategoryDialog, setDeleteCategoryDialog] = useState({
@@ -137,6 +140,7 @@ const CourseManagementPage = () => {
     sort_dir: 'asc',
     category_id: currentCategory?.id,
     search_type: searchType,
+    lang: language,
   });
 
   // Fetch courses data for the selected category
@@ -333,7 +337,7 @@ const CourseManagementPage = () => {
       }}
     >
       <Typography variant="body2" color="text.secondary" mr={1}>
-        Show descendant courses
+        {translate('Course management.TOGGLE_INCLUDE_DESCENDANTS', 'Include Descendants')}
       </Typography>
       <FormControlLabel
         control={
@@ -354,12 +358,12 @@ const CourseManagementPage = () => {
     [
       {
         id: 'status',
-        label: 'Status',
+        label: translate('Course management.FIELD_STATUS', 'Status'),
         icon: <i className='solar-check-square-bold-duotone' size={18} />,
         subMenu: [
           {
             id: 'set-published',
-            label: 'Set Published',
+            label: translate('Course management.DROPDOWN_STATUS_PUBLISHED', 'Set Published'),
             icon: <i className='solar-check-circle-bold-duotone' size={18} />,
             handler: (rows) => {
               const courseIds = rows.map(row => row.id);
@@ -368,7 +372,7 @@ const CourseManagementPage = () => {
           },
           {
             id: 'set-unpublished',
-            label: 'Set unpublished',
+            label: translate('Course management.DROPDOWN_STATUS_UNPUBLISHED', 'Set unpublished'),
             icon: <i className='solar-archive-bold-duotone' size={18} />,
             handler: (rows) => {
               const courseIds = rows.map(row => row.id);
@@ -391,7 +395,7 @@ const CourseManagementPage = () => {
     [
       {
         id: 'delete-selected',
-        label: 'Delete',
+        label: translate('common.delete', 'Delete'),
         icon: <i className="solar-trash-bin-2-bold-duotone" size={18} />,
         handler: (rows) => {
           handleDeleteSelectedCourses(rows);
@@ -403,7 +407,7 @@ const CourseManagementPage = () => {
     [
       {
         id: 'enroll-selected',
-        label: 'Enroll users',
+        label: translate('Course management.BUTTON_ENROLL_USERS', 'Enroll users'),
         icon: <i className="solar-user-plus-bold-duotone" size={18} />,
         handler: (rows) => {
           if (rows.length > 0) {
@@ -422,13 +426,13 @@ const CourseManagementPage = () => {
     [
       {
         id: 'add-course',
-        label: 'Add Course',
+        label: translate('Course management.MENU_ADD_COURSE', 'Add Course'),
         icon: <i className="solar-document-add-bold-duotone" />,
         handler: () => setAddCourseDrawerOpen(true),
       },
       {
         id: 'add-category',
-        label: 'Add Category',
+        label: translate('Course management.MENU_ADD_CATGORY', 'Add Category'),
         icon: <i className="solar-add-folder-bold-duotone" />,
         handler: () => setAddCategoryDrawerOpen(true),
       },
@@ -439,7 +443,7 @@ const CourseManagementPage = () => {
     [
       {
         id: 'enroll-selected',
-        label: 'Enroll users',
+        label: translate('Course management.BUTTON_ENROLL_USERS', 'Enroll users'),
         icon: <i className="solar-user-plus-bold-duotone" />,
         handler: (rows) => {
           if (rows.length > 0) {
@@ -525,7 +529,7 @@ const CourseManagementPage = () => {
   return (
     <>
       <DataView
-        title="Course Management"
+        title={translate('Course management.BREADCRUMB_COURSE_MANAGEMENT', 'Course Management')}
         columns={columnsData?.columns || []}
         isColumnsLoading={isColumnsLoading}
         columnsError={columnsError}

@@ -4,7 +4,7 @@
 // MUI Imports
 import {
   Experimental_CssVarsProvider as CssVarsProvider,
-  experimental_extendTheme as extendTheme,
+  extendTheme,
 } from '@mui/material/styles'
 import { AppRouterCacheProvider } from '@mui/material-nextjs/v14-appRouter'
 import CssBaseline from '@mui/material/CssBaseline'
@@ -21,6 +21,7 @@ import ModeChanger from './ModeChanger'
 // Core Theme Imports
 import userTheme from './userTheme'
 import { useSettings } from '@/@core/contexts/settingsContext'
+import { useLanguage } from '@/providers/LanguageProvider'
 
 const ThemeProvider = props => {
   // Props
@@ -28,8 +29,10 @@ const ThemeProvider = props => {
 
   // Hooks
   const { settings } = useSettings()
+  const { language } = useLanguage()
 
-  const direction = settings?.language?.direction
+
+  const direction = language?.direction
 
   const isDark = useMedia('(prefers-color-scheme: dark)', false)
 

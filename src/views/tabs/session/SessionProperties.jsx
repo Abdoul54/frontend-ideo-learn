@@ -33,8 +33,10 @@ import toast from 'react-hot-toast';
 import DateInput from '@/components/inputs/DateInput';
 import { useUpdateSession } from '@/hooks/api/tenant/learn/course/useSessionCourse';
 import CheckboxInput from '@/components/inputs/CheckboxInput';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const SessionProperties = ({ session, courseId }) => {
+    const { translate } = useTranslation();
 
     console.log("Session Properties - Session Data:", session);
     console.log("Session Properties - Course ID:", courseId);
@@ -236,11 +238,12 @@ const SessionProperties = ({ session, courseId }) => {
                             pill='false'
                             onChange={(e, newValue) => handleTabChange(newValue)}
                             orientation='vertical'
+                            vertical="true"
                             variant="fullWidth"
                             sx={{ width: '100%', '& .MuiTabs-flexContainer': { width: '100%' } }}
                         >
-                            <Tab value="general" label="General" />
-                            <Tab value="details" label="Details" />
+                            <Tab value="general" label={translate('Course management.SIDEBAR_MENU_GENERAL', 'General')} />
+                            <Tab value="details" label={translate('Course management.SIDEBAR_MENU_DETAILS', 'Details')} />
                         </CustomTabList>
                     </Paper>
                 </Grid>
@@ -252,8 +255,8 @@ const SessionProperties = ({ session, courseId }) => {
                             <CardHeader
                                 title={
                                     <ListItemText
-                                        primary="Session Information"
-                                        secondary="Customize the session changing its code, name, enrollments and score info."
+                                        primary={translate('Course management.SECTION_SESSION_INFORMATION', 'Session information')}
+                                        secondary={translate('Course management.SECTION_SUBTITLE_SESSION_INFO', 'Customize the session changing its code, name, enrollments and score info.')}
                                         primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
                                     />
                                 }
@@ -265,11 +268,11 @@ const SessionProperties = ({ session, courseId }) => {
                                         <Controller
                                             name="name"
                                             control={control}
-                                            rules={{ required: 'Name is required' }}
+                                            rules={{ required: translate('Course management.FIELD_NAME_REQUIRED', 'Name is required') }}
                                             render={({ field, fieldState: { error } }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Name"
+                                                    label={translate('common.name', 'Name')}
                                                     fullWidth
                                                     required
                                                     error={!!error}
@@ -288,10 +291,10 @@ const SessionProperties = ({ session, courseId }) => {
                                             render={({ field, fieldState: { error } }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Code"
+                                                    label={translate('Course management.FIELD_CODE', 'Code')}
                                                     fullWidth
                                                     error={!!error}
-                                                    helperText={error ? error.message : "Unique identifier for this session"}
+                                                    helperText={error ? error.message : translate('Course management.FIELD_CODE_DESCRIPTION', 'Unique identifier for this session')}
                                                     variant="outlined"
                                                 />
                                             )}
@@ -306,7 +309,7 @@ const SessionProperties = ({ session, courseId }) => {
                                             render={({ field }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Minimum enrollments"
+                                                    label={translate('Course management.TABLE_HEADER_MIN_ENROLLMENT', 'Minimum enrollments')}
                                                     type="number"
                                                     fullWidth
                                                     InputProps={{ inputProps: { min: 0 } }}
@@ -320,11 +323,11 @@ const SessionProperties = ({ session, courseId }) => {
                                         <Controller
                                             name="max_enroll"
                                             control={control}
-                                            rules={{ required: 'Maximum enrollments is required' }}
+                                            rules={{ required: translate('Course management.FIELD_MAX_ENROLL_REQUIRED', 'Maximum enrollments is required') }}
                                             render={({ field, fieldState: { error } }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Maximum enrollments"
+                                                    label={translate('Course management.FIELD_MAXIMUM_ENROLLMENTS', 'Maximum enrollments')}
                                                     type="number"
                                                     fullWidth
                                                     required
@@ -345,7 +348,7 @@ const SessionProperties = ({ session, courseId }) => {
                                             render={({ field, fieldState: { error } }) => (
                                                 <TextField
                                                     {...field}
-                                                    label="Description"
+                                                    label={translate('Course management.SECTION_DESCRIPTION', 'Description')}
                                                     fullWidth
                                                     multiline
                                                     rows={4}
@@ -365,8 +368,8 @@ const SessionProperties = ({ session, courseId }) => {
                             <CardHeader
                                 title={
                                     <ListItemText
-                                        primary="Session completion"
-                                        secondary="Configure how the session will be marked as completed"
+                                        primary={translate('Course management.SECTION_SESSION_COMPLETION', 'Session completion')}
+                                        secondary={translate('Course management.SECTION_SUBTITLE_SESSION_COMPLETION', 'Configure how the session will be marked as completed')}
                                         primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
                                     />
                                 }
@@ -395,9 +398,9 @@ const SessionProperties = ({ session, courseId }) => {
                                                         control={<Radio />}
                                                         label={
                                                             <Box>
-                                                                <Typography variant="body1">Manual</Typography>
+                                                                <Typography variant="body1">{translate('Course management.RADIO_MANUEL_TITLE', 'Manual')}</Typography>
                                                                 <Typography variant="body2" color="text.secondary">
-                                                                    The session can be marked as completed manually only by Superadmins and Power Users
+                                                                    {translate('Course management.RADIO_MANUEL_SUBTITLE', 'The session can be marked as completed manually only by Superadmins and Power Users')}
                                                                 </Typography>
                                                             </Box>
                                                         }
@@ -407,9 +410,9 @@ const SessionProperties = ({ session, courseId }) => {
                                                         control={<Radio />}
                                                         label={
                                                             <Box>
-                                                                <Typography variant="body1">Evaluation based</Typography>
+                                                                <Typography variant="body1">{translate('Course management.RADIO_EVALUATION_TITLE', 'Evaluation based')}</Typography>
                                                                 <Typography variant="body2" color="text.secondary">
-                                                                    The session is marked as completed when the evaluation is Passed. You can also configure a maximum score for the session.
+                                                                    {translate('Course management.RADIO_EVALUATION_SUBTITLE', 'The session is marked as completed when the evaluation is Passed. You can also configure a maximum score for the session.')}
                                                                 </Typography>
                                                             </Box>
                                                         }
@@ -422,13 +425,13 @@ const SessionProperties = ({ session, courseId }) => {
                                                                 name="score_base"
                                                                 control={control}
                                                                 rules={{
-                                                                    required: 'Maximum score is required',
-                                                                    min: { value: 0, message: 'Must be at least 0' }
+                                                                    required: translate('Course management.FIELD_MAXIMUM_SCORE_REQUIRED', 'Maximum score is required'),
+                                                                    min: { value: 0, message: translate('Course management.FIELD_MIN_VALUE', 'Must be at least 0') }
                                                                 }}
                                                                 render={({ field, fieldState: { error } }) => (
                                                                     <TextField
                                                                         {...field}
-                                                                        label="Maximum score"
+                                                                        label={translate('Course management.FIELD_MAXIMUM_SCORE', 'Maximum score')}
                                                                         type="number"
                                                                         fullWidth
                                                                         margin="normal"
@@ -445,9 +448,9 @@ const SessionProperties = ({ session, courseId }) => {
                                                         control={<Radio />}
                                                         label={
                                                             <Box>
-                                                                <Typography variant="body1">Attendance based</Typography>
+                                                                <Typography variant="body1">{translate('Course management.RADIO_ATTENDANCE_TITLE', 'Attendance based')}</Typography>
                                                                 <Typography variant="body2" color="text.secondary">
-                                                                    The session is marked as completed when the attendance status in the attendance sheet is Present for all the events or a custom number of them
+                                                                    {translate('Course management.RADIO_ATTENDANCE_SUBTITLE', 'The session is marked as completed when the attendance status in the attendance sheet is Present for all the events or a custom number of them')}
                                                                 </Typography>
                                                             </Box>
                                                         }
@@ -472,12 +475,12 @@ const SessionProperties = ({ session, courseId }) => {
                                                                             <FormControlLabel
                                                                                 value={null}
                                                                                 control={<Radio />}
-                                                                                label="All events"
+                                                                                label={translate('Course management.SUB_RADIO_ATTENDANCE_01', 'All events')}
                                                                             />
                                                                             <FormControlLabel
                                                                                 value="1"
                                                                                 control={<Radio />}
-                                                                                label="Custom number of events"
+                                                                                label={translate('Course management.SUB_RADIO_ATTENDANCE_02', 'Custom number of events')}
                                                                             />
                                                                         </RadioGroup>
                                                                     )}
@@ -489,13 +492,13 @@ const SessionProperties = ({ session, courseId }) => {
                                                                         name="min_attended_dates_for_completion"
                                                                         control={control}
                                                                         rules={{
-                                                                            required: 'Minimum attendance is required',
-                                                                            min: { value: 1, message: 'Must be at least 1' }
+                                                                            required: translate('Course management.FIELD_MIN_ATTENDANCE_REQUIRED', 'Minimum attendance is required'),
+                                                                            min: { value: 1, message: translate('Course management.FIELD_MIN_VALUE', 'Must be at least 1') }
                                                                         }}
                                                                         render={({ field, fieldState: { error } }) => (
                                                                             <TextField
                                                                                 {...field}
-                                                                                label="Minimum attended dates for completion"
+                                                                                label={translate('Course management.FIELD_MIN_ATTENDED_DATES', 'Minimum attended dates for completion')}
                                                                                 type="number"
                                                                                 fullWidth
                                                                                 margin="normal"
@@ -514,9 +517,9 @@ const SessionProperties = ({ session, courseId }) => {
                                                         control={<Radio />}
                                                         label={
                                                             <Box>
-                                                                <Typography variant="body1">Training material based</Typography>
+                                                                <Typography variant="body1">{translate('Course management.RADIO_TRAINING_TITLE', 'Training material based')}</Typography>
                                                                 <Typography variant="body2" color="text.secondary">
-                                                                    The session is marked as completed when the learner completes the Test training material
+                                                                    {translate('Course management.RADIO_TRAINING_SUBTITLE', 'The session is marked as completed when the learner completes the Test training material')}
                                                                 </Typography>
                                                             </Box>
                                                         }
@@ -535,8 +538,8 @@ const SessionProperties = ({ session, courseId }) => {
                             <CardHeader
                                 title={
                                     <ListItemText
-                                        primary="Session Details"
-                                        secondary="Additional configuration options for this session"
+                                        primary={translate('Course management.SECTION_SESSION_DETAILS', 'Session Details')}
+                                        secondary={translate('Course management.SECTION_SUBTITLE_SESSION_DETAILS', 'Additional configuration options for this session')}
                                         primaryTypographyProps={{ variant: 'h5', fontWeight: 600 }}
                                     />
                                 }
@@ -547,10 +550,10 @@ const SessionProperties = ({ session, courseId }) => {
                                     {/* Session Instructors */}
                                     <Grid item xs={12}>
                                         <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                                            Session instructors
+                                            {translate('Course management.SUB_SECTION_SESSION_INSTRUCTORS', 'Session instructors')}
                                         </Typography>
                                         <Typography variant="body2" color="text.secondary" gutterBottom>
-                                            Session instructors can mark the attendance and evaluate learners
+                                            {translate('Course management.TEXT_INSTRUCTORS_DESCRIPTION', 'Session instructors can mark the attendance and evaluate learners')}
                                         </Typography>
 
                                         <Controller
@@ -578,8 +581,8 @@ const SessionProperties = ({ session, courseId }) => {
                                                     renderInput={(params) => (
                                                         <TextField
                                                             {...params}
-                                                            label="Instructors"
-                                                            placeholder="Type to search..."
+                                                            label={translate('Course management.DROPDOWN_INSTRUCTORS', 'Instructors')}
+                                                            placeholder={translate('common.TYPE_TO_SEARCH', 'Type to search...')}
                                                             fullWidth
                                                             helperText={`${value.length}/200`}
                                                         />
@@ -621,7 +624,7 @@ const SessionProperties = ({ session, courseId }) => {
                                     {/* Self enrollment deadline */}
                                     <Grid item xs={12} sx={{ mt: 3 }}>
                                         <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                                            Self enrollment deadline
+                                            {translate('Course management.SUB_SECTION_SELF_ENROLLMENT', 'Self enrollment deadline')}
                                         </Typography>
 
                                         <Controller
@@ -638,7 +641,7 @@ const SessionProperties = ({ session, courseId }) => {
                                                             }}
                                                         />
                                                     }
-                                                    label="Enable deadline for self enrollment"
+                                                    label={translate('Course management.CHECKBOX_ENABLE_DEADLINE', 'Enable deadline for self enrollment')}
                                                 />
                                             )}
                                         />
@@ -657,12 +660,12 @@ const SessionProperties = ({ session, courseId }) => {
                                                         <FormControlLabel
                                                             value="automatic_deadline"
                                                             control={<Radio />}
-                                                            label="Automatic deadline, based on the session start date"
+                                                            label={translate('Course management.RADIO_AUTOMATIC_DEADLINE', 'Automatic deadline, based on the session start date')}
                                                         />
                                                         <FormControlLabel
                                                             value="deadline_date"
                                                             control={<Radio />}
-                                                            label="Deadline date"
+                                                            label={translate('Course management.RADIO_DEADLINE_DATE', 'Deadline date')}
                                                         />
 
                                                         {/* Enrollment Deadline */}
@@ -675,7 +678,7 @@ const SessionProperties = ({ session, courseId }) => {
                                                                         <DateInput
                                                                             name="enrollment_deadline"
                                                                             control={control}
-                                                                            label="Enrollment deadline"
+                                                                            label={translate('Course management.PLACEHOLDER_ENROLLMENT_DEADLINE', 'Enrollment deadline')}
                                                                             value={field.value}
                                                                             onChange={(date) => {
                                                                                 setValue('enrollment_deadline', date, { shouldDirty: true });
@@ -689,7 +692,7 @@ const SessionProperties = ({ session, courseId }) => {
                                                         <FormControlLabel
                                                             value="dynamic_deadline"
                                                             control={<Radio />}
-                                                            label="Dynamic deadline"
+                                                            label={translate('Course management.RADIO_DYNAMIC_DEADLINE', 'Dynamic deadline')}
                                                         />
 
                                                         {/* Custom Deadline Days */}
@@ -701,11 +704,11 @@ const SessionProperties = ({ session, courseId }) => {
                                                                     render={({ field }) => (
                                                                         <TextField
                                                                             {...field}
-                                                                            label="Custom deadline days"
+                                                                            label={translate('Course management.FIELD_CUSTOM_DEADLINE_DAYS', 'Custom deadline days')}
                                                                             type="number"
                                                                             fullWidth
                                                                             InputProps={{ inputProps: { min: 1 } }}
-                                                                            helperText="Number of days before session start that enrollment is allowed"
+                                                                            helperText={translate('Course management.TEXT_DEADLINE_DAYS_DESCRIPTION', 'Number of days before session start that enrollment is allowed')}
                                                                             variant="outlined"
                                                                         />
                                                                     )}
@@ -721,7 +724,7 @@ const SessionProperties = ({ session, courseId }) => {
                                     {/* Deep Link Option */}
                                     <Grid item xs={12} sx={{ mt: 3 }}>
                                         <Typography variant="subtitle1" gutterBottom fontWeight="bold">
-                                            Session enrollment link
+                                            {translate('Course management.SUBSECTION_SESSION_ENROLLMENT_LINK', 'Session enrollment link')}
                                         </Typography>
 
                                         <Controller
@@ -735,7 +738,7 @@ const SessionProperties = ({ session, courseId }) => {
                                                             onChange={(e) => field.onChange(e.target.checked)}
                                                         />
                                                     }
-                                                    label="Enable enrollment link for this session"
+                                                    label={translate('Course management.CHECKBOX_ENABLE_ENROLLMENT_LINK', 'Enable enrollment link for this session')}
                                                 />
                                             )}
                                         />
@@ -743,7 +746,7 @@ const SessionProperties = ({ session, courseId }) => {
                                         {watch('deeplink_enabled') && session?.deep_link_hash && (
                                             <Box sx={{ ml: 4, mt: 1 }}>
                                                 <TextField
-                                                    label="Enrollment URL"
+                                                    label={translate('Course management.PLACEHOLDER_ENROLLMENT_URL', 'Enrollment URL')}
                                                     variant="outlined"
                                                     fullWidth
                                                     value={watch('enrollment_url')}
@@ -759,7 +762,7 @@ const SessionProperties = ({ session, courseId }) => {
                                                             </IconButton>
                                                         ),
                                                     }}
-                                                    helperText="Learners will be automatically enrolled in the session upon clicking the link"
+                                                    helperText={translate('Course management.ENROLL_LINK_DESCRIPTION', 'Learners will be automatically enrolled in the session upon clicking the link')}
                                                 />
                                             </Box>
                                         )}
@@ -780,7 +783,9 @@ const SessionProperties = ({ session, courseId }) => {
                             disabled={updateSessionMutation.isPending}
                             startIcon={updateSessionMutation.isPending ? <CircularProgress size={20} /> : null}
                         >
-                            {updateSessionMutation.isPending ? 'Saving...' : 'Save Changes'}
+                            {updateSessionMutation.isPending 
+                                ? translate('common.saving', 'Saving...') 
+                                : translate('common.save_changes', 'Save Changes')}
                         </Button>
                     </Box>
                 </Grid>

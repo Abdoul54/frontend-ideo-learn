@@ -196,7 +196,7 @@ const BaseFileInput = ({
     useNameColors = true,
     allowRemove = true,
     // Dropzone props
-    maxSize = 5,
+    maxSize, // Removed default value to allow unlimited file size
     height = 180,
     uploading = false,
     successText = 'File uploaded successfully!',
@@ -221,6 +221,9 @@ const BaseFileInput = ({
     const hasFileLimit = maxFiles !== undefined;
     // Default to 5 only if maxFiles is explicitly provided
     const fileLimit = hasFileLimit ? maxFiles : Infinity;
+
+    // Determine if we have a file size limit
+    const hasFileSizeLimit = maxSize !== undefined && maxSize !== null;
 
     // Image crop state
     const [cropOpen, setCropOpen] = useState(false);
@@ -372,14 +375,16 @@ const BaseFileInput = ({
             }
         }
 
-        // Check file sizes
-        const maxSizeBytes = maxSize * 1024 * 1024; // Convert MB to bytes
-        const oversizedFile = fileList.find(file => file.size > maxSizeBytes);
+        // Check file sizes only if maxSize is provided
+        if (hasFileSizeLimit) {
+            const maxSizeBytes = maxSize * 1024 * 1024; // Convert MB to bytes
+            const oversizedFile = fileList.find(file => file.size > maxSizeBytes);
 
-        if (oversizedFile) {
-            setIsDragReject(true);
-            setCustomError(`${fileTooLargeText} (Max: ${maxSize}MB)`);
-            return null;
+            if (oversizedFile) {
+                setIsDragReject(true);
+                setCustomError(`${fileTooLargeText} (Max: ${maxSize}MB)`);
+                return null;
+            }
         }
 
         setIsDragAccept(true);
@@ -397,17 +402,20 @@ const BaseFileInput = ({
         // Handle different variants
         if (variant === 'multiple') {
             const newFiles = Array.from(files);
-            // Validate files here before adding them
-            const maxSizeBytes = maxSize * 1024 * 1024;
-            const oversizedFile = newFiles.find(file => file.size > maxSizeBytes);
 
-            if (oversizedFile) {
-                setCustomError(`${fileTooLargeText} (Max: ${maxSize}MB)`);
-                // Only call setFormError if it exists and name is provided
-                if (typeof setFormError === 'function' && name) {
-                    setFormError(name, { message: `File too large (Max: ${maxSize}MB)` });
+            // Validate file sizes only if maxSize is provided
+            if (hasFileSizeLimit) {
+                const maxSizeBytes = maxSize * 1024 * 1024;
+                const oversizedFile = newFiles.find(file => file.size > maxSizeBytes);
+
+                if (oversizedFile) {
+                    setCustomError(`${fileTooLargeText} (Max: ${maxSize}MB)`);
+                    // Only call setFormError if it exists and name is provided
+                    if (typeof setFormError === 'function' && name) {
+                        setFormError(name, { message: `File too large (Max: ${maxSize}MB)` });
+                    }
+                    return;
                 }
-                return;
             }
 
             // Only apply file limit if maxFiles is specified
@@ -874,7 +882,7 @@ const BaseFileInput = ({
                                     Accepts: {accept.replace(/,/g, ', ')}
                                 </Typography>
                             )}
-                            {maxSize && (
+                            {hasFileSizeLimit && (
                                 <Typography variant="caption" color="text.secondary">
                                     Max size: {maxSize}MB
                                 </Typography>
@@ -1025,6 +1033,11 @@ const BaseFileInput = ({
                                 ? "Add more files"
                                 : (placeholder || "Drag and drop your files here, or click to select"))}
                     </Typography>
+                    {hasFileSizeLimit && (
+                        <Typography variant="caption" color="text.secondary">
+                            Max size: {maxSize}MB
+                        </Typography>
+                    )}
                 </Box>
             )}
 
@@ -1084,6 +1097,11 @@ const BaseFileInput = ({
                                     ? 'Square images work best (1:1)'
                                     : `Aspect ratio: ${aspectRatio}`}
                             </Typography>
+                            {hasFileSizeLimit && (
+                                <Typography variant="caption" color="text.secondary">
+                                    Max size: {maxSize}MB
+                                </Typography>
+                            )}
                         </>
                     ) : (
                         <Box sx={{ width: '100%' }}>
@@ -1455,7 +1473,7 @@ const BaseFileInput = ({
                                 <Typography variant="body2" color="text.secondary">
                                     {isDragActive ? '' : (helperText || `Click or drag to upload${variant === 'multiple' ? ' files' : ''}`)}
                                 </Typography>
-                                {maxSize && (
+                                {hasFileSizeLimit && (
                                     <Typography variant="caption" color="text.secondary">
                                         Max size: {maxSize}MB
                                     </Typography>

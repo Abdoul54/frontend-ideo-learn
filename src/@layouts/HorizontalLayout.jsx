@@ -19,7 +19,7 @@ const HorizontalLayout = props => {
   const { header, footer, children, isCentral } = props
 
   return (
-    <div className={isCentral ? classnames(horizontalLayoutClasses.root, 'flex flex-auto') : ""}>
+    <div className={isCentral ? classnames(horizontalLayoutClasses.root, 'flex flex-auto') : "flex flex-col h-screen"}>
       <HorizontalNavProvider>
         {
           isCentral ? (
@@ -31,21 +31,18 @@ const HorizontalLayout = props => {
           )
             :
             (
-
               <>
                 {/* Full width header */}
                 {header || null}
 
-                {/* Content area with sidebar */}
-                <div className="flex flex-1">
-                  {/* Fixed sidebar */}
-                  <div className="layout-sidebar-box">
+                {/* Content area with sidebar - the key fix is removing fixed and making this a flex layout */}
+                <div className="flex flex-1 overflow-hidden">
+                  {/* Sidebar with fixed positioning */}
                     <Sidebar />
-                  </div>
 
-                  {/* Main content */}
-                  <div className='layout-content-box'>
-                    <StyledContentWrapper className={classnames(horizontalLayoutClasses.contentWrapper, 'flex flex-col')}>
+                  {/* Main content - with overflow auto to enable scrolling */}
+                  <div className='flex-1 overflow-auto'>
+                    <StyledContentWrapper className={classnames(horizontalLayoutClasses.contentWrapper, 'flex flex-col w-full')}>
                       <main className="flex-1">
                         <LayoutContent>{children}</LayoutContent>
                       </main>
@@ -57,10 +54,8 @@ const HorizontalLayout = props => {
             )
         }
       </HorizontalNavProvider>
-    </div >
-
+    </div>
   )
 }
-
 
 export default HorizontalLayout

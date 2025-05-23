@@ -5,8 +5,10 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useGetListUsers } from '@/hooks/api/useUsers';
 import { useManagerTypes } from '@/hooks/api/tenant/useManager';
 import { axiosInstance } from "@/lib/axios";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 const ManagerSelection = ({ control, managerType, userData }) => {
+    const { translate } = useTranslation();
     const [searchText, setSearchText] = useState('');
     const [inputValue, setInputValue] = useState('');
     const { data: users = [] } = useGetListUsers({ search_text: searchText });
@@ -22,25 +24,25 @@ const ManagerSelection = ({ control, managerType, userData }) => {
     // Find the manager in the fetched users if available
     const selectedManager = useMemo(() => {
         if (!managerField.value) return null;
-        
+
         // Try to find the manager in the users list
-        const foundUser = users.find(user => 
-            String(user.id) === String(managerField.value.id) || 
+        const foundUser = users.find(user =>
+            String(user.id) === String(managerField.value.id) ||
             String(user.user_id) === String(managerField.value.id));
-            
+
         return foundUser || managerField.value;
     }, [managerField.value, users]);
 
     // Define available options
     const allOptions = useMemo(() => {
         if (!selectedManager) return users;
-        
+
         // Check if selectedManager is already in the users array
-        const isInUsers = users.some(user => 
-            String(user.id) === String(selectedManager.id) || 
+        const isInUsers = users.some(user =>
+            String(user.id) === String(selectedManager.id) ||
             String(user.user_id) === String(selectedManager.id)
         );
-        
+
         // If not in users, prepend it to the options
         return isInUsers ? users : [selectedManager, ...users];
     }, [selectedManager, users]);
@@ -58,7 +60,7 @@ const ManagerSelection = ({ control, managerType, userData }) => {
 
     // Initialize from userData if provided (for edit mode)
     useEffect(() => {
-        if (!initializationCompleted.current && userData && userData.manager && 
+        if (!initializationCompleted.current && userData && userData.manager &&
             userData.manager[managerType.manager_type_id]) {
             const managerId = userData.manager[managerType.manager_type_id];
             if (managerId) {
@@ -66,22 +68,22 @@ const ManagerSelection = ({ control, managerType, userData }) => {
                     try {
                         const response = await axiosInstance.get(`/tenant/tanzim/v1/users/${managerId}`);
                         const user = response.data.data;
-                        
+
                         // Create a user object with ID as string
-                        const userObj = { 
+                        const userObj = {
                             id: String(managerId),
                             fullname: `${user.firstname} ${user.lastname}`,
                             email: user.email
                         };
-                        
+
                         managerField.onChange(userObj);
                         setInputValue(userObj.fullname);
                         initializationCompleted.current = true;
                     } catch (error) {
                         console.error('Error fetching manager:', error);
-                        const tempUser = { 
-                            id: String(managerId), 
-                            fullname: `User ${managerId}` 
+                        const tempUser = {
+                            id: String(managerId),
+                            fullname: `User ${managerId}`
                         };
                         managerField.onChange(tempUser);
                         setInputValue(tempUser.fullname);
@@ -110,9 +112,9 @@ const ManagerSelection = ({ control, managerType, userData }) => {
                 options={allOptions}
                 getOptionLabel={(user) => {
                     if (!user) return '';
-                    return user.fullname || 
-                        (user.first_name && user.last_name ? 
-                            `${user.first_name} ${user.last_name}` : 
+                    return user.fullname ||
+                        (user.first_name && user.last_name ?
+                            `${user.first_name} ${user.last_name}` :
                             `User ${user.id || user.user_id}`);
                 }}
                 value={selectedManager}
@@ -140,7 +142,7 @@ const ManagerSelection = ({ control, managerType, userData }) => {
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        placeholder="Type to search for a manager..."
+                        placeholder={translate('User Management.PLACEHOLDER_SEARCH_MANAGER', 'Type to search for a manager...')}
                         fullWidth
                     />
                 )}
@@ -167,6 +169,7 @@ const ManagerSelection = ({ control, managerType, userData }) => {
 };
 
 const TeamMembersSelection = ({ control, managerType, userData }) => {
+    const { translate } = useTranslation();
     const [searchText, setSearchText] = useState('');
     const [inputValue, setInputValue] = useState('');
     const { data: users = [] } = useGetListUsers({ search_text: searchText });
@@ -183,7 +186,7 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
         if (!teamMembersField.value || !Array.isArray(teamMembersField.value)) {
             return [];
         }
-        
+
         // Ensure all IDs are strings
         return teamMembersField.value.map(id => String(id));
     }, [teamMembersField.value]);
@@ -191,21 +194,21 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
     // Find users that match the selected IDs
     const selectedUsers = useMemo(() => {
         // Get users that match our selected IDs
-        const matchedUsers = users.filter(user => 
+        const matchedUsers = users.filter(user =>
             selectedUserIds.includes(String(user.id || user.user_id))
         );
-        
+
         // For IDs that we don't have matching users for yet, create placeholder objects
         const matchedIds = matchedUsers.map(user => String(user.id || user.user_id));
         const missingIds = selectedUserIds.filter(id => !matchedIds.includes(id));
-        
+
         const placeholderUsers = missingIds.map(id => ({
             id: id,
             user_id: id,
             fullname: `User ${id}`,
             email: ''
         }));
-        
+
         return [...matchedUsers, ...placeholderUsers];
     }, [users, selectedUserIds]);
 
@@ -235,9 +238,9 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
     // Handle when a user is selected from the dropdown
     const handleUserSelect = (event, user) => {
         if (!user) return;
-        
+
         const userId = String(user.id || user.user_id);
-        
+
         if (userId && !selectedUserIds.includes(userId)) {
             const newSelectedIds = [...selectedUserIds, userId];
             teamMembersField.onChange(newSelectedIds);
@@ -256,15 +259,15 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
     return (
         <Box mb={4} mt={2} padding={2}>
             <Typography variant="subtitle1" mb={1}>
-                Team members (as {managerType.manager_type_name})
+                {translate('User Management.TEAM_MEMBERS_AS', { managerType: managerType.manager_type_name })}
             </Typography>
             <Typography variant="body2" color="text.secondary" mb={2}>
-                Please select team members who will report to this user
+                {translate('User Management.TEXT_SELECT_MANAGERS', 'Please select team members who will report to this user')}
             </Typography>
 
             {/* Selected Users */}
             <Box mb={2}>
-                <Typography variant="subtitle2" mb={1}>Selected Team Members</Typography>
+                <Typography variant="subtitle2" mb={1}>{translate('User Management.SELECTED_TEAM_MEMBERS', 'Selected Team Members')}</Typography>
                 <Box display="flex" flexWrap="wrap" gap={1} mb={2} minHeight="40px">
                     {selectedUsers.length > 0 ? (
                         selectedUsers.map(user => (
@@ -278,7 +281,7 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
                         ))
                     ) : (
                         <Typography variant="body2" color="text.secondary">
-                            No team members selected
+                            {translate('User Management.NO_TEAM_MEMBERS', 'No team members selected')}
                         </Typography>
                     )}
                 </Box>
@@ -290,8 +293,8 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
                 options={availableOptions}
                 getOptionLabel={(user) => {
                     if (!user) return '';
-                    return user.fullname || 
-                        `${user.first_name || ''} ${user.last_name || ''}`.trim() || 
+                    return user.fullname ||
+                        `${user.first_name || ''} ${user.last_name || ''}`.trim() ||
                         `User ${user.id || user.user_id}`;
                 }}
                 value={null} // Always null to allow new selections
@@ -307,7 +310,7 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
                 renderInput={(params) => (
                     <TextField
                         {...params}
-                        placeholder="Search for team members..."
+                        placeholder={translate('User Management.SEARCH_TEAM_MEMBERS', 'Search for team members...')}
                         fullWidth
                     />
                 )}
@@ -333,6 +336,7 @@ const TeamMembersSelection = ({ control, managerType, userData }) => {
 };
 
 const StepFour = ({ control, userData }) => {
+    const { translate } = useTranslation();
     const { data: managerTypesData } = useManagerTypes();
     const managerTypes = useMemo(() => managerTypesData?.items || [], [managerTypesData]);
 
@@ -348,10 +352,10 @@ const StepFour = ({ control, userData }) => {
             <Grid item xs={12}>
                 <Paper variant="outlined" sx={{ p: 2 }}>
                     <Typography variant="h6" mb={2}>
-                        Manager Information
+                        {translate('User Management.SECTION_MANAGER_INFORMATION', 'Manager Information')}
                     </Typography>
                     <Typography variant="body2" color="text.secondary" mb={2}>
-                        Please select managers for this user
+                        {translate('User Management.TEXT_SELECT_MANAGERS', 'Please select managers for this user')}
                     </Typography>
                     {managerTypes.map((type) => (
                         <ManagerSelection
@@ -372,7 +376,7 @@ const StepFour = ({ control, userData }) => {
                             onChange={e => canManageField.onChange(e.target.checked)}
                         />
                     }
-                    label="This user manages a team"
+                    label={translate('User Management.TOGGLE_USER_MANAGES_TEAM', 'This user manages a team')}
                 />
             </Grid>
 
@@ -380,7 +384,7 @@ const StepFour = ({ control, userData }) => {
                 <Grid item xs={12}>
                     <Paper variant="outlined" sx={{ p: 2 }}>
                         <Typography variant="h6" mb={2}>
-                            Team Members
+                            {translate('User Management.TAB_TEAM_MEMBERS', 'Team Members')}
                         </Typography>
                         {managerTypes.map((type) => (
                             <TeamMembersSelection

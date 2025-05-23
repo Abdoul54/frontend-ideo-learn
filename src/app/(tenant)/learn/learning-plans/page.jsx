@@ -7,6 +7,7 @@ import DataView from "@/views/DataView";
 import LearningPlansDrawer from "@/views/Forms/LearningPlans/LearningPlansDrawer";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 const Page = () => {
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
@@ -33,6 +34,7 @@ const Page = () => {
         sort: sorting
     });
 
+    const { translate } = useTranslation();
     const router = useRouter()
 
     const {
@@ -86,17 +88,17 @@ const Page = () => {
     return (
         <>
             <DataView
-                title="Learning Plans"
+                title={translate('LP management.PAGE_TITLE_LEARNING_PLANS')}
                 columns={columnsData?.columns || []}
                 isColumnsLoading={isColumnsLoading}
                 columnsError={columnsError}
                 toolbar={{
-                    breadcrumbs: [{ label: 'Learning Plans', link: '/learn/learning-plans' }],
+                    breadcrumbs: [{ label: translate('LP management.BREADCRUMB_LEARNING_PLANS'), link: '/learn/learning-plans' }],
                     buttonGroup: [
                         {
-                            text: 'Create Learning Plan',
+                            text: translate('LP management.MODAL_TITLE_CREATE_LEARNING_PLAN'),
                             variant: 'contained',
-                            tooltip: 'Create Learning Plan',
+                            tooltip: translate('LP management.MODAL_TITLE_CREATE_LEARNING_PLAN'),
                             icon: 'solar-add-circle-linear',
                             onClick: () => setDrawerState({ open: true, type: 'learning_plan' })
                         }
@@ -173,16 +175,18 @@ const Page = () => {
                     open={drawerState?.open}
                     data={drawerState?.data}
                     onClose={() => setDrawerState({ open: false, type: null, data: null })}
+                    translate={translate}
                 />
             }
-            {
+            {/* {
                 drawerState?.open && drawerState?.type === 'add_courses' &&
                 <LearningPlansDrawer
                     open={drawerState?.open}
                     data={drawerState?.data}
                     onClose={() => setDrawerState({ open: false, type: null, data: null })}
+                    translate={translate}
                 />
-            }
+            } */}
         </>
     );
 }

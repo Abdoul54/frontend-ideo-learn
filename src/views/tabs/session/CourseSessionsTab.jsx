@@ -5,8 +5,11 @@ import DataView from "@/views/DataView";
 import OptionMenu from '@/@core/components/option-menu';
 import DeleteConfirmationDialog from '@/views/Dialogs/DeleteConfirmation';
 import AddSessionDrawer from '@/views/Drawers/Learn/session/AddSessionDrawer';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const CourseSessionsTab = ({ courseId }) => {
+    const { translate } = useTranslation();
+
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
     const [sorting, setSorting] = useState([{ id: 'name', desc: true }]);
     const [searchQuery, setSearchQuery] = useState('');
@@ -63,7 +66,7 @@ const CourseSessionsTab = ({ courseId }) => {
     const columns = [
         {
             accessorKey: 'name',
-            header: 'Session Name',
+            header: translate('Course management.TABLE_HEADER_SESSION_NAME', 'Session Name'),
             cell: ({ row }) => (
                 <Typography
                     variant="body2"
@@ -83,44 +86,44 @@ const CourseSessionsTab = ({ courseId }) => {
         },
         {
             accessorKey: 'code',
-            header: 'Session Code',
+            header: translate('Course management.TABLE_HEADER_SESSION_CODE', 'Session Code'),
             cell: ({ row }) => <Typography variant="body2">{row.original.code}</Typography>,
             size: 150
         },
         {
             accessorKey: 'enrollment_deadline',
-            header: 'Enrollment Deadline',
+            header: translate('Course management.FIELD_ENROLLMENT_DEADLINE', 'Enrollment Deadline'),
             cell: ({ row }) => (
                 <Typography variant="body2">
                     {row.original.enrollment_deadline
                         ? new Date(row.original.enrollment_deadline).toLocaleDateString()
-                        : 'Not Set'}
+                        : translate('common.not_set', 'Not Set')}
                 </Typography>
             ),
             size: 150
         },
         {
             accessorKey: 'min_enroll',
-            header: 'Min Enrollment',
+            header: translate('Course management.TABLE_HEADER_MIN_ENROLLMENT', 'Min Enrollment'),
             cell: ({ row }) => <Typography variant="body2">{row.original.min_enroll}</Typography>,
             size: 120
         },
         {
             accessorKey: 'max_enroll',
-            header: 'Max Enrollment',
+            header: translate('Course management.TABLE_HEADER_MAX_ENROLLMENT', 'Max Enrollment'),
             cell: ({ row }) => <Typography variant="body2">{row.original.max_enroll}</Typography>,
             size: 120
         },
         {
             accessorKey: 'instructors',
-            header: 'Instructors',
+            header: translate('Course management.TABLE_HEADER_INSTRUCTORS', 'Instructors'),
             cell: ({ row }) => {
                 const instructors = row.original.instructors || [];
                 return (
                     <Typography variant="body2">
                         {instructors.length > 0
                             ? instructors.map(instructor => instructor.name).join(', ')
-                            : 'No instructors assigned'}
+                            : translate('Course management.NO_INSTRUCTORS_ASSIGNED', 'No instructors assigned')}
                     </Typography>
                 );
             },
@@ -129,7 +132,7 @@ const CourseSessionsTab = ({ courseId }) => {
         // Action column
         {
             id: 'actions',
-            header: 'Actions',
+            header: translate('Course management.TABLE_HEADER_ACTIONS', 'Actions'),
             cell: ({ row }) => (
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                     <OptionMenu
@@ -141,7 +144,7 @@ const CourseSessionsTab = ({ courseId }) => {
                         icon={<i className="solar-menu-dots-bold" size={16} />}
                         options={[
                             {
-                                text: 'Edit',
+                                text: translate('common.edit', 'Edit'),
                                 icon: <i className="solar-pen-2-line-duotone" size={14} />,
                                 menuItemProps: {
                                     onClick: () => {
@@ -152,7 +155,7 @@ const CourseSessionsTab = ({ courseId }) => {
                                 }
                             },
                             {
-                                text: 'Delete',
+                                text: translate('common.delete', 'Delete'),
                                 icon: <i className="solar-trash-bin-2-bold-duotone" size={14} />,
                                 menuItemProps: {
                                     onClick: () => handleDeleteSession(row.original),
@@ -172,7 +175,7 @@ const CourseSessionsTab = ({ courseId }) => {
         [
             {
                 id: 'delete-selected',
-                label: 'Delete Selected',
+                label: translate('Course management.DELETE_SELECTED', 'Delete Selected'),
                 icon: <i className="solar-trash-bin-2-bold-duotone" size={18} />,
                 handler: (rows) => {
                     handleDeleteSelectedSessions(rows);
@@ -187,7 +190,7 @@ const CourseSessionsTab = ({ courseId }) => {
         [
             {
                 id: 'add-session',
-                label: 'Add Session',
+                label: translate('Course management.MENU_ADD_SESSION', 'Add Session'),
                 icon: <i className="solar-document-add-bold-duotone" />,
                 handler: () => {
                     setAddSessionDrawerOpen(true);
@@ -207,9 +210,9 @@ const CourseSessionsTab = ({ courseId }) => {
     if (error) {
         return (
             <Paper elevation={0} sx={{ p: 4, border: '1px solid', borderColor: 'divider' }}>
-                <Typography variant="h6" color="error">Error loading sessions</Typography>
+                <Typography variant="h6" color="error">{translate('Course management.ERROR_LOADING_SESSIONS', 'Error loading sessions')}</Typography>
                 <Typography variant="body1" sx={{ mt: 2 }}>
-                    {error.message || "An error occurred while loading session data."}
+                    {error.message || translate('Course management.ERROR_LOADING_DATA', "An error occurred while loading session data.")}
                 </Typography>
             </Paper>
         );
@@ -223,7 +226,7 @@ const CourseSessionsTab = ({ courseId }) => {
     return (
         <>
             <DataView
-                title="Course Sessions"
+                title={translate('Course management.TAB_SESSIONS', 'Course Sessions')}
                 height="calc(100vh - 253px)"
                 columns={columns}
                 pagination={{
@@ -249,8 +252,8 @@ const CourseSessionsTab = ({ courseId }) => {
                         columnVisibility: true
                     },
                     emptyState: {
-                        message: "No sessions found",
-                        description: "This course has no sessions yet. Add a new session to get started.",
+                        message: translate('Course management.NO_SESSIONS_FOUND', "No sessions found"),
+                        description: translate('Course management.NO_SESSIONS_YET', "This course has no sessions yet. Add a new session to get started."),
                         height: "calc(100vh - 408px)",
                     }
                 }}
@@ -280,7 +283,7 @@ const CourseSessionsTab = ({ courseId }) => {
                                     ])}
                                 />
                             ),
-                            tooltip: "Add options",
+                            tooltip: translate('common.add_options', "Add options"),
                         }
                     ]
                 }}
@@ -300,8 +303,12 @@ const CourseSessionsTab = ({ courseId }) => {
                 open={deleteSessionDialog.open}
                 onClose={() => setDeleteSessionDialog({ ...deleteSessionDialog, open: false })}
                 data={{ ids: deleteSessionDialog.sessionIds }}
-                title={`Delete ${deleteSessionDialog.isMultiple ? `${deleteSessionDialog.sessionIds.length} Sessions` : 'Session'}`}
-                message={`Are you sure you want to delete ${deleteSessionDialog.isMultiple ? 'these sessions' : 'this session'}? This action cannot be undone.`}
+                title={deleteSessionDialog.isMultiple
+                    ? translate('Course management.DELETE_MULTIPLE_SESSIONS', {count: deleteSessionDialog.sessionIds.length})
+                    : translate('Course management.DELETE_SESSION', 'Delete Session')}
+                message={deleteSessionDialog.isMultiple
+                    ? translate('Course management.CONFIRM_DELETE_MULTIPLE_SESSIONS', 'Are you sure you want to delete these sessions? This action cannot be undone.')
+                    : translate('Course management.CONFIRM_DELETE_SESSION', 'Are you sure you want to delete this session? This action cannot be undone.')}
                 onSubmit={() => {
                     const ids = deleteSessionDialog.sessionIds;
                     if (ids && ids.length > 0) {

@@ -1,7 +1,7 @@
 'use client';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import DataView from "@/views/DataView";
-import { useHaykal } from "@/hooks/api/tenant/useHaykal";
+import { useDeleteHaykal, useHaykal } from "@/hooks/api/tenant/useHaykal";
 import { useHistoryNavigation } from '@/hooks/useHistoryNavigation';
 import { Breadcrumbs, FormControlLabel, Link, Switch } from '@mui/material';
 import AddHaykalDrawer from '@/views/Drawers/AddHaykalDrawer';
@@ -21,6 +21,14 @@ import CreateUserForm from '@/views/Forms/Tenant/CreateUserForm';
 import MassUpdateUserForm from '@/views/Forms/Tenant/MassUpdateUserForm';
 import { useUsersColumns } from '@/hooks/api/tenant/useUsers';
 import OptionMenu from '@/@core/components/option-menu';
+import UserBranchErrorDialog from '@/views/Dialogs/UserBranchErrorDialog';
+import BranchDeleteConfirmationDialog from '@/views/Dialogs/BranchDeleteConfirmationDialog';
+import HaykalDeleteWarningDialog from '@/views/Dialogs/HaykalDeleteWarningDialog';
+import AssignUserFieldsToBranchDrawer from '@/views/Drawers/AssignUserFieldsToBranchDrawer';
+import EditHaykalDrawer from '@/views/Drawers/EditHaykalDrawer';
+import MoveHaykalDrawer from '@/views/Drawers/MoveHaykalDrawer';
+import { useAdvancedSettings } from '@/hooks/api/tenant/useAdvancedSettings';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const HaykalPage = () => {
   // State management
@@ -45,6 +53,16 @@ const HaykalPage = () => {
     userIds: [],
   });
 
+  // Add these near your other state variables
+  const [moveHaykalDrawerOpen, setMoveHaykalDrawerOpen] = useState(false);
+  const [editHaykalDrawerOpen, setEditHaykalDrawerOpen] = useState(false);
+  const [selectedHaykalId, setSelectedHaykalId] = useState(null);
+  const [assignUserFieldsDrawerOpen, setAssignUserFieldsDrawerOpen] = useState(false);
+  const [haykalDeleteWarningOpen, setHaykalDeleteWarningOpen] = useState(false);
+  const [haykalDeleteConfirmOpen, setHaykalDeleteConfirmOpen] = useState(false);
+  const [currentHaykalItem, setCurrentHaykalItem] = useState(null);
+  const [userBranchErrorOpen, setUserBranchErrorOpen] = useState(false);
+
   const [moveUsersDrawerOpen, setMoveUsersDrawerOpen] = useState(false);
 
   const batchDeleteUsers = useBatchDeleteUsers();
@@ -59,6 +77,79 @@ const HaykalPage = () => {
 
   const router = useRouter();
 
+  const deleteHaykalMutation = useDeleteHaykal();
+
+  // Handle confirmed deletion of a haykal/branch
+  const handleConfirmedDelete = async (haykalId) => {
+    try {
+      await deleteHaykalMutation.mutateAsync(haykalId);
+      console.log('Branch deleted successfully:', haykalId);
+    } catch (error) {
+      console.error('Error deleting Branch:', error);
+
+      const errorMessage = error.response?.data?.message;
+      if (Array.isArray(errorMessage) &&
+        errorMessage.some(msg =>
+          typeof msg === 'string' &&
+          (msg.includes('user_branches') || msg.includes('column "id" does not exist'))
+        )) {
+        setUserBranchErrorOpen(true);
+        toast.error('Cannot delete branch that contains users');
+      } else {
+        toast.error('Error deleting branch');
+      }
+    } finally {
+      setHaykalDeleteConfirmOpen(false);
+    }
+  };
+
+  const { data: advancedSettings } = useAdvancedSettings();
+  const { translate } = useTranslation();
+
+  // Define actions for the DataTableNavigation component
+  const navigationActions = useMemo(() => {
+    const shouldShowUserFields = advancedSettings?.user?.use_node_fields_visibility || false;
+
+    return [
+      {
+        label: translate('User Management.CONTEXT_MENU_MOVE', 'Move'),
+        icon: <i className="solar-square-transfer-horizontal-linear" style={{ width: '18px', height: '18px' }} />,
+        onClick: (item, { openDrawer }) => {
+          setCurrentHaykalItem(item);
+          setMoveHaykalDrawerOpen(true);
+        }
+      },
+      ...(shouldShowUserFields ? [{
+        label: translate('User Management.CONTEXT_MENU_ASSIGN_USER_FIELDS', 'Assign User Fields'),
+        icon: <i className="solar-user-id-linear" style={{ width: '18px', height: '18px' }} />,
+        onClick: (item, { openDrawer }) => {
+          setSelectedHaykalId(item.id);
+          setAssignUserFieldsDrawerOpen(true);
+        }
+      }] : []),
+      {
+        label: translate('User Management.MENU_EDIT', 'Edit'),
+        icon: <i className="solar-pen-2-linear" style={{ width: '18px', height: '18px' }} />,
+        onClick: (item, { openDrawer }) => {
+          setSelectedHaykalId(item.id);
+          setEditHaykalDrawerOpen(true);
+        }
+      },
+      {
+        label: translate('User Management.MENU_DELETE', 'Delete'),
+        icon: <i className="solar-trash-bin-trash-linear" style={{ width: '18px', height: '18px', color: 'error.main' }} />,
+        className: "text-error",
+        onClick: (item, { openDrawer }) => {
+          setCurrentHaykalItem(item);
+          if (item.has_children) {
+            setHaykalDeleteWarningOpen(true); // Directly set the warning dialog state
+          } else {
+            setHaykalDeleteConfirmOpen(true); // Directly set the confirm dialog state
+          }
+        }
+      }
+    ];
+  }, [advancedSettings]);
 
   const handleBatchDelete = (rows) => {
     const userIds = rows.map((row) => row.id);
@@ -152,11 +243,29 @@ const HaykalPage = () => {
   );
 
   //fetch haykals data
+  const [appLanguage, setAppLanguage] = useState(null);
+
+  useEffect(() => {
+    try {
+      const storedLanguage = localStorage.getItem('app_language');
+      console.log('Stored language:', storedLanguage);
+      if (storedLanguage) {
+        const languageData = JSON.parse(storedLanguage);
+        if (languageData && languageData.locale) {
+          setAppLanguage(languageData.locale);
+        }
+      }
+    } catch (error) {
+      console.error('Error retrieving language from localStorage:', error);
+    }
+  }, []);
+
   const { data: haykalData, isLoading: isHaykalLoading, error: haykalError } = useHaykal({
     page: haykalPagination.pageIndex + 1,
     page_size: haykalPagination.pageSize,
     search: haykalSearchQuery || undefined,
     sort_attr: sorting[0]?.id || 'name',
+    lang: appLanguage,
     sort_dir: sorting[0]?.desc ? 'desc' : 'asc',
     haykal_id: currentHaykal?.id === 1 ? undefined : currentHaykal?.id,
     search_type: searchType
@@ -261,12 +370,12 @@ const HaykalPage = () => {
     [
       {
         id: 'branches',
-        label: 'Branches',
+        label: translate('User Management.MENU_BRANCHES', 'Branches'),
         icon: <i className='solar-folder-bold-duotone' size={18} />,
         subMenu: [
           {
             id: 'add-to-branch',
-            label: 'Add to branch',
+            label: translate('User Management.SUBMENU_ADD_TO_BRANCH', 'Add to branch'),
             icon: <i className='solar-add-folder-bold-duotone' size={18} />,
             handler: (rows) => {
               setSelectedRows(rows);
@@ -276,7 +385,7 @@ const HaykalPage = () => {
           },
           {
             id: 'remove-from-branch',
-            label: 'Remove from branch',
+            label: translate('User Management.SUBMENU_REMOVE_FROM_BRANCH', 'Remove from branch'),
             icon: <i className='solar-folder-error-line-duotone' size={18} />,
             handler: (rows) => {
               handleDeleteSelected(rows);
@@ -284,7 +393,7 @@ const HaykalPage = () => {
           },
           {
             id: 'move-to-branch',
-            label: 'Move to Branch',
+            label: translate('User Management.SUBMENU_MOVE_TO_BRANCH', 'Move to branch'),
             icon: <i className="solar-move-to-folder-bold-duotone" size={18} />,
             handler: (rows) => {
               setSelectedRows(rows);
@@ -293,7 +402,7 @@ const HaykalPage = () => {
           },
           {
             id: 'add-to-multiple-branches',
-            label: 'Add to Multiple Branches',
+            label: translate('User Management.SUBMENU_ADD_TO_MULTIPLE_BRANCHES', 'Add to Multiple Branches'),
             icon: <i className='solar-add-folder-bold-duotone' size={18} />,
             handler: (rows) => {
               setSelectedRows(rows);
@@ -302,7 +411,7 @@ const HaykalPage = () => {
           },
           {
             id: 'remove-from-multiple-branches',
-            label: 'Remove from Multiple Branches',
+            label: translate('User Management.SUBMENU_REMOVE_FROM_MULTIPLE_BRANCHES', 'Remove from Multiple Branches'),
             icon: <i className="solar-folder-error-line-duotone" size={18} />,
             handler: (rows) => {
               setSelectedRows(rows);
@@ -316,12 +425,12 @@ const HaykalPage = () => {
     [
       {
         id: 'status',
-        label: 'Status',
+        label: translate('User Management.MENU_STATUS', 'Status'),
         icon: <i className='solar-user-check-bold-duotone' size={18} />,
         subMenu: [
           {
             id: 'activate',
-            label: 'Activate',
+            label: translate('User Management.SUBMENU_ACTIVATE', 'Activate'),
             handler: (rows) => {
               const userIds = rows.map(row => row.id);
               updateStatusMutation.mutate({ userIds, status: 1 });
@@ -330,7 +439,7 @@ const HaykalPage = () => {
           },
           {
             id: 'deactivate',
-            label: 'Deactivate',
+            label: translate('User Management.SUBMENU_DEACTIVATE', 'Deactivate'),
             handler: (rows) => {
               const userIds = rows.map(row => row.id);
               updateStatusMutation.mutate({ userIds, status: 0 });
@@ -339,10 +448,9 @@ const HaykalPage = () => {
           },
         ]
       },
-      // Keep Edit as a standalone action
       {
         id: 'mass-update',
-        label: 'Edit',
+        label: translate('User Management.MENU_EDIT', 'Edit'),
         icon: <i className="solar-pen-2-bold-duotone" size={18} />,
         handler: (rows) => {
           setSelectedRows(rows);
@@ -351,11 +459,11 @@ const HaykalPage = () => {
         disabled: selectedRows.length === 0,
       },
     ],
-    // Keep Delete in its own group
+    // Delete action
     [
       {
         id: 'delete-selected',
-        label: 'Delete',
+        label: translate('User Management.MENU_DELETE', 'Delete'),
         icon: <i className="solar-trash-bin-2-bold-duotone" size={18} />,
         handler: (rows) => {
           handleBatchDelete(rows);
@@ -383,25 +491,25 @@ const HaykalPage = () => {
     [
       {
         id: 'manage-groups',
-        label: 'Groups',
+        label: translate('User Management.RIGHT_MENU_MANAGE_GROUPS', 'Groups'),
         icon: <i className="solar-users-group-two-rounded-bold" />,
         handler: handleGroupsClick,
       },
       {
         id: 'manage-power-users',
-        label: 'Power Users',
+        label: translate('User Management.RIGHT_MENU_MANAGE_POWER_USERS', 'Power Users'),
         icon: <i className="solar-shield-user-line-duotone" />,
         handler: handlePowerUsersClick,
       },
       {
         id: 'manage-user-fields',
-        label: 'Additional Fields',
+        label: translate('User Management.RIGHT_MENU_ADDITIONAL_FIELDS', 'Additional Fields'),
         icon: <i className="solar-hamburger-menu-line-duotone" />,
         handler: handleUserFieldsClick,
       },
       {
         id: 'advanced-settings',
-        label: 'Advanced Settings',
+        label: translate('User Management.RIGHT_MENU_ADVANCED_SETTINGS', 'Advanced Settings'),
         icon: <i className="solar-settings-minimalistic-bold" />,
         handler: () => router.push('/settings/advanced-settings'),
       },
@@ -412,13 +520,13 @@ const HaykalPage = () => {
     [
       {
         id: 'manage-team-request',
-        label: 'Manage team request',
+        label: translate('User Management.MENU_MANAGE_TEAM_REQUEST', 'Manage team request'),
         icon: <i className="solar-user-plus-broken" />,
         handler: () => router.push('/manage/manage-team-requests'),
       },
       {
         id: 'manage-manager-types',
-        label: 'Manage manager types',
+        label: translate('User Management.MENU_MANAGE_MANAGER_TYPES', 'Manage manager types'),
         icon: <i className="solar-user-id-bold" />,
         handler: () => router.push('/manage/manager-types'),
       }
@@ -429,13 +537,13 @@ const HaykalPage = () => {
     [
       {
         id: 'add-user',
-        label: 'Add User',
+        label: translate('User Management.MENU_ADD_USER', 'Add User'),
         icon: <i className="lucide-user-plus" />,
         handler: handleCreateUserClick,
       },
       {
         id: 'add-haykal',
-        label: 'Add Haykal',
+        label: translate('User Management.MENU_ADD_HAYKAL', 'Add Haykal'),
         icon: <i className="lucide-folder-plus" />,
         handler: handleAddHaykalClick,
       },
@@ -460,7 +568,7 @@ const HaykalPage = () => {
       }}
     >
       <Typography variant="body2" color="text.secondary" mr={1}>
-        Show users in sub-branches:
+        {translate('User Management.TOGGLE_SHOW_USERS_IN_SUBBRANCHES', 'Show users in sub-branches:')}
       </Typography>
       <FormControlLabel
         control={
@@ -470,7 +578,6 @@ const HaykalPage = () => {
             color="primary"
           />
         }
-      // label={selectionStatus === 2 ? "All assigned users" : "Only direct assignments"}
       />
     </Box>
   );
@@ -494,7 +601,7 @@ const HaykalPage = () => {
   return (
     <>
       <DataView
-        title="Users Management"
+        title={translate('User Management.PAGE_TITLE_USER_MANAGEMENT', 'User Management')}
         // columns={usersColumns(handleDeleteUser, handleEditUser)}
         columns={columnsData?.columns || []}
         isColumnsLoading={isColumnsLoading}
@@ -534,7 +641,8 @@ const HaykalPage = () => {
           },
           parent: transformedHaykalData.parent,
           isLoading: isHaykalLoading,
-          footerComponent: selectionStatusSwitch
+          footerComponent: selectionStatusSwitch,
+          actions: navigationActions,
         }}
         toolbar={{
           //breadcrumbs: CustomBreadcrumbs,
@@ -561,7 +669,7 @@ const HaykalPage = () => {
                   ])}
                 />
               ),
-              tooltip: "Add options",
+              tooltip: translate('User Management.ADD_OPTIONS', "Add options"),
             },
             {
               component: (
@@ -585,26 +693,8 @@ const HaykalPage = () => {
                   ])}
                 />
               ),
-              tooltip: "Manage team and managers",
+              tooltip: translate('User Management.MANAGE_TEAM_AND_MANAGERS', "Manage team and managers"),
             },
-            // {
-            //   text: "Manage Team Requests",
-            //   tooltip: "Manage team requests",
-            //   variant: "contained",
-            //   color: "secondary",
-            //   icon: "lucide-users",
-            //   sx: { ml: 2 },
-            //   onClick: () => router.push("/manage/manage-team-requests")
-            // },
-            // {
-            //   text: "Manage manager types",
-            //   tooltip: "Manage manager types",
-            //   variant: "contained",
-            //   color: "secondary",
-            //   icon: "lucide-user-check",
-            //   sx: { ml: 2 },
-            //   onClick: () => router.push("/manage/manager-types")
-            // },
             {
               component: (
                 <OptionMenu
@@ -627,7 +717,7 @@ const HaykalPage = () => {
                   ])}
                 />
               ),
-              tooltip: "related sections",
+              tooltip: translate('User Management.RELATED_SECTIONS', "Related sections"),
             }
           ]
         }}
@@ -650,8 +740,8 @@ const HaykalPage = () => {
             breadcrumbs: true
           },
           emptyState: {
-            message: "No users found",
-            description: "Try adjusting your filters or add a new user.",
+            message: translate('User Management.NO_USERS_FOUND', "No users found"),
+            description: translate('User Management.NO_USERS_DESCRIPTION', "Try adjusting your filters or add a new user."),
             height: 'calc(100vh - 400px)',
             icon: <i className="lucide-user-x" style={{ fontSize: '2rem' }} />
           }
@@ -719,8 +809,8 @@ const HaykalPage = () => {
       <DeleteConfirmationDialog
         open={batchDeleteConfirmation.open}
         onClose={() => setBatchDeleteConfirmation({ open: false, userIds: [] })}
-        data={{ ids: batchDeleteConfirmation.userIds }} // Pass userIds in data
-        title={`DELETE ${batchDeleteConfirmation.userIds.length} USERS`}
+        data={{ ids: batchDeleteConfirmation.userIds }}
+        title={translate('User Management.DIALOG_TITLE_DELETE_USERS', `DELETE ${batchDeleteConfirmation.userIds.length} USERS`)}
         onSubmit={() => batchDeleteUsers.mutateAsync(batchDeleteConfirmation.userIds)}
       />
 
@@ -734,6 +824,51 @@ const HaykalPage = () => {
         open={massUpdateDrawerOpen}
         onClose={() => setMassUpdateDrawerOpen(false)}
         selectedRows={selectedRows}
+      />
+
+      {/* Haykal-related Drawers and Dialogs */}
+      <MoveHaykalDrawer
+        open={moveHaykalDrawerOpen}
+        onClose={() => setMoveHaykalDrawerOpen(false)}
+        haykalId={currentHaykalItem?.id}
+        currentTitle={currentHaykalItem?.title}
+      />
+
+      <EditHaykalDrawer
+        open={editHaykalDrawerOpen}
+        onClose={() => {
+          setEditHaykalDrawerOpen(false);
+          setSelectedHaykalId(null);
+        }}
+        haykalId={selectedHaykalId}
+      />
+
+      <AssignUserFieldsToBranchDrawer
+        open={assignUserFieldsDrawerOpen}
+        onClose={() => {
+          setAssignUserFieldsDrawerOpen(false);
+          setSelectedHaykalId(null);
+        }}
+        haykalId={selectedHaykalId}
+      />
+
+      <HaykalDeleteWarningDialog
+        open={haykalDeleteWarningOpen}
+        onClose={() => setHaykalDeleteWarningOpen(false)}
+        haykalTitle={currentHaykalItem?.title}
+      />
+
+      <BranchDeleteConfirmationDialog
+        open={haykalDeleteConfirmOpen}
+        onClose={() => setHaykalDeleteConfirmOpen(false)}
+        onConfirm={() => handleConfirmedDelete(currentHaykalItem?.id)}
+        haykalTitle={currentHaykalItem?.title}
+      />
+
+      <UserBranchErrorDialog
+        open={userBranchErrorOpen}
+        onClose={() => setUserBranchErrorOpen(false)}
+        haykalTitle={currentHaykalItem?.title}
       />
     </>
   );

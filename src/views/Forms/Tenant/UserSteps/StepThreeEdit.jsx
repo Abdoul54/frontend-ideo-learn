@@ -7,6 +7,7 @@ import SwitchInput from "@/components/inputs/SwitchInput";
 import { useUserFieldsassigned, useUserFieldsAssigned } from "@/hooks/api/tenant/useUserFields";
 import React from "react";
 import { useAdvancedSettings } from "@/hooks/api/tenant/useAdvancedSettings";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 const renderFieldByType = (field, control) => {
     const commonProps = {
@@ -53,6 +54,8 @@ const renderFieldByType = (field, control) => {
 };
 
 const StepThreeEdit = ({ control, userData }) => {
+    const { translate } = useTranslation();
+
     // Extract branch IDs from userData
     const branchIds = React.useMemo(() => {
         if (userData && userData.branches) {
@@ -91,7 +94,7 @@ const StepThreeEdit = ({ control, userData }) => {
         return (
             <Grid item xs={12}>
                 <Typography variant="body2" color="text.secondary">
-                    Additional fields are disabled in system settings.
+                    {translate('User Management.ADDITIONAL_FIELDS_DISABLED', 'Additional fields are disabled in system settings.')}
                 </Typography>
             </Grid>
         );
@@ -100,7 +103,7 @@ const StepThreeEdit = ({ control, userData }) => {
     if (isLoading) {
         return (
             <Grid item xs={12}>
-                <Typography>Loading additional fields...</Typography>
+                <Typography>{translate('User Management.LOADING_ADDITIONAL_FIELDS', 'Loading additional fields...')}</Typography>
             </Grid>
         );
     }
@@ -108,9 +111,11 @@ const StepThreeEdit = ({ control, userData }) => {
     if (error || (associatedFields.length === 0 && nonAssociatedFields.length === 0)) {
         return (
             <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>Additional Information</Typography>
+                <Typography variant="h6" gutterBottom>{translate('User Management.RIGHT_MENU_ADDITIONAL_FIELDS', 'Additional Information')}</Typography>
                 <Typography color={error ? "error" : "text.secondary"}>
-                    {error ? "Error loading additional fields." : "No additional fields found."}
+                    {error ? 
+                        translate('User Management.ERROR_LOADING_FIELDS', 'Error loading additional fields.') : 
+                        translate('User Management.NO_ADDITIONAL_FIELDS', 'No additional fields found.')}
                 </Typography>
             </Grid>
         );
@@ -123,7 +128,7 @@ const StepThreeEdit = ({ control, userData }) => {
                 <>
                     <Grid item xs={12}>
                         <Typography variant="h6" gutterBottom>
-                            Additional fields that are associated with the branches to which the user has been assigned
+                            {translate('User Management.FIELDS_ASSOCIATED_BRANCHES', 'Additional fields that are associated with the branches to which the user has been assigned')}
                         </Typography>
                     </Grid>
 
@@ -147,7 +152,7 @@ const StepThreeEdit = ({ control, userData }) => {
                 <>
                     <Grid item xs={12}>
                         <Typography variant="h6" gutterBottom>
-                            Additional fields that are not associated with the branches to which the user has been assigned
+                            {translate('User Management.FIELDS_NOT_ASSOCIATED_BRANCHES', 'Additional fields that are not associated with the branches to which the user has been assigned')}
                         </Typography>
                     </Grid>
 

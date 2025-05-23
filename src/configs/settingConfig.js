@@ -1,7 +1,7 @@
 
 const settingConfig = {
   templateName: 'IDEO Learn',
-  settingsCookieName: 'app-settings',
+  // settingsCookieName: 'app-settings',
   mode: 'light', // 'system', 'light', 'dark'
   skin: 'bordered', // 'default', 'bordered'
   semiDark: false, // true, false
@@ -23,10 +23,10 @@ const settingConfig = {
   },
   disableRipple: false, // true, false
   toastPosition: 'top-right', // 'top-right', 'top-center', 'top-left', 'bottom-right', 'bottom-center', 'bottom-left'
-  language: {
-    locale: 'en', // 'ar', 'en', 'es', 'fr', 'de', 'pt', 'ja', 'zh', 'ru'
-    direction: 'ltr' // 'ltr', 'rtl'
-  },
+  // language: {
+  //   locale: 'en', // 'ar', 'en', 'es', 'fr', 'de', 'pt', 'ja', 'zh', 'ru'
+  //   direction: 'ltr' // 'ltr', 'rtl'
+  // },
   "navigation": {
     "items": [
       {

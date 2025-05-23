@@ -6,7 +6,7 @@ import {
     Card,
     CardActions,
     CardContent,
-    Grid,
+    Grid2 as Grid,
     List,
     ListItem,
 } from "@mui/material";
@@ -17,7 +17,7 @@ import { usePostProfile, useUpdateProfile } from "@/hooks/api/tenant/useProfiles
 import { yupResolver } from "@hookform/resolvers/yup";
 import { defaultValues, schema } from "@/constants/Profile";
 
-const ProfilesDrawer = ({ open, onClose, data }) => {
+const ProfilesDrawer = ({ open, onClose, data, translate }) => {
 
     const addProfile = usePostProfile()
     const updateProfile = useUpdateProfile()
@@ -55,7 +55,9 @@ const ProfilesDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title="Profiles"
+            title={
+                data ? data?.name : translate('Power User & Profile Management.CREATE_PROFILE')
+            }
             open={open}
             onClose={onClose}
         >
@@ -82,18 +84,18 @@ const ProfilesDrawer = ({ open, onClose, data }) => {
                     }
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="name"
-                                label="Name"
+                                label={translate('common.FIELD_NAME')}
                                 control={control}
                                 type="text"
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="description"
-                                label="Description"
+                                label={translate('common.FIELD_DESCRIPTION')}
                                 control={control}
                                 type="text"
                                 multiline
@@ -104,8 +106,10 @@ const ProfilesDrawer = ({ open, onClose, data }) => {
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={addProfile?.isPending || updateProfile?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={addProfile?.isPending || updateProfile?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={addProfile?.isPending || updateProfile?.isPending}>{translate('common.cancel')}</Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={addProfile?.isPending || updateProfile?.isPending}>
+                        {data ? addProfile?.isPending || updateProfile?.isPending ? translate('common.saving') : translate('common.save') : addProfile?.isPending || updateProfile?.isPending ? translate('common.creating') : translate('common.create')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer>

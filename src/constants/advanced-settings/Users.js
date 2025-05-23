@@ -15,7 +15,7 @@ export const schema = yup.object({
     remenber_me_enabled: yup.boolean().required('This field is required'),
     max_log_attemps: yup.number().required('This field is required').positive('This field must be a positive number'),
     user_logout_redirect: yup.object({
-        url: yup.string().required('This field is required')
+        url: yup.string().nullable()
     }),
     max_delete_users: yup.number().required('This field is required').positive('This field must be a positive number')
 })

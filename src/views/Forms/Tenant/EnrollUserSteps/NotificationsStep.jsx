@@ -17,6 +17,7 @@ import {
     Badge
 } from "@mui/material";
 import dayjs from "dayjs";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 export default function NotificationsStep({
     control,
@@ -26,12 +27,14 @@ export default function NotificationsStep({
     groupCount = 0,
     branchCount = 0
 }) {
+    const { translate } = useTranslation();
+
     return (
         <Grid container spacing={3}>
             <Grid item xs={12} sx={{ mb: 2, mt: 4 }}>
                 <Paper variant="outlined" sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>
-                        Notification Settings
+                        {translate('Course management.SECTION_NOTIFICATION_SETTINGS', 'Notification Settings')}
                     </Typography>
 
                     <Box sx={{ mt: 2 }}>
@@ -52,12 +55,13 @@ export default function NotificationsStep({
                         /> */}
 
                         <Typography variant="body2" color="text.secondary">
-                            There are no notification settings available for now.
+                            {translate('Course management.TEXT_NO_SETTINGS_AVAILABLE', 'There are no notification settings available for now.')}
                         </Typography>
                     </Box>
 
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 2 }}>
-                        Users will receive an email notification about their enrollment in {bulkEnrollment ? 'these courses' : 'this course'}.
+                        {translate('Course management.TEXT_EMAIL_NOTIFICATION', 
+                            `Users will receive an email notification about their enrollment in ${bulkEnrollment ? 'these courses' : 'this course'}.`)}
                     </Typography>
                 </Paper>
             </Grid>
@@ -65,7 +69,7 @@ export default function NotificationsStep({
             <Grid item xs={12}>
                 <Paper variant="outlined" sx={{ p: 3 }}>
                     <Typography variant="h6" gutterBottom>
-                        Enrollment Summary
+                        {translate('Course management.SECTION_ENROLLMENT_SUMMARY', 'Enrollment Summary')}
                     </Typography>
 
                     <Divider sx={{ my: 2 }} />
@@ -84,7 +88,7 @@ export default function NotificationsStep({
                                             max={999}
                                             sx={{ '& .MuiBadge-badge': { fontSize: '0.8rem', height: 20, minWidth: 20 } }}
                                         >
-                                            <span style={{ marginRight: 10 }}>Selected Users</span>
+                                            <span style={{ marginRight: 10 }}>{translate('Course management.TAB_SELECTED_USERS', 'Selected Users')}</span>
                                         </Badge>
                                     </Typography>
 
@@ -127,7 +131,7 @@ export default function NotificationsStep({
                                         max={999}
                                         sx={{ '& .MuiBadge-badge': { fontSize: '0.8rem', height: 20, minWidth: 20 } }}
                                     >
-                                        <span style={{ marginRight: 10 }}>Selected Groups</span>
+                                        <span style={{ marginRight: 10 }}>{translate('Course management.TAB_SELECTED_GROUPS', 'Selected Groups')}</span>
                                     </Badge>
                                 </Typography>
 
@@ -137,7 +141,7 @@ export default function NotificationsStep({
                                     render={({ field: { value } }) => (
                                         <Box sx={{ mt: 1 }}>
                                             <Chip
-                                                label={`${value.length} groups selected`}
+                                                label={`${value.length} ${translate('Course management.TEXT_GROUPS_SELECTED', 'groups selected')}`}
                                                 color="primary"
                                                 variant="outlined"
                                                 size="small"
@@ -158,7 +162,7 @@ export default function NotificationsStep({
                                         max={999}
                                         sx={{ '& .MuiBadge-badge': { fontSize: '0.8rem', height: 20, minWidth: 20 } }}
                                     >
-                                        <span style={{ marginRight: 10 }}>Selected Branches</span>
+                                        <span style={{ marginRight: 10 }}>{translate('Course management.TAB_SELECTED_BRANCHES', 'Selected Branches')}</span>
                                     </Badge>
                                 </Typography>
 
@@ -168,7 +172,7 @@ export default function NotificationsStep({
                                     render={({ field: { value } }) => (
                                         <Box sx={{ mt: 1 }}>
                                             <Chip
-                                                label={`${value.length} branches selected`}
+                                                label={translate('Course management.TEXT_BRANCHES_SELECTED', `${value.length} branches selected`)}
                                                 color="primary"
                                                 variant="outlined"
                                                 size="small"
@@ -209,7 +213,7 @@ export default function NotificationsStep({
 
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="subtitle1" gutterBottom>
-                            Enrollment Details
+                            {translate('Course management.SECTION_ENROLLMENT_DETAILS', 'Enrollment Details')}
                         </Typography>
 
                         <Stack spacing={2}>
@@ -219,7 +223,7 @@ export default function NotificationsStep({
                                 render={({ field: { value } }) => (
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Typography variant="body2" sx={{ width: 150, fontWeight: 500 }}>
-                                            Enrollment type:
+                                            {translate('Course management.FIELD_ENROLLMENT_TYPE', 'Enrollment type:')}
                                         </Typography>
                                         <Chip
                                             label={value === 'course' ? 'Course enrollment' : 'Session enrollment'}
@@ -263,13 +267,14 @@ export default function NotificationsStep({
                                 render={({ field: { value } }) => (
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Typography variant="body2" sx={{ width: 150, fontWeight: 500 }}>
-                                            User level:
+                                            {translate('Course management.FIELD_USER_LEVEL', 'User level:')}
                                         </Typography>
                                         <Chip
                                             label={
-                                                value === 1 ? 'Learner' :
-                                                    value === 2 ? 'Tutor' :
-                                                        value === 3 ? 'Instructor' : 'Unknown'
+                                                value === 1 ? translate('Course management.DROPDOWN_LEARNER', 'Learner') :
+                                                    value === 2 ? translate('Course management.DROPDOWN_TUTOR', 'Tutor') :
+                                                        value === 3 ? translate('Course management.DROPDOWN_INSTRUCTOR', 'Instructor') : 
+                                                        translate('common.unknown', 'Unknown')
                                             }
                                             color="primary"
                                             variant="outlined"
@@ -281,7 +286,7 @@ export default function NotificationsStep({
 
                             <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                 <Typography variant="body2" sx={{ width: 150, fontWeight: 500 }}>
-                                    Validity period:
+                                    {translate('Course management.FIELD_VALIDITY_PERIOD', 'Validity period:')}
                                 </Typography>
 
                                 <Controller
@@ -319,7 +324,7 @@ export default function NotificationsStep({
                                 render={({ field: { value } }) => (
                                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
                                         <Typography variant="body2" sx={{ width: 150, fontWeight: 500 }}>
-                                            Send notifications:
+                                            {translate('Course management.FIELD_SEND_NOTIFICATIONS', 'Send notifications:')}
                                         </Typography>
                                         <Chip
                                             label={value ? 'Yes' : 'No'}

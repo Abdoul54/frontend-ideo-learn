@@ -6,20 +6,18 @@ import {
     Card,
     CardActions,
     CardContent,
-    Grid,
-    InputAdornment,
+    Grid2 as Grid,
     List,
     ListItem,
     ListItemText,
-    TextField,
 } from "@mui/material";
 import DrawerFormContainer from "@/components/DrawerFormContainer";
 import { useEffect, useState } from "react";
 import { useProfiles } from "@/hooks/api/tenant/useProfiles";
-import DataTable from "@/components/datatable/DataTable";
 import * as yup from 'yup';
 import { useAssignPowerUserPorfiles } from "@/hooks/api/tenant/usePowerUsers";
 import { yupResolver } from "@hookform/resolvers/yup";
+import DataView from "@/views/DataView";
 
 
 const schema = yup.object({
@@ -27,12 +25,13 @@ const schema = yup.object({
     profile_ids: yup.array().min(1, 'Please select at least one profile'),
 })
 
-const GrantProfilesDrawer = ({ open, onClose, data }) => {
+const GrantProfilesDrawer = ({ open, onClose, data, translate }) => {
 
     const assignPowerUser = useAssignPowerUserPorfiles()
     const [search, setSearch] = useState('');
     const [sorting, setSorting] = useState('');
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
+    const [columnVisibility, setColumnVisibility] = useState({});
 
     const { data: profiles, isLoading, error } = useProfiles({
         page: pagination.pageIndex + 1,
@@ -43,20 +42,18 @@ const GrantProfilesDrawer = ({ open, onClose, data }) => {
 
     const columns = [
         {
-            header: 'Name',
+            header: translate('Power User & Profile Management.FIELD_NAME'),
             accessorKey: 'name',
             flex: 1,
             enableSorting: true
         },
         {
-            header: 'Description',
+            header: translate('Power User & Profile Management.FIELD_DESCRIPTION'),
             accessorKey: 'description',
             flex: 1,
             enableSorting: true
         }
     ]
-
-    console.log('profiles', profiles);
 
     const methods = useForm({
         resolver: yupResolver(schema),
@@ -80,8 +77,6 @@ const GrantProfilesDrawer = ({ open, onClose, data }) => {
     const selectedProfiles = watch('profile_ids');
 
     const onSubmit = (formData) => {
-        console.log('formData', formData);
-
         if (data?.id)
             assignPowerUser.mutateAsync(formData)
                 .then(() => {
@@ -92,7 +87,7 @@ const GrantProfilesDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title="Grant Profiles"
+            title={translate('Power User & Profile Management.GRANT_PROFILES')}
             open={open}
             onClose={onClose}
         >
@@ -119,58 +114,64 @@ const GrantProfilesDrawer = ({ open, onClose, data }) => {
                     }
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
-                        <Grid item xs={12} component={ListItem}>
-                            <ListItemText primary='Grant the power user profiles.' secondary={errors?.user_ids?.message} secondaryTypographyProps={{
-                                color: 'error',
-                            }} />
-                        </Grid>
-                        <Grid item xs={12} component={ListItem}>
-                            <TextField
-                                name="search"
-                                placeholder="Search .."
-                                fullWidth
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                size="small"
-                                InputProps={{
-                                    startAdornment: <InputAdornment position="start"><i className="solar-magnifer-outline" /></InputAdornment>
+                        <Grid item size={12} component={ListItem}>
+                            <ListItemText
+                                primary={translate('Power User & Profile Management.FIELD_GRANT_PROFILES')}
+                                secondary={errors?.user_ids?.message}
+                                slotProps={{
+                                    secondary: {
+                                        color: 'error.main'
+                                    }
                                 }}
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
-                            <DataTable
+                        <Grid item size={12} component={ListItem}>
+                            <DataView
                                 columns={columns}
+                                data={profiles?.items || []}
                                 isLoading={isLoading}
                                 error={error}
-                                totalRows={profiles?.pagination?.total}
-                                pageIndex={pagination.pageIndex}
-                                pageSize={pagination.pageSize}
-                                data={profiles?.items || []}
-                                onPaginationChange={(pagination) => setPagination(pagination)}
-                                onSortingChange={(sorting) => setSorting(sorting)}
-                                sorting={sorting}
-                                selectedRows={profiles?.items.filter(item => selectedProfiles?.includes(item.id))}
-                                onRowSelectionChange={(value) => {
-                                    setValue('profile_ids', value?.map(item => item.id))
-                                }}
                                 height="calc(100vh - 335px)"
-                                variant='outlined'
-                                emptyStateProps={{
-                                    height: 'calc(100vh - 495px)',
-                                    message: isLoading
-                                        ? 'Loading Power Users...'
-                                        : search
-                                            ? 'No power users found matching your search'
-                                            : 'No power users found'
-                                }}
                                 enableSelection
+                                pagination={{ ...pagination, total: profiles?.pagination?.total }}
+                                setPagination={setPagination}
+                                selectedRows={profiles?.items.filter(item => selectedProfiles?.includes(item.id))}
+                                setSelectedRows={(value => {
+                                    setValue('profile_ids', value?.map(item => item.id))
+                                })}
+                                disableMultiSelect
+                                slots={{
+                                    globalFilter: search,
+                                    setGlobalFilter: setSearch,
+                                    columnVisibility: columnVisibility,
+                                    setColumnVisibility: setColumnVisibility,
+                                    sorting: sorting,
+                                    setSorting: setSorting,
+                                    features: {
+                                        search: true,
+                                        filter: false,
+                                        columnVisibility: true
+                                    },
+                                    emptyState: {
+                                        height: 'calc(100vh - 495px)',
+                                        message: isLoading
+                                            ? 'Loading Power Users...'
+                                            : search
+                                                ? 'No power users found matching your search'
+                                                : 'No power users found'
+                                    }
+                                }}
+                                noToolBar
+                                noMobileDataTable
                             />
                         </Grid>
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={assignPowerUser?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={assignPowerUser?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={assignPowerUser?.isPending}>{translate('common.cancel')}</Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={assignPowerUser?.isPending}>
+                        {assignPowerUser?.isPending ? translate('common.saving') : translate('common.save')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer>

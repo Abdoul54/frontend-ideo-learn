@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { axiosInstance } from '@/lib/axios';
 import centralChecker from '@/utils/workers/centralChecker';
+import { useSession } from 'next-auth/react';
 
 // Define the storage key for user data
 const STORAGE_KEY = 'app_user_profile';
@@ -37,6 +38,7 @@ const saveUserData = (userData) => {
 
 export function UserProvider({ children }) {
   const queryClient = useQueryClient();
+  const session = useSession();
   const [user, setUser] = useState(null);
   const [isInitialized, setIsInitialized] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -83,7 +85,7 @@ export function UserProvider({ children }) {
         throw new Error(`Failed to fetch user data: ${error.message}`);
       }
     },
-    enabled: isCentralChecked,
+    enabled: isCentralChecked && session?.status === 'authenticated',
     retry: 2,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,

@@ -12,7 +12,6 @@ import {
   TextField,
   Typography,
   useMediaQuery,
-  Menu, MenuItem, ListItemIcon, ListItemText,
   Tooltip,
   Fade,
   Divider
@@ -28,6 +27,7 @@ import toast from 'react-hot-toast'
 import BranchDeleteConfirmationDialog from '@/views/Dialogs/BranchDeleteConfirmationDialog'
 import UserBranchErrorDialog from '@/views/Dialogs/UserBranchErrorDialog'
 import SearchTypeDropdown from '../SearchTypeDropDown'
+import OptionMenu from '@/@core/components/option-menu'
 
 // Custom styled components
 const ContentBox = styled(Box)(({ theme }) => ({
@@ -95,94 +95,60 @@ const PaginationWrapper = styled(Box)(({ theme }) => ({
 }))
 
 // Enhanced NavigationItem Component
-const NavigationItem = ({ item, onNavigate, onMove }) => {
+const NavigationItem = ({
+  item,
+  onNavigate,
+  // Custom array of actions
+  actions = []
+}) => {
   const theme = useTheme();
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [moveDrawerOpen, setMoveDrawerOpen] = useState(false);
-  const open = Boolean(anchorEl);
-  const [editDrawerOpen, setEditDrawerOpen] = useState(false);
-  const [assignUserFieldDrawerOpen, setAssignUserFieldDrawerOpen] = useState(false);
-  const [selectedHaykalId, setSelectedHaykalId] = useState(null);
-  const [warningDialogOpen, setWarningDialogOpen] = useState(false);
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
-  const [userErrorDialogOpen, setUserErrorDialogOpen] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
-  const { data: advancedSettings } = useAdvancedSettings();
-  const shouldShowUserFields = advancedSettings?.user?.use_node_fields_visibility || false;
+  // Store any active drawer/dialog state
+  const [activeDrawer, setActiveDrawer] = useState({
+    type: null, // Type of drawer/dialog
+    open: false, // Whether it's open
+    data: null // Any data to pass to the drawer/dialog
+  });
 
-  const deleteHaykalMutation = useDeleteHaykal();
-
-  const handleMenuOpen = (event) => {
-    event.stopPropagation();
-    setAnchorEl(event.currentTarget);
+  const closeDrawer = () => {
+    setActiveDrawer({
+      type: null,
+      open: false,
+      data: null
+    });
   };
 
-  const handleMenuClose = (event) => {
-    if (event) event.stopPropagation();
-    setAnchorEl(null);
-  };
-
-  const handleMoveAction = (event) => {
-    if (event) event.stopPropagation();
-    setMoveDrawerOpen(true);
-    handleMenuClose();
-  };
-
-  const handleEditAction = (event) => {
-    if (event) event.stopPropagation();
-    setSelectedHaykalId(item.id);
-    setEditDrawerOpen(true);
-    handleMenuClose();
-  };
-
-  const handleDeleteAction = (event) => {
-    if (event) event.stopPropagation();
-
-    if (item.has_children) {
-      setWarningDialogOpen(true);
-    } else {
-      setConfirmDialogOpen(true);
+  // Convert our actions array to the format expected by OptionMenu
+  const menuOptions = actions.map(action => ({
+    text: action.label,
+    icon: action.icon,
+    menuItemProps: {
+      onClick: () => {
+        if (action.onClick) {
+          action.onClick(item, {
+            openDrawer: (type, data = null) => {
+              setActiveDrawer({
+                type,
+                open: true,
+                data
+              });
+            }
+          });
+        }
+      },
+      className: action.className
     }
-
-    handleMenuClose();
-  };
-
-  const handleConfirmedDelete = async () => {
-    try {
-      await deleteHaykalMutation.mutateAsync(item.id);
-      console.log('Branch deleted successfully:', item.id);
-    } catch (error) {
-      console.error('Error deleting Branch:', error);
-
-      const errorMessage = error.response?.data?.message;
-      if (Array.isArray(errorMessage) &&
-        errorMessage.some(msg =>
-          typeof msg === 'string' &&
-          (msg.includes('user_branches') || msg.includes('column "id" does not exist'))
-        )) {
-        setUserErrorDialogOpen(true);
-        toast.error('Cannot delete branch that contains users');
-      } else {
-        toast.error('Error deleting branch');
-      }
-    } finally {
-      setConfirmDialogOpen(false);
-    }
-  };
-
-  const handleAssignUserfieldAction = (event) => {
-    if (event) event.stopPropagation();
-    setSelectedHaykalId(item.id);
-    setAssignUserFieldDrawerOpen(true);
-    handleMenuClose();
-  }
+  }));
 
   // Modern color gradient for folder icon based on item title
   const getFolderColor = () => {
     // Return fixed theme color instead of dynamic color
     return theme.palette.primary.main;
   };
+
+  // Check if we have any menu items to display
+  const hasMenuItems = actions.length > 0;
 
   return (
     <>
@@ -282,36 +248,45 @@ const NavigationItem = ({ item, onNavigate, onMove }) => {
             height: '100%',
             pr: 1
           }}>
-            {/* Actions Menu Button */}
-            <IconButton
-              size="small"
-              onClick={handleMenuOpen}
-              sx={{
-                color: theme.palette.text.secondary,
-                opacity: isHovered ? 1 : 0,
-                transition: 'opacity 0.15s ease, background-color 0.15s ease',
-                mr: 1,
-                width: 32,
-                height: 32,
-                '&:hover': {
-                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                }
-              }}
-            >
-              <i className="solar-menu-dots-bold" style={{ width: '18px', height: '18px' }} />
-            </IconButton>
+            {/* Actions Menu Button - Only show if we have menu items */}
+            {hasMenuItems && (
+              <Box
+                sx={{
+                  opacity: isHovered ? 1 : 0,
+                  transition: 'opacity 0.15s ease',
+                  mr: 1,
+                }}
+                onClick={(e) => e.stopPropagation()}
+              >
+                <OptionMenu
+                  options={menuOptions}
+                  icon="solar-menu-dots-bold"
+                  iconButtonProps={{
+                    size: "small",
+                    sx: {
+                      color: theme.palette.text.secondary,
+                      width: 32,
+                      height: 32,
+                      '&:hover': {
+                        backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                      }
+                    }
+                  }}
+                />
+              </Box>
+            )}
 
             {/* Arrow icon or children indicator */}
-            <Box sx={{
-              width: 32,
-              height: 32,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: isHovered ? theme.palette.primary.main : theme.palette.text.secondary,
-              transition: 'color 0.15s ease'
-            }}>
-              {item.has_children ? (
+            {(item?.has_children || item?.has_child) && (
+              <Box sx={{
+                width: 32,
+                height: 32,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: isHovered ? theme.palette.primary.main : theme.palette.text.secondary,
+                transition: 'color 0.15s ease'
+              }}>
                 <i
                   className='solar-alt-arrow-right-linear'
                   style={{
@@ -321,127 +296,66 @@ const NavigationItem = ({ item, onNavigate, onMove }) => {
                     transform: isHovered ? 'translateX(2px)' : 'translateX(0)'
                   }}
                 />
-              ) : null}
-            </Box>
+              </Box>
+            )}
           </Box>
         </Paper>
       </Tooltip>
 
-      {/* Menu with Actions */}
-      <Menu
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleMenuClose}
-        onClick={(e) => e.stopPropagation()}
-        PaperProps={{
-          elevation: 3,
-          sx: {
-            minWidth: 200,
-            overflow: 'visible',
-            filter: 'drop-shadow(0 2px 8px rgba(0,0,0,0.15))',
-            mt: 0.5,
-            '& .MuiMenuItem-root': {
-              px: 2,
-              py: 1.5,
-              borderRadius: 1,
-              mx: 0.5,
-              my: 0.25,
-              '&:hover': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.08)
-              }
-            },
-            '&:before': {
-              content: '""',
-              display: 'block',
-              position: 'absolute',
-              top: 0,
-              right: 14,
-              width: 10,
-              height: 10,
-              bgcolor: 'background.paper',
-              transform: 'translateY(-50%) rotate(45deg)',
-              zIndex: 0,
-            },
-          },
-        }}
-        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
-        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
-      >
-        <MenuItem onClick={handleMoveAction}>
-          <ListItemIcon>
-            <i className="solar-square-transfer-horizontal-linear" style={{ width: '18px', height: '18px', color: theme.palette.text.secondary }} />
-          </ListItemIcon>
-          <ListItemText primary="Move" />
-        </MenuItem>
+      {/* Dynamic Drawers and Dialogs - Rendered based on active drawer type */}
+      {activeDrawer.type === 'move' && (
+        <MoveHaykalDrawer
+          open={activeDrawer.open}
+          onClose={closeDrawer}
+          haykalId={item.id}
+          currentTitle={item.title}
+        />
+      )}
 
-        {shouldShowUserFields && (
-          <MenuItem onClick={handleAssignUserfieldAction}>
-            <ListItemIcon>
-              <i className="solar-user-id-linear" style={{ width: '18px', height: '18px', color: theme.palette.text.secondary }} />
-            </ListItemIcon>
-            <ListItemText primary="Assign User Fields" />
-          </MenuItem>
-        )}
+      {activeDrawer.type === 'edit' && (
+        <EditHaykalDrawer
+          open={activeDrawer.open}
+          onClose={closeDrawer}
+          haykalId={activeDrawer.data || item.id}
+        />
+      )}
 
-        <MenuItem onClick={handleEditAction}>
-          <ListItemIcon>
-            <i className="solar-pen-2-linear" style={{ width: '18px', height: '18px', color: theme.palette.text.secondary }} />
-          </ListItemIcon>
-          <ListItemText primary="Edit" />
-        </MenuItem>
+      {activeDrawer.type === 'assignUserFields' && (
+        <AssignUserFieldsToBranchDrawer
+          open={activeDrawer.open}
+          onClose={closeDrawer}
+          haykalId={activeDrawer.data || item.id}
+        />
+      )}
 
-        <MenuItem onClick={handleDeleteAction}>
-          <ListItemIcon>
-            <i className="solar-trash-bin-trash-linear" style={{ width: '18px', height: '18px', color: theme.palette.error.main }} />
-          </ListItemIcon>
-          <ListItemText primary="Delete" sx={{ color: theme.palette.error.main }} />
-        </MenuItem>
-      </Menu>
+      {activeDrawer.type === 'deleteWarning' && (
+        <HaykalDeleteWarningDialog
+          open={activeDrawer.open}
+          onClose={closeDrawer}
+          haykalTitle={item.title}
+        />
+      )}
 
-      {/* Drawers and Dialogs */}
-      <MoveHaykalDrawer
-        open={moveDrawerOpen}
-        onClose={() => setMoveDrawerOpen(false)}
-        haykalId={item.id}
-        currentTitle={item.title}
-      />
+      {activeDrawer.type === 'deleteConfirm' && (
+        <BranchDeleteConfirmationDialog
+          open={activeDrawer.open}
+          onClose={closeDrawer}
+          onConfirm={() => {
+            // You would need to implement the delete logic here 
+            // or pass it via the action.onClick handler
+            closeDrawer();
+          }}
+          haykalTitle={item.title}
+        />
+      )}
 
-      <EditHaykalDrawer
-        open={editDrawerOpen}
-        onClose={() => {
-          setEditDrawerOpen(false);
-          setSelectedHaykalId(null);
-        }}
-        haykalId={selectedHaykalId}
-      />
-
-      <AssignUserFieldsToBranchDrawer
-        open={assignUserFieldDrawerOpen}
-        onClose={() => {
-          setAssignUserFieldDrawerOpen(false);
-          setSelectedHaykalId(null);
-        }}
-        haykalId={selectedHaykalId}
-      />
-
-      <HaykalDeleteWarningDialog
-        open={warningDialogOpen}
-        onClose={() => setWarningDialogOpen(false)}
-        haykalTitle={item.title}
-      />
-
-      <BranchDeleteConfirmationDialog
-        open={confirmDialogOpen}
-        onClose={() => setConfirmDialogOpen(false)}
-        onConfirm={handleConfirmedDelete}
-        haykalTitle={item.title}
-      />
-
-      <UserBranchErrorDialog
-        open={userErrorDialogOpen}
-        onClose={() => setUserErrorDialogOpen(false)}
-        haykalTitle={item.title}
-      />
+      {activeDrawer.type === 'userError' && (
+        <UserBranchErrorDialog
+          open={activeDrawer.open}
+          onClose={closeDrawer}
+          haykalTitle={item.title}
+        />
+      )}
     </>
   )
 }
@@ -554,7 +468,9 @@ const DataTableNavigation = ({
   footerComponent,
   searchType,
   onSearchTypeChange,
-  enableSearchType = false
+  enableSearchType = false,
+  // New prop for custom actions
+  actions = []
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery('(max-width: 768px)');
@@ -667,7 +583,12 @@ const DataTableNavigation = ({
             Array.from({ length: pagination?.rowsPerPage || 5 })?.map((_, idx) => <NavigationItemSkeleton key={idx} />)
           ) : navigationItems.length > 0 ? (
             navigationItems.map(item => (
-              <NavigationItem key={item.id} item={item} onNavigate={GoForward} onMove={onMoveItem} />
+              <NavigationItem
+                key={item.id}
+                item={item}
+                onNavigate={GoForward}
+                actions={actions}
+              />
             ))
           ) : (
             <EmptyNavigationState />

@@ -1,66 +1,42 @@
 'use client';
 
-import { useEffect, useState } from "react";
 import {
     Tab,
-    Grid,
+    Grid2 as Grid,
     Paper
 } from "@mui/material";
 import ToolBar from "@/components/ToolBar";
 import { TabContext, TabPanel } from "@mui/lab";
 import CustomTabList from "@/@core/components/mui/TabList";
-import { useSearchParams } from "next/navigation";
 import PersonalInfo from "@/views/tabs/profile/PersonalInfo";
 import ChangePassword from "@/views/tabs/profile/ChangePassword";
 import Preferences from "@/views/tabs/profile/Preferences";
 import ConditionsOfUse from "@/views/tabs/profile/ConditionsOfUse";
 import Skills from "@/views/tabs/profile/Skills";
 import { useAdvancedSettings } from "@/@core/contexts/advancedSettingsContext";
+import useUrlTabs from "@/hooks/useUrlTabs";
 
 
 export default function Page() {
-    const searchParams = useSearchParams()
-    const [tabIndex, setTabIndex] = useState('personalInfo');
     const { advancedSettings } = useAdvancedSettings();
 
-    const handleChange = (event, newValue) => {
-        setTabIndex(newValue);
-    };
+    const { activeTab, handleTabChange } = useUrlTabs({
+        defaultTab: 'personalInfo',
+        validTabs: ['personalInfo', 'changePassword', 'preferences', 'conditionsOfUse', 'skills'],
+    });
 
-    useEffect(() => {
-        const tabParam = searchParams.get("tab");
-        switch (tabParam) {
-            case "personal_info":
-                setTabIndex("personalInfo");
-                break;
-            case "change_password":
-                setTabIndex("changePassword");
-                break;
-            case "preferences":
-                setTabIndex("preferences");
-                break;
-            case "conditions_of_use":
-                setTabIndex("conditionsOfUse");
-                break;
-            case "skills":
-                setTabIndex("skills");
-                break;
-            default:
-                setTabIndex("personalInfo");
-        }
-    }, [searchParams]);
 
     const tabs = [
         { value: 'personalInfo', label: 'Personal Info', condition: true },
         { value: 'changePassword', label: 'Change Password', condition: advancedSettings?.user?.allow_password_change },
-        { value: 'preferences', label: 'Preferences', condition: advancedSettings?.user?.hide_preferences_tab },
+        { value: 'preferences', label: 'Preferences', condition: !advancedSettings?.user?.hide_preferences_tab },
         { value: 'conditionsOfUse', label: 'Conditions of use', condition: true },
         { value: 'skills', label: 'My skills', condition: true }
     ];
 
     return (
         <Grid container spacing={3}>
-            <Grid item xs={12}>
+            <Grid item size={12}>
                 <ToolBar
                     breadcrumbs={[{
                         label: 'My Profile',
@@ -68,16 +44,21 @@ export default function Page() {
                     }]}
                 />
             </Grid>
-            <Grid item xs={12}>
-                <TabContext value={tabIndex}>
+            <Grid item size={12}>
+                <TabContext value={activeTab}>
                     <Grid container spacing={3}>
-                        <Grid item xs={12} md={3}>
+                        <Grid item size={{
+                            xs: 12,
+                            md: 3
+                        }}>
                             <Paper elevation={0} sx={{ bgcolor: 'background.paper', padding: 4 }}>
                                 <CustomTabList
-                                    pill='true'
-                                    onChange={handleChange}
+                                    onChange={handleTabChange}
                                     orientation='vertical'
                                     variant="fullWidth"
+                                    color="primary"
+                                    vertical="true"
+
                                     sx={{
                                         width: '100%',
                                         '& .MuiTabs-flexContainer': {
@@ -97,7 +78,10 @@ export default function Page() {
                                 </CustomTabList>
                             </Paper>
                         </Grid>
-                        <Grid item xs={12} md={9}>
+                        <Grid item size={{
+                            xs: 12,
+                            md: 9
+                        }}>
                             {tabs.map(tab => (
                                 <TabPanel key={tab.value} value={tab.value} sx={{ p: 0 }}>
                                     {tab.value === 'personalInfo' && <PersonalInfo />}

@@ -5,6 +5,7 @@ import DataView from "@/views/DataView";
 import { useChangeLocalizationStatus, useLocalization } from "@/hooks/api/tenant/useLocalization";
 import { columns } from "@/constants/LocalizationTool";
 import LocalizationToolDrawer from "@/views/Forms/LocalizationTool/LocalizationToolDrawer";
+import { useRouter } from "next/navigation";
 
 const Page = () => {
     const [filters, setFilters] = useState(null);
@@ -19,7 +20,7 @@ const Page = () => {
     });
     const [columnVisibility, setColumnVisibility] = useState({});
     const changeLocalizationStatus = useChangeLocalizationStatus()
-
+    const router = useRouter()
 
     const { data, isLoading, error } = useLocalization({
         page: pagination.pageIndex + 1,
@@ -29,11 +30,12 @@ const Page = () => {
         filters
     })
 
+
     return (
         <>
             <DataView
                 title="Users"
-                columns={columns(drawerState, setDrawerState, changeLocalizationStatus)}
+                columns={columns(drawerState, setDrawerState, changeLocalizationStatus, router)}
                 data={data?.items}
                 isLoading={isLoading}
                 error={error}

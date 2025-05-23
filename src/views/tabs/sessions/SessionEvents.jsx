@@ -17,8 +17,10 @@ import DeleteConfirmationDialog from '@/views/Dialogs/DeleteConfirmation';
 import AddEventDrawer from '@/views/Drawers/Learn/session/AddEventDrawer';
 import { useDeleteSessionEvent, useSessionEvents } from '@/hooks/api/tenant/learn/sessions/useSessionEvents';
 import OptionMenu from '@/@core/components/option-menu';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const SessionEvents = ({ session }) => {
+    const { translate } = useTranslation();
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([{ id: 'day', desc: false }]);
     const [searchQuery, setSearchQuery] = useState("");
@@ -84,7 +86,7 @@ const SessionEvents = ({ session }) => {
     const columns = [
         {
             id: 'name',
-            header: 'NAME',
+            header: translate('Course management.TABLE_HEADER_SESSION_NAME', 'NAME'),
             accessorKey: 'name',
             enableSorting: true,
             cell: ({ row }) => (
@@ -107,7 +109,7 @@ const SessionEvents = ({ session }) => {
         },
         {
             id: 'day',
-            header: 'DATE',
+            header: translate('Course management.TABLE_HEADER_DATE', 'DATE'),
             accessorKey: 'day',
             enableSorting: true,
             cell: ({ row }) => {
@@ -122,7 +124,7 @@ const SessionEvents = ({ session }) => {
         },
         {
             id: 'hours',
-            header: 'HOURS',
+            header: translate('Course management.TABLE_HEADER_HOURS', 'HOURS'),
             accessorKey: 'duration_minutes',
             enableSorting: true,
             cell: ({ row }) => {
@@ -138,31 +140,31 @@ const SessionEvents = ({ session }) => {
         },
         {
             id: 'type',
-            header: 'TYPE',
+            header: translate('Course management.TABLE_HEADER_EVENT_TYPE', 'TYPE'),
             accessorKey: 'event_type',
             enableSorting: true,
             cell: ({ row }) => (
                 <Typography variant="body2">
-                    {row.original.event_type === 'PILT' ? 'Physical' :
-                        row.original.event_type === 'VILT' ? 'Virtual' :
-                            row.original.event_type === 'PVILT' ? 'Physical & Virtual' :
-                                'Online'}
+                    {row.original.event_type === 'PILT' ? translate('Course management.CHECKBOX_PHYSICAL_LEARNING', 'Physical') :
+                        row.original.event_type === 'VILT' ? translate('Course management.CHECKBOX_VIRTUAL_LEARNING', 'Virtual') :
+                            row.original.event_type === 'PVILT' ? translate('Course management.CHECKBOX_PHYSICAL_AND_VIRTUAL', 'Physical & Virtual') :
+                                translate('Course management.ONLINE', 'Online')}
                 </Typography>
             )
         },
         {
             id: 'video_conference_tool',
-            header: 'VIDEO CONFERENCE TOOL',
+            header: translate('Course management.TABLE_HEADER_VIDEO_CONFERENCE_TOOL', 'VIDEO CONFERENCE TOOL'),
             accessorKey: 'custom_url',
             cell: ({ row }) => (
                 <Typography variant="body2">
-                    {row.original.custom_url ? 'Custom tool' : 'N/A'}
+                    {row.original.custom_url ? translate('Course management.CUSTOM_TOOL', 'Custom tool') : 'N/A'}
                 </Typography>
             )
         },
         {
             id: 'attendance',
-            header: 'ATTENDANCE',
+            header: translate('Course management.TABLE_HEADER_ATTENDANCE', 'ATTENDANCE'),
             accessorKey: 'attendances_count',
             cell: ({ row }) => {
                 const attendanceCount = row.original.attendances_count?.present || 0;
@@ -176,10 +178,10 @@ const SessionEvents = ({ session }) => {
         },
         {
             id: 'actions',
-            header: 'ACTIONS',
+            header: translate('Course management.TABLE_HEADER_ACTIONS', 'ACTIONS'),
             cell: ({ row }) => (
                 <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Tooltip title="Edit">
+                    <Tooltip title={translate('common.edit', 'Edit')}>
                         <IconButton
                             size="small"
                             onClick={() => handleEditEvent(row.original)}
@@ -187,7 +189,7 @@ const SessionEvents = ({ session }) => {
                             <i className="solar-pen-bold-duotone" fontSize="small" />
                         </IconButton>
                     </Tooltip>
-                    <Tooltip title="Delete">
+                    <Tooltip title={translate('common.delete', 'Delete')}>
                         <IconButton
                             size="small"
                             onClick={() => handleDeleteEvent(row.original)}
@@ -210,14 +212,14 @@ const SessionEvents = ({ session }) => {
     const actionItems = [
         [
             {
-                label: 'Add Event',
+                label: translate('Course management.MENU_ADD_EVENT', 'Add Event'),
                 icon: <i className="lucide-plus" />,
                 handler: () => setAddEventDrawerOpen(true)
             }
         ],
         [
             {
-                label: 'Export Events',
+                label: translate('Course management.MENU_EXPORT_EVENTS', 'Export Events'),
                 icon: <i className="solar-download-bold-duotone" />,
                 handler: () => handleExportEvents()
             }
@@ -256,8 +258,8 @@ const SessionEvents = ({ session }) => {
                                 columnVisibility: true
                             },
                             emptyState: {
-                                message: "No events found",
-                                description: "There are no events for this session yet. Add an event to get started.",
+                                message: translate('Course management.NO_EVENTS_FOUND', 'No events found'),
+                                description: translate('Course management.NO_EVENTS_DESCRIPTION', 'There are no events for this session yet. Add an event to get started.'),
                                 height: 'calc(100vh - 400px)'
                             }
                         }}
@@ -285,7 +287,7 @@ const SessionEvents = ({ session }) => {
                                             ])}
                                         />
                                     ),
-                                    tooltip: "Add options",
+                                    tooltip: translate('common.add_options', 'Add options'),
                                 }
                             ]
                         }}
@@ -300,21 +302,13 @@ const SessionEvents = ({ session }) => {
                 sessionId={session?.id}
             />
 
-            {/* You may need to add an EditEventDrawer component if you want to implement edit functionality */}
-            {/* <EditEventDrawer
-                open={editEventDrawerOpen}
-                onClose={() => setEditEventDrawerOpen(false)}
-                sessionId={session?.id}
-                eventId={selectedEventId}
-            /> */}
-
             {/* Delete Event Confirmation Dialog */}
             <DeleteConfirmationDialog
                 open={deleteEventDialog.open}
                 onClose={() => setDeleteEventDialog({ ...deleteEventDialog, open: false })}
                 data={{ id: deleteEventDialog.eventId }}
-                title={`Delete Event: ${deleteEventDialog.eventName}`}
-                message={`Are you sure you want to delete the event "${deleteEventDialog.eventName}"? This action cannot be undone.`}
+                title={translate('Course management.DELETE_EVENT', `Delete Event: ${deleteEventDialog.eventName}`)}
+                message={translate('Course management.DELETE_EVENT_CONFIRMATION', `Are you sure you want to delete the event "${deleteEventDialog.eventName}"? This action cannot be undone.`)}
                 onSubmit={() => {
                     deleteEventMutation.mutate({
                         sessionId: session?.id,

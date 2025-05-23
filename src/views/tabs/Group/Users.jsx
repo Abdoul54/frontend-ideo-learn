@@ -144,9 +144,9 @@ const Users = ({ groupId }) => {
                                     />
                                 ) : (
                                     <DataTable
-                                        height='calc(100vh - 324px)'
+                                        height='calc(100vh - 325px)'
                                         emptyStateProps={{
-                                            height: 'calc(100vh - 478px)'
+                                            height: 'calc(100vh - 479px)'
                                         }}
                                         columns={groupsUsersColumns(setDeleteConfirmation)}
                                         data={data?.items}

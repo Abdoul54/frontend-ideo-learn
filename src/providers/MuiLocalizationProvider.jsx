@@ -3,15 +3,15 @@
 import { LocalizationProvider } from '@mui/x-date-pickers'
 import 'dayjs/locale/ar'
 
-import { useSettings } from '@/@core/contexts/settingsContext'
 import { getLocale } from '@/utils/getters/getLocale'
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { useLanguage } from './LanguageProvider'
 
 
 export function MuiLocalizationProvider({ children }) {
-    const { settings } = useSettings()
+    const { language } = useLanguage()
 
-    const { localeText, adapterLocale } = getLocale(settings?.language?.locale)
+    const { localeText, adapterLocale } = getLocale(language?.locale)
 
     const dateFormats = {
         // Day formats

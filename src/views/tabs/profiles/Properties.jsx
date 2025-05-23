@@ -1,7 +1,7 @@
 import TextInput from "@/components/inputs/TextInput";
 import {
     Button,
-    Grid,
+    Grid2 as Grid,
     List,
     ListItem,
     ListItemText,
@@ -12,16 +12,17 @@ import {
     Box,
     Stack,
     Chip,
+    Card,
+    CardContent,
 } from "@mui/material";
 import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 
-import { useProfile, useUpdateProfile } from "@/hooks/api/tenant/useProfiles";
+import { useUpdateProfile } from "@/hooks/api/tenant/useProfiles";
 import OptionMenu from "@/@core/components/option-menu";
 import PermissionsDrawer from "@/views/Forms/Profiles/PermissionsDrawer";
 
-const Properties = ({ profileId }) => {
-    const { data, isLoading } = useProfile({ id: profileId });
+const Properties = ({ profile }) => {
     const [drawerState, setDrawerState] = useState({
         open: false,
         data: null,
@@ -39,15 +40,15 @@ const Properties = ({ profileId }) => {
     });
 
     useEffect(() => {
-        if (data) {
+        if (profile) {
             reset({
-                id: data?.id,
-                name: data?.name || '',
-                description: data?.description || '',
-                permissions: data?.permissions || {},  // Ensure this is an object
+                id: profile?.id,
+                name: profile?.name || '',
+                description: profile?.description || '',
+                permissions: profile?.permissions || {},  // Ensure this is an object
             });
         }
-    }, [data, reset]);
+    }, [profile, reset]);
 
 
     const watchedPermissions = watch('permissions');
@@ -60,7 +61,7 @@ const Properties = ({ profileId }) => {
             );
 
             await updateProfile.mutateAsync({
-                id: profileId,
+                id: profile?.id,
                 data: {
                     name: formData?.name,
                     description: formData?.description,
@@ -98,130 +99,136 @@ const Properties = ({ profileId }) => {
 
     return (
         <>
-            <Grid container spacing={3} component="form" onSubmit={handleSubmit(onSubmit)}>
-                <Grid item xs={12}>
-                    <Typography variant="h4">General</Typography>
-                </Grid>
-                <Grid item xs={12}>
-                    <List>
-                        <ListItem>
-                            <ListItemText
-                                primary="Profile information"
-                                primaryTypographyProps={{ variant: 'h5' }}
-                            />
-                        </ListItem>
-                        <ListItem>
-                            <TextInput
-                                name="name"
-                                label="Name"
-                                control={control}
-                                type="text"
-                            />
-                        </ListItem>
-                        <ListItem>
-                            <TextInput
-                                name="description"
-                                label="Description"
-                                control={control}
-                                type="text"
-                                multiline
-                                maxRows={5}
-                            />
-                        </ListItem>
-                    </List>
-                </Grid>
-                <Grid item xs={12}>
-                    <Divider />
-                </Grid>
-                <Grid item xs={12} component={Stack} direction="row" justifyContent="space-between">
-                    <Typography variant="h4">Manage permissions</Typography>
-                    <Button
-                        variant='text'
-                        color="primary"
-                        startIcon={<i className="solar-add-circle-outline" />}
-                        onClick={() => setDrawerState({ open: true, data: null })}
-                    >
-                        Add Permission
-                    </Button>
-                </Grid>
-                <Grid item xs={12} >
-                    <List>
-                        {watchedPermissions && Object.keys(watchedPermissions).map(area => (
-                            <ListItem key={area}>
-                                <Paper elevation={0} sx={{ width: 1, border: 1, borderColor: 'text.primary', padding: 3 }} >
-                                    <Stack direction="row" gap={2} width={1}>
-                                        <Stack direction="row" gap={2} width={1}>
-                                            <Typography variant="h5">{area.charAt(0).toUpperCase() + area.slice(1)}</Typography>
-                                            <Divider orientation="vertical" flexItem sx={{ borderColor: 'divider' }} />
-                                            <Stack direction="row" gap={1} flexWrap="wrap">
-                                                {watchedPermissions[area]?.map((permission) => (
-                                                    <Chip
-                                                        key={permission.code}
-                                                        label={permission.name}
-                                                    />
-                                                ))}
-                                            </Stack>
-                                        </Stack>
-                                        <Box
-                                            sx={{
-                                                display: 'flex',
-                                                alignItems: 'center'
-                                            }}
-                                        >
-                                            <OptionMenu
-                                                icon="solar-menu-dots-circle-outline"
-                                                options={[
-                                                    {
-                                                        text: 'Edit',
-                                                        icon: <i className='solar-pen-2-outline' />,
-                                                        menuItemProps: {
-                                                            onClick: (e) => {
-                                                                e.stopPropagation();
-                                                                handleEditPermission(area, watchedPermissions[area]);
+            <Card>
+                <CardContent>
+                    <Grid container spacing={3} component="form" onSubmit={handleSubmit(onSubmit)}>
+                        <Grid item size={12}>
+                            <Typography variant="h4">General</Typography>
+                        </Grid>
+                        <Grid item size={12}>
+                            <List>
+                                <ListItem>
+                                    <ListItemText
+                                        primary="Profile information"
+                                        primaryTypographyProps={{ variant: 'h5' }}
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <TextInput
+                                        name="name"
+                                        label="Name"
+                                        control={control}
+                                        type="text"
+                                    />
+                                </ListItem>
+                                <ListItem>
+                                    <TextInput
+                                        name="description"
+                                        label="Description"
+                                        control={control}
+                                        type="text"
+                                        multiline
+                                        maxRows={5}
+                                    />
+                                </ListItem>
+                            </List>
+                        </Grid>
+                        <Grid item size={12}>
+                            <Divider />
+                        </Grid>
+                        <Grid item size={12} >
+                            <Stack direction="row" gap={2} justifyContent="space-between" alignItems="center">
+                                <Typography variant="h4">Manage permissions</Typography>
+                                <Button
+                                    variant='text'
+                                    color="primary"
+                                    startIcon={<i className="solar-add-circle-outline" />}
+                                    onClick={() => setDrawerState({ open: true, data: null })}
+                                >
+                                    Add Permission
+                                </Button>
+                            </Stack>
+                        </Grid>
+                        <Grid item size={12} >
+                            <List>
+                                {watchedPermissions && Object.keys(watchedPermissions).map(area => (
+                                    <ListItem key={area}>
+                                        <Paper elevation={0} sx={{ width: 1, border: 1, borderColor: 'text.primary', padding: 3 }} >
+                                            <Stack direction="row" gap={2} width={1}>
+                                                <Stack direction="row" gap={2} width={1}>
+                                                    <Typography variant="h5">{area.charAt(0).toUpperCase() + area.slice(1)}</Typography>
+                                                    <Divider orientation="vertical" flexItem sx={{ borderColor: 'divider' }} />
+                                                    <Stack direction="row" gap={1} flexWrap="wrap">
+                                                        {watchedPermissions[area]?.map((permission) => (
+                                                            <Chip
+                                                                key={permission.code}
+                                                                label={permission.name}
+                                                            />
+                                                        ))}
+                                                    </Stack>
+                                                </Stack>
+                                                <Box
+                                                    sx={{
+                                                        display: 'flex',
+                                                        alignItems: 'center'
+                                                    }}
+                                                >
+                                                    <OptionMenu
+                                                        icon="solar-menu-dots-circle-outline"
+                                                        options={[
+                                                            {
+                                                                text: 'Edit',
+                                                                icon: <i className='solar-pen-2-outline' />,
+                                                                menuItemProps: {
+                                                                    onClick: (e) => {
+                                                                        e.stopPropagation();
+                                                                        handleEditPermission(area, watchedPermissions[area]);
+                                                                    },
+                                                                    className: 'flex items-center gap-2',
+                                                                }
                                                             },
-                                                            className: 'flex items-center gap-2',
-                                                        }
-                                                    },
-                                                    {
-                                                        text: 'Delete',
-                                                        icon: <i className='solar-trash-bin-minimalistic-2-outline' />,
-                                                        menuItemProps: {
-                                                            className: 'flex items-center gap-2 text-error hover:bg-errorLight',
-                                                            onClick: (e) => {
-                                                                e.stopPropagation();
-                                                                handleDeletePermission(area);
+                                                            {
+                                                                text: 'Delete',
+                                                                icon: <i className='solar-trash-bin-minimalistic-2-outline' />,
+                                                                menuItemProps: {
+                                                                    className: 'flex items-center gap-2 text-error hover:bg-errorLight',
+                                                                    onClick: (e) => {
+                                                                        e.stopPropagation();
+                                                                        handleDeletePermission(area);
+                                                                    }
+                                                                }
                                                             }
-                                                        }
-                                                    }
-                                                ]}
-                                            />
-                                        </Box>
-                                    </Stack>
-                                </Paper>
-                            </ListItem>
-                        ))}
-                    </List>
-                </Grid>
+                                                        ]}
+                                                    />
+                                                </Box>
+                                            </Stack>
+                                        </Paper>
+                                    </ListItem>
+                                ))}
+                            </List>
+                        </Grid>
 
 
-                {/* Form Actions */}
-                <Grid item xs={12}
-                    sx={{
-                        display: 'flex',
-                        justifyContent: 'flex-end'
-                    }}
-                >
-                    <Button
-                        type="submit"
-                        variant="contained"
-                        color="primary"
-                        disabled={updateProfile?.isPending || isLoading}
-                        startIcon={updateProfile?.isPending ? <CircularProgress size={20} /> : null}
-                    >
-                        {updateProfile?.isPending ? 'Saving...' : 'Save Changes'}
-                    </Button>
-                </Grid>
-            </Grid>
+                        {/* Form Actions */}
+                        <Grid item size={12}
+                            sx={{
+                                display: 'flex',
+                                justifyContent: 'flex-end'
+                            }}
+                        >
+                            <Button
+                                type="submit"
+                                variant="contained"
+                                color="primary"
+                                disabled={updateProfile?.isPending}
+                                startIcon={updateProfile?.isPending ? <CircularProgress size={20} /> : null}
+                            >
+                                {updateProfile?.isPending ? 'Saving...' : 'Save Changes'}
+                            </Button>
+                        </Grid>
+                    </Grid>
+                </CardContent>
+            </Card>
             {
                 drawerState.open && (
                     <PermissionsDrawer

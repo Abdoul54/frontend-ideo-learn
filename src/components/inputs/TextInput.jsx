@@ -9,14 +9,16 @@ import { TextField } from '@mui/material';
  * @param {string} props.name - Field name for form control
  * @param {Object} props.control - React Hook Form control object
  * @param {string} props.label - Label text for the input field
+ * @param {Object} [props.rules] - Validation rules for the input field
  * @param {string} [props.type="text"] - Input type (text, password, email, etc.)
  * @returns {JSX.Element} Rendered TextInput component
  */
-export default function TextInput({ name, control, label, type = "text", ...props }) {
+export default function TextInput({ name, control, label, rules, type = "text", ...props }) {
     return (
         <Controller
             name={name}
             control={control}
+            rules={rules}
             render={({ field, fieldState: { error } }) => (
                 <TextField
                     {...field}

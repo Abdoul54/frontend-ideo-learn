@@ -13,22 +13,23 @@ import { horizontalLayoutClasses } from '@layouts/utils/layoutClasses'
 import useHorizontalNav from '@menu/hooks/useHorizontalNav'
 import DialogsSettings from '@/views/Dialogs/Settings'
 import { useAdvancedSettings } from '@/@core/contexts/advancedSettingsContext'
-import { useUser } from '@/@core/contexts/userContext'
 
 // Constants
 const NAVBAR_ICONS = [
-  { icon: 'solar-question-circle-bold-duotone', ariaLabel: 'Help' },
-  { icon: 'solar-medal-ribbons-star-bold-duotone', ariaLabel: 'Rewards' },
+  // { icon: 'solar-question-circle-bold-duotone', ariaLabel: 'Help' },
+  // { icon: 'solar-medal-ribbons-star-bold-duotone', ariaLabel: 'Rewards' },
   { icon: 'solar-bell-bing-bold-duotone', ariaLabel: 'Notifications' }
 ]
 
-const UnifiedSearchField = ({ onClose, className }) => (
+const UnifiedSearchField = ({ onClose, className, query, setQuery }) => (
   <TextField
     id='search'
     variant='outlined'
     size='small'
     fullWidth
     placeholder='Search'
+    value={query}
+    onChange={(e) => setQuery(e.target.value)}
     className={className}
     sx={{
       '& .MuiOutlinedInput-root': {
@@ -56,10 +57,10 @@ const UnifiedSearchField = ({ onClose, className }) => (
           style={{ color: 'var(--mui-palette-customColors-headerIcon)' }}
         />
       ),
-      endAdornment: onClose && (
+      endAdornment: (query || onClose) && (
         <i
           className='solar-close-circle-bold-duotone text-xl cursor-pointer'
-          onClick={onClose}
+          onClick={onClose || (() => setQuery(''))}
           style={{ color: 'var(--mui-palette-customColors-headerIcon)' }}
         />
       )
@@ -81,6 +82,7 @@ const NavbarContent = () => {
   const { isBreakpointReached } = useHorizontalNav()
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [query, setQuery] = useState('')
 
   const toggleSearch = () => setIsSearchOpen(!isSearchOpen)
   const toggleSettings = () => setIsSettingsOpen(!isSettingsOpen)
@@ -88,14 +90,14 @@ const NavbarContent = () => {
   const renderLogo = () => (
     <div className='flex items-center gap-6'>
       <NavToggle />
-      {!isBreakpointReached && <Logo />}
+      <Logo />
     </div>
   )
 
   const renderSearch = () => (
     !isBreakpointReached && (
       <div className='flex-1 max-w-md'>
-        <UnifiedSearchField />
+        <UnifiedSearchField query={query} setQuery={setQuery}  />
       </div>
     )
   )
@@ -106,7 +108,10 @@ const NavbarContent = () => {
       in={isSearchOpen}
       sx={{ display: isBreakpointReached ? 'flex' : 'none' }}
     >
-      <UnifiedSearchField onClose={() => setIsSearchOpen(false)} />
+      <UnifiedSearchField query={query} setQuery={setQuery} onClose={() => {
+        setIsSearchOpen(false)
+        setQuery('')
+      }} />
     </Collapse>
   )
 

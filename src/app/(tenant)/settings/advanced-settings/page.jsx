@@ -1,14 +1,11 @@
 'use client';
 
-import { useEffect, useState } from "react";
 import {
   Tab,
   Grid,
   Paper,
   Box,
-  Skeleton,
-  Alert,
-  AlertTitle
+  Skeleton
 } from "@mui/material";
 import SelfRegistration from "@/views/tabs/Settings/SelfRegistration";
 import Users from "@/views/tabs/Settings/Users";
@@ -19,7 +16,8 @@ import CustomTabList from "@/@core/components/mui/TabList";
 import { useSettingsMetadata } from "@/hooks/api/tenant/useSettingsMetadata";
 import Password from "@/views/tabs/Settings/Password";
 import AdvancedOptions from "@/views/tabs/Settings/AdvancedOptions";
-import { useSearchParams } from "next/navigation";
+import StatusCard from "@/components/StatusCard";
+import useUrlTabs from "@/hooks/useUrlTabs"; // Import our custom hook
 
 const LoadingSkeleton = () => (
   <Grid container spacing={3}>
@@ -59,37 +57,14 @@ const LoadingSkeleton = () => (
 );
 
 export default function Page() {
-  const searchParams = useSearchParams()
-  const [tabIndex, setTabIndex] = useState('date');
-  const { data: metadata, isLoading, isError } = useSettingsMetadata();
+  const { activeTab, handleTabChange } = useUrlTabs({
+    defaultTab: 'register',
+    validTabs: ['register', 'user', 'password', 'advancedoptions', 'date'],
+  });
 
-  const handleChange = (event, newValue) => {
-    setTabIndex(newValue);
-  };
+  const { data: metadata, isLoading, isError, error } = useSettingsMetadata();
 
-  useEffect(() => {
-    const tabParam = searchParams.get("tab");
-    switch (tabParam) {
-      case "register":
-        setTabIndex("register");
-        break;
-      case "user":
-        setTabIndex("user");
-        break;
-      case "password":
-        setTabIndex("password");
-        break;
-      case "advanced_options":
-        setTabIndex("advancedoptions");
-        break;
-      case "date":
-        setTabIndex("date");
-        break;
-      default:
-        setTabIndex("register");
-    }
-  }, [searchParams]);
-
+  // Define available tabs based on metadata
   const visibleTabs = metadata ? Object.keys(metadata) : [];
 
   const tabs = [
@@ -101,7 +76,7 @@ export default function Page() {
   ];
 
   return (
-    <Grid container>
+    <Grid container spacing={4}>
       <Grid item xs={12}>
         <ToolBar
           breadcrumbs={[{
@@ -112,22 +87,23 @@ export default function Page() {
       </Grid>
       <Grid item xs={12}>
         {isError ? (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            <AlertTitle>Error</AlertTitle>
-            Failed to load settings. Please try again later or contact support if the problem persists.
-          </Alert>
+          <StatusCard
+            type="error"
+            title={`Error ${error?.message || 500}`}
+            message="An error occurred while fetching settings. Please try again later. If the problem persists, contact support."
+          />
         ) : isLoading ? (
           <LoadingSkeleton />
         ) : (
-          <TabContext value={tabIndex}>
+          <TabContext value={activeTab}>
             <Grid container spacing={3}>
               <Grid item xs={12} md={3}>
                 <Paper elevation={0} sx={{ bgcolor: 'background.paper', padding: 4 }}>
                   <CustomTabList
-                    pill='true'
-                    onChange={handleChange}
+                    onChange={handleTabChange}
                     orientation='vertical'
                     variant="fullWidth"
+                    vertical="true"
                     sx={{
                       width: '100%',
                       '& .MuiTabs-flexContainer': {

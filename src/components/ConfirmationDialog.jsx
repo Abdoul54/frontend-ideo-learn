@@ -9,6 +9,7 @@ import {
     CircularProgress
 } from '@mui/material';
 import toast from "react-hot-toast";
+import HighlightQuotes from './HighlightQuotes';
 
 /**
  * @typedef {Object} DialogActionsConfig
@@ -272,7 +273,7 @@ const ConfirmationDialog = ({
                 <Box sx={{ display: 'flex', alignItems: 'center' }}>
                     {currentTheme.icon}
                     <Typography variant="h6" component="span" sx={{ ml: 1 }}>
-                        {title}
+                        <HighlightQuotes text={title} />
                     </Typography>
                 </Box>
                 {!loading && (
@@ -306,21 +307,20 @@ const ConfirmationDialog = ({
 
                 {message && (
                     <Typography variant="body2" color="text.secondary">
-                        {message}
+                        <HighlightQuotes text={message} />
                     </Typography>
                 )}
 
                 {typingConfirmation && !loading && (
                     <Box sx={{ mt: 2 }}>
                         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                            Type "{confirmationWord}" to confirm:
+                            <HighlightQuotes text={`Type "${confirmationWord}" to confirm:`} />
                         </Typography>
                         <TextField
                             fullWidth
                             size="small"
                             value={typedConfirmation}
                             onChange={handleTypingConfirmationChange}
-                            placeholder={`Type "${confirmationWord}" here`}
                             variant="outlined"
                             autoFocus
                         />

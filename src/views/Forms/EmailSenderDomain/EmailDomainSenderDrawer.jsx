@@ -23,12 +23,10 @@ const EmailSenderDomainDrawer = ({ open, onClose, data }) => {
     }, [data, reset]);
 
     const onSubmit = (data) => {
-        updateEmailSender(data, {
-            onSuccess: () => {
-                reset();
-                onClose();
-            }
-        });
+        updateEmailSender?.mutateAsync(data).then(() => {
+            onClose();
+            reset();
+        })
     }
 
     const cancel = () => {
@@ -135,15 +133,16 @@ const EmailSenderDomainDrawer = ({ open, onClose, data }) => {
                         p: 2
                     }}
                 >
-                    <Button onClick={cancel}>
+                    <Button onClick={cancel} disabled={updateEmailSender?.isLoading}>
                         Cancel
                     </Button>
                     <Button
                         variant='contained'
                         color="primary"
                         type="submit"
+                        disabled={updateEmailSender?.isPending}
                     >
-                        Submit
+                        {updateEmailSender?.isPending ? 'Saving...' : 'Save'}
                     </Button>
                 </CardActions>
             </Card>

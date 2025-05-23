@@ -17,10 +17,13 @@ import { Controller, useForm } from 'react-hook-form';
 import MultilingualTextInput from '@/components/inputs/MultilingualTextInput';
 import CategorySelector from '@/components/CategorySelector';
 import { axiosInstance } from '@/lib/axios';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const AddCategoryDrawer = ({ open, onClose, parentCategoryId, initialHistory = [] }) => {
   // Fetch active languages
   const { data: activeLanguages, isLoading: isLoadingLanguages, error: languagesError } = useActiveLanguages();
+
+  const { translate, language } = useTranslation();
 
   // Find default language from active languages
   const defaultLanguage = activeLanguages?.find(lang => lang.is_default)?.code || 'fr';
@@ -255,14 +258,14 @@ const AddCategoryDrawer = ({ open, onClose, parentCategoryId, initialHistory = [
   // Determine drawer title based on whether we're creating a category or subcategory
   const drawerTitle = initialHistory && initialHistory.length > 0
     ? `Create a new subcategory under "${selectedCategory.title}"`
-    : "Create a new category";
+    : translate('Course management.MODAL_TITLE_CREATE_CATEGORY', 'Create a new category');
 
   return (
     <DrawerFormContainer
       open={open}
       onClose={onClose}
       title={drawerTitle}
-      description="Add a new category to your course structure"
+      description={translate('Course management.MODAL_SUBTITLE_CREATE_CATEGORY', 'Add new category to your course structure')}
       width={500}
     >
       {isError && generalError && (
@@ -297,7 +300,7 @@ const AddCategoryDrawer = ({ open, onClose, parentCategoryId, initialHistory = [
 
               {/* Parent Category Selection */}
               <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'black' }}>
-                Parent Category
+                {translate('Course management.SECTION_PARENT_CATEGORY', 'Parent Category')}
               </Typography>
 
               <Box sx={{
@@ -322,7 +325,7 @@ const AddCategoryDrawer = ({ open, onClose, parentCategoryId, initialHistory = [
                     onClick={() => setShowCategorySelector(!showCategorySelector)}
                     startIcon={<i className={`solar-${showCategorySelector ? 'x' : 'folder'}-bold-duotone`} style={{ width: 16, height: 16 }} />}
                   >
-                    {showCategorySelector ? 'Close Panel' : 'Select Category'}
+                    {showCategorySelector ? 'Close Panel' : translate('Course management.BUTTON_SELECT_CATEGORY', 'Select Category')}
                   </Button>
                 </Stack>
 
@@ -365,7 +368,7 @@ const AddCategoryDrawer = ({ open, onClose, parentCategoryId, initialHistory = [
 
               {/* Translations */}
               <Typography variant="subtitle1" fontWeight="bold">
-                Category Name
+                {translate('Course management.SECTION_CATEGORY_NAME', 'Category Name')}
               </Typography>
 
               {isLoadingLanguages ? (
@@ -391,7 +394,7 @@ const AddCategoryDrawer = ({ open, onClose, parentCategoryId, initialHistory = [
                       <MultilingualTextInput
                         name="translations"
                         control={control}
-                        label="Category Name"
+                        label={translate('Course management.FIELD_CATEGORY_NAME', 'Category Name')}
                         currentLang={currentLang}
                         onLanguageChange={setCurrentLang}
                         defaultLanguage="all"
@@ -423,12 +426,12 @@ const AddCategoryDrawer = ({ open, onClose, parentCategoryId, initialHistory = [
             <Grid container spacing={2} justifyContent="flex-end">
               <Grid item>
                 <Button variant="outlined" color="inherit" onClick={onClose} disabled={isLoading}>
-                  Cancel
+                  {translate('common.cancel', 'Cancel')}
                 </Button>
               </Grid>
               <Grid item>
                 <Button type="submit" variant="contained" color="primary" disabled={isLoading}>
-                  {isLoading ? 'Creating...' : 'Create Category'}
+                  {isLoading ? 'Creating...' : translate('Course management.BUTTON_CREATE_CATEGORY', 'Create Category')}
                 </Button>
               </Grid>
             </Grid>

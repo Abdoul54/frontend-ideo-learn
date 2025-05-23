@@ -17,6 +17,7 @@ import DrawerFormContainer from "@/components/DrawerFormContainer";
 import { useState } from "react";
 import DataView from "@/views/DataView";
 import { useAssignSkillsToSkillGroup, useSkillGroups } from "@/hooks/api/tenant/skills/useSkillGroups";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 // skills should at least have one skill
 const schema = yup.object().shape({
@@ -24,6 +25,7 @@ const schema = yup.object().shape({
 });
 
 const SkillGroupAssignmentDrawer = ({ open, onClose, data }) => {
+    const { translate } = useTranslation();
     // states 
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
@@ -68,8 +70,8 @@ const SkillGroupAssignmentDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title="Assign Skill to skill groups"
-            description="Select the skills you want to assign to the selected skill groups."
+            title={translate('Skill management.MODAL_TITLE_ASSIGN_SKILLS_GROUPS', 'Assign Skill to skill sets')}
+            description={translate('Skill management.MODAL_SUBTITLE_ASSIGN_SKILLS_GROUPS', 'Select the skills you want to assign to the selected skill sets')}
             open={open}
             onClose={onClose}
         >
@@ -97,30 +99,35 @@ const SkillGroupAssignmentDrawer = ({ open, onClose, data }) => {
                 }}>
                     <Grid container rowSpacing={3} padding={2} component={List}>
                         <Grid item xs={12} component={ListItem}>
-                            <ListItemText primary='Skills' secondary={
-                                errors?.skills?.message || 'Select the skills you want to assign to this set'
-                            } primaryTypographyProps={{
-                                variant: 'h5',
-                                sx: {
-                                    fontWeight: 600,
-                                    fontSize: '1.2rem',
-                                }
-                            }} secondaryTypographyProps={{
-                                color: errors?.skills ? 'error.main' : 'text.secondary',
-                            }} />
+                            <ListItemText 
+                                primary={translate('Skill management.TAB_SKILL_SETS', 'Skill Sets')} 
+                                secondary={
+                                    errors?.skills?.message || translate('Skill management.SECTION_SUBTITLE_SKILLS', 'Select the skills you want to assign to the selected skill sets')
+                                } 
+                                primaryTypographyProps={{
+                                    variant: 'h5',
+                                    sx: {
+                                        fontWeight: 600,
+                                        fontSize: '1.2rem',
+                                    }
+                                }} 
+                                secondaryTypographyProps={{
+                                    color: errors?.skills ? 'error.main' : 'text.secondary',
+                                }} 
+                            />
                         </Grid>
                         <Grid item xs={12}>
                             <DataView
-                                title="Groups"
+                                title={translate('Skill management.TAB_SKILL_SETS', 'Skill Sets')}
                                 columns={[
                                     {
                                         accessorKey: 'name',
-                                        header: 'Name',
+                                        header: translate('common.name', 'Name'),
                                         flex: 1,
                                     },
                                     {
                                         accessorKey: 'description',
-                                        header: 'Description',
+                                        header: translate('common.description', 'Description'),
                                         flex: 1,
                                     }
                                 ]}
@@ -153,13 +160,18 @@ const SkillGroupAssignmentDrawer = ({ open, onClose, data }) => {
                                 }}
                                 noToolBar
                                 disableMultiSelect
+                                noMobileDataTable
                             />
                         </Grid>
                     </Grid>
                 </CardContent >
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={assignSkills?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={selectedSkills.length === 0 || assignSkills?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={assignSkills?.isPending}>
+                        {translate('common.cancel', 'Cancel')}
+                    </Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={selectedSkills.length === 0 || assignSkills?.isPending}>
+                        {assignSkills?.isPending ? translate('common.saving', 'Saving...') : translate('common.save', 'Save')}
+                    </Button>
                 </CardActions>
             </Card >
         </DrawerFormContainer >

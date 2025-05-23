@@ -35,6 +35,7 @@ import { useCreateSessionEvent, useClassroomsByLocation } from '@/hooks/api/tena
 import { useTimezonesTenant } from '@/hooks/api/tenant/useTimeLangSettings';
 import { useLocations } from '@/hooks/api/tenant/learn/classrooms-locations/useLocations';
 import { useClassrooms } from '@/hooks/api/tenant/learn/classrooms-locations/useClassrooms';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const weekdays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
@@ -44,6 +45,8 @@ const eventTypes = [
 ];
 
 const AddEventDrawer = ({ open, onClose, sessionId }) => {
+    const { translate } = useTranslation();
+    
     const [userSearchText, setUserSearchText] = useState('');
     const { data: users = [] } = useGetListUsers({ search_text: userSearchText });
     const [venueEnabled, setVenueEnabled] = useState(false); // Default unchecked for venue
@@ -239,7 +242,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
             }}
         >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-                <Typography variant="h5">New event</Typography>
+                <Typography variant="h5">{translate('Course management.MODAL_TITLE_NEW_EVENT', 'New event')}</Typography>
                 <IconButton onClick={handleClose}>
                     <i className="lucide-x" fontSize="small" />
                 </IconButton>
@@ -247,7 +250,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
 
             <Box component="form" onSubmit={handleSubmit(onSubmit)}>
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
-                    Event information
+                    {translate('Course management.SECTION_EVENT_INFORMATION', 'Event information')}
                 </Typography>
 
                 <Grid container spacing={2}>
@@ -256,11 +259,11 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                         <Controller
                             name="name"
                             control={control}
-                            rules={{ required: 'Name is required' }}
+                            rules={{ required: translate('Course management.NAME_REQUIRED', 'Name is required') }}
                             render={({ field, fieldState: { error } }) => (
                                 <TextField
                                     {...field}
-                                    label="Name"
+                                    label={translate('common.name', 'Name')}
                                     fullWidth
                                     required
                                     error={!!error}
@@ -280,10 +283,10 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                             <Controller
                                 name="date"
                                 control={control}
-                                rules={{ required: 'Date is required' }}
+                                rules={{ required: translate('Course management.DATE_REQUIRED', 'Date is required') }}
                                 render={({ field, fieldState: { error } }) => (
                                     <DatePicker
-                                        label="Date"
+                                        label={translate('Course management.TABLE_HEADER_DATE', 'Date')}
                                         value={field.value}
                                         onChange={(date) => {
                                             field.onChange(date);
@@ -297,7 +300,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                                 fullWidth: true,
                                                 required: true,
                                                 error: !!error,
-                                                helperText: error ? error.message : "Insert or select a date. Format example D/MM/YYYY."
+                                                helperText: error ? error.message : translate('Course management.TEXT_DATE_FORMAT', "Insert or select a date. Format example D/MM/YYYY.")
                                             }
                                         }}
                                     />
@@ -314,7 +317,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                             render={({ field, fieldState: { error } }) => (
                                 <TextField
                                     {...field}
-                                    label="Description"
+                                    label={translate('Course management.SECTION_DESCRIPTION', 'Description')}
                                     fullWidth
                                     multiline
                                     rows={3}
@@ -327,7 +330,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                 </Grid>
 
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mt: 3 }}>
-                    Event time
+                    {translate('Course management.SECTION_EVENT_TIME', 'Event time')}
                 </Typography>
 
                 <Grid container spacing={2}>
@@ -337,10 +340,10 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                             <Controller
                                 name="time_begin"
                                 control={control}
-                                rules={{ required: 'Start time is required' }}
+                                rules={{ required: translate('Course management.START_TIME_REQUIRED', 'Start time is required') }}
                                 render={({ field, fieldState: { error } }) => (
                                     <TimePicker
-                                        label="Start time"
+                                        label={translate('Course management.FIELD_START_TIME', 'Start time')}
                                         value={field.value}
                                         onChange={(time) => {
                                             if (time) {
@@ -367,10 +370,10 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                             <Controller
                                 name="time_end"
                                 control={control}
-                                rules={{ required: 'End time is required' }}
+                                rules={{ required: translate('Course management.END_TIME_REQUIRED', 'End time is required') }}
                                 render={({ field, fieldState: { error } }) => (
                                     <TimePicker
-                                        label="End time"
+                                        label={translate('Course management.FIELD_END_TIME', 'End time')}
                                         value={field.value}
                                         onChange={(time) => {
                                             if (time) {
@@ -399,7 +402,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <TimePicker
-                                        label="Break start time"
+                                        label={translate('Course management.FIELD_BREAK_START', 'Break start time')}
                                         value={field.value}
                                         onChange={(time) => {
                                             if (time) {
@@ -410,7 +413,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                             textField: {
                                                 fullWidth: true,
                                                 error: !!error,
-                                                helperText: error ? error.message : 'Insert time in hh:mm format'
+                                                helperText: error ? error.message : translate('Course management.TEXT_TIME_FORMAT', 'Insert time in hh:mm format')
                                             }
                                         }}
                                     />
@@ -436,13 +439,13 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                         const breakEnd = dayjs.isDayjs(value) 
                                             ? value 
                                             : dayjs(value, 'HH:mm');
-                                            
-                                        return breakEnd.isAfter(breakBegin) || 'Break end time must be after break start time';
+
+                                        return breakEnd.isAfter(breakBegin) || translate('Course management.BREAK_END_TIME_VALIDATION', 'Break end time must be after break start time');
                                     }
                                 }}
                                 render={({ field, fieldState: { error } }) => (
                                     <TimePicker
-                                        label="Break end time"
+                                        label={translate('Course management.FIELD_BREAK_END', 'Break end time')}
                                         value={field.value}
                                         onChange={(time) => {
                                             if (time) {
@@ -453,7 +456,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                             textField: {
                                                 fullWidth: true,
                                                 error: !!error,
-                                                helperText: error ? error.message : 'Insert time in hh:mm format'
+                                                helperText: error ? error.message : translate('Course management.TEXT_TIME_FORMAT', 'Insert time in hh:mm format')
                                             }
                                         }}
                                     />
@@ -467,13 +470,13 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                         <Controller
                             name="timezone"
                             control={control}
-                            rules={{ required: 'Timezone is required' }}
+                            rules={{ required: translate('Course management.TIMEZONE_REQUIRED', 'Timezone is required') }}
                             render={({ field, fieldState: { error } }) => (
                                 <FormControl fullWidth error={!!error} required>
-                                    <InputLabel>Time zone</InputLabel>
+                                    <InputLabel>{translate('Course management.FIELD_TIME_ZONE', 'Time zone')}</InputLabel>
                                     <Select
                                         {...field}
-                                        label="Time zone"
+                                        label={translate('Course management.FIELD_TIME_ZONE', 'Time zone')}
                                     >
                                         {timezones.map((timezone) => (
                                             <MenuItem key={timezone.id} value={timezone.id}>
@@ -493,7 +496,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                             const startTime = watch('time_begin');
                             const endTime = watch('time_end');
 
-                            let duration = 'Calculated automatically based on start and end times';
+                            let duration = translate('Course management.DURATION_CALCULATION', 'Calculated automatically based on start and end times');
 
                             if (startTime && endTime && dayjs.isDayjs(startTime) && dayjs.isDayjs(endTime)) {
                                 // Calculate duration in minutes
@@ -514,7 +517,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                             return (
                                 <Box sx={{ bgcolor: 'background.paper', p: 2, borderRadius: 1 }}>
                                     <Typography variant="body2" fontWeight="bold">
-                                        Duration:
+                                        {translate('Course management.TEXT_DURATION', 'Duration:')}
                                     </Typography>
                                     <Typography variant="body2">
                                         {duration}
@@ -526,11 +529,11 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                 </Grid>
 
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mt: 3 }}>
-                    Event type
+                    {translate('Course management.SECTION_EVENT_TYPE', 'Event type')}
                 </Typography>
 
                 <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ mt: 3 }}>
-                    Venue and video conference tool (required)
+                    {translate('Course management.SUB_SECTION_EVENT_TYPE', 'Venue and video conference tool (required)')}
                 </Typography>
 
                 <Grid container spacing={2}>
@@ -545,7 +548,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                         color="primary"
                                     />
                                 }
-                                label="Venue"
+                                label={translate('Course management.RADIO_VENUE', 'Venue')}
                             />
                         </Grid>
 
@@ -555,13 +558,13 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                     <Controller
                                         name="id_location"
                                         control={control}
-                                        rules={{ required: venueEnabled ? 'Location is required' : false }}
+                                        rules={{ required: venueEnabled ? translate('Course management.LOCATION_REQUIRED', 'Location is required') : false }}
                                         render={({ field, fieldState: { error } }) => (
                                             <FormControl fullWidth error={!!error} required={venueEnabled}>
-                                                <InputLabel>Location (required)</InputLabel>
+                                                <InputLabel>{translate('Course management.FIELD_LOCATION', 'Location (required)')}</InputLabel>
                                                 <Select
                                                     {...field}
-                                                    label="Location (required)"
+                                                    label={translate('Course management.FIELD_LOCATION', 'Location (required)')}
                                                 >
                                                     {locations.items.map((location) => (
                                                         <MenuItem key={location.id} value={location.id}>
@@ -578,7 +581,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                     <Controller
                                         name="id_classroom"
                                         control={control}
-                                        rules={{ required: venueEnabled ? 'Classroom is required' : false }}
+                                        rules={{ required: venueEnabled ? translate('Course management.CLASSROOM_REQUIRED', 'Classroom is required') : false }}
                                         render={({ field, fieldState: { error } }) => (
                                             <FormControl
                                                 fullWidth
@@ -586,15 +589,15 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                                 required={venueEnabled}
                                                 disabled={!selectedLocationId}
                                             >
-                                                <InputLabel>Classroom</InputLabel>
+                                                <InputLabel>{translate('Course management.FIELD_CLASSROOM', 'Classroom')}</InputLabel>
                                                 <Select
                                                     {...field}
-                                                    label="Classroom"
+                                                    label={translate('Course management.FIELD_CLASSROOM', 'Classroom')}
                                                 >
                                                     {isLoadingClassrooms ? (
-                                                        <MenuItem disabled>Loading classrooms...</MenuItem>
+                                                        <MenuItem disabled>{translate('Course management.LOADING_CLASSROOMS', 'Loading classrooms...')}</MenuItem>
                                                     ) : locationClassrooms.items.length === 0 ? (
-                                                        <MenuItem disabled>No classrooms available for this location</MenuItem>
+                                                        <MenuItem disabled>{translate('Course management.NO_CLASSROOMS', 'No classrooms available for this location')}</MenuItem>
                                                     ) : (
                                                         locationClassrooms.items.map((classroom) => (
                                                             <MenuItem key={classroom.id} value={classroom.id}>
@@ -606,7 +609,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                                 {error && <Typography color="error" variant="caption">{error.message}</Typography>}
                                                 {!selectedLocationId && !error && (
                                                     <Typography variant="caption" color="text.secondary">
-                                                        Please select a location first
+                                                        {translate('Course management.SELECT_LOCATION_FIRST', 'Please select a location first')}
                                                     </Typography>
                                                 )}
                                             </FormControl>
@@ -618,7 +621,6 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                     </>
 
                     {/* Video Conference Tool for VILT*/}
-
                     <>
                         <Grid item xs={12}>
                             <FormControlLabel
@@ -629,7 +631,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                         color="primary"
                                     />
                                 }
-                                label="Video conference tool"
+                                label={translate('Course management.RADIO_VIDEO_CONFERENCE', 'Video conference tool')}
                             />
                         </Grid>
 
@@ -640,25 +642,25 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                         name="custom_url"
                                         control={control}
                                         rules={{
-                                            required: requiresVideoConference ? 'Video conference URL is required' : false,
+                                            required: requiresVideoConference ? translate('Course management.VIDEO_URL_REQUIRED', 'Video conference URL is required') : false,
                                             validate: value => {
                                                 if (!requiresVideoConference) return true;
                                                 try {
                                                     new URL(value);
                                                     return true;
                                                 } catch {
-                                                    return 'Must be a valid URL';
+                                                    return translate('Course management.INVALID_URL', 'Must be a valid URL');
                                                 }
                                             }
                                         }}
                                         render={({ field, fieldState: { error } }) => (
                                             <TextField
                                                 {...field}
-                                                label="Video conference URL"
+                                                label={translate('Course management.PLACEHOLDER_VIDEO', 'Video conference URL')}
                                                 fullWidth
                                                 required={requiresVideoConference}
                                                 error={!!error}
-                                                helperText={error ? error.message : "URL for the video conference tool"}
+                                                helperText={error ? error.message : translate('Course management.PLACEHOLDER_VIDEO_DESCRIPTION', 'URL for the video conference tool')}
                                             />
                                         )}
                                     />
@@ -666,7 +668,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
 
                                 <Grid item xs={12} sx={{ mt: 2 }}>
                                     <Typography variant="subtitle2" fontWeight="medium">
-                                        Attendance options
+                                        {translate('Course management.SUB_SECTION_ATTENDANCE_OPTIONS', 'Attendance options')}
                                     </Typography>
 
                                     <Box sx={{ mt: 1 }}>
@@ -681,7 +683,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                                             onChange={(e) => field.onChange(e.target.checked)}
                                                         />
                                                     }
-                                                    label="Mark the event as attended when the user joins the webinar"
+                                                    label={translate('Course management.CHECKBOX_ATTENDANCE_OPTIONS_01', 'Mark the event as attended when the user joins the webinar')}
                                                 />
                                             )}
                                         />
@@ -699,7 +701,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                                             onChange={(e) => field.onChange(e.target.checked)}
                                                         />
                                                     }
-                                                    label="Mark the event as attended if the user accesses the recordings"
+                                                    label={translate('Course management.CHECKBOX_ATTENDANCE_OPTIONS_02', 'Mark the event as attended if the user accesses the recordings')}
                                                 />
                                             )}
                                         />
@@ -709,7 +711,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                 {/* Join button options */}
                                 <Grid item xs={12} sx={{ mt: 2 }}>
                                     <Typography variant="subtitle2" fontWeight="medium">
-                                        Join button options
+                                        {translate('Course management.SUB_SECTION_BUTTON_OPTIONS', 'Join button options')}
                                     </Typography>
 
                                     <Controller
@@ -729,9 +731,9 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                                     control={<Radio />}
                                                     label={
                                                         <Box>
-                                                            <Typography variant="body1" sx={{ mt: 2 }}>Display the Join button at the beginning of the event (default)</Typography>
+                                                            <Typography variant="body1" sx={{ mt: 2 }}>{translate('Course management.RADIO_BUTTON_OPTIONS_01_TITLE', 'Display the Join button at the beginning of the event (default)')}</Typography>
                                                             <Typography variant="caption" sx={{ mt: 1 }} color="text.secondary">
-                                                                Both instructors and learners will see the Join button when the video conference starts
+                                                                {translate('Course management.RADIO_BUTTON_OPTIONS_01_SUBTITLE', 'Both instructors and learners will see the Join button when the video conference starts')}
                                                             </Typography>
                                                         </Box>
                                                     }
@@ -741,9 +743,9 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                                     control={<Radio />}
                                                     label={
                                                         <Box>
-                                                            <Typography variant="body1" sx={{ mt: 4 }}>Display the Join button before the event starts</Typography>
+                                                            <Typography variant="body1" sx={{ mt: 4 }}>{translate('Course management.RADIO_BUTTON_OPTIONS_02_TITLE', 'Display the Join button before the event starts')}</Typography>
                                                             <Typography variant="caption" sx={{ mt: 1 }} color="text.secondary">
-                                                                Customize how many hours before the video conference starts instructors and learners will display the Join button (ex. 1:00 - one hour before). You can configure two different times for instructors and learners.
+                                                                {translate('Course management.RADIO_BUTTON_OPTIONS_02_SUBTITLE', 'Customize how many hours before the video conference starts instructors and learners will display the Join button (ex. 1:00 - one hour before). You can configure two different times for instructors and learners.')}
                                                             </Typography>
                                                         </Box>
                                                     }
@@ -758,7 +760,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                 </Grid>
 
                 <Typography variant="subtitle1" fontWeight="bold" gutterBottom sx={{ mt: 3 }}>
-                    Event instructors
+                    {translate('Course management.SECTION_EVENT_INSTRUCTORS', 'Event instructors')}
                 </Typography>
 
                 <Grid container spacing={2}>
@@ -785,12 +787,12 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                                     renderInput={(params) => (
                                         <TextField
                                             {...params}
-                                            label="Instructors"
-                                            placeholder="Type to search..."
+                                            label={translate('Course management.DROPDOWN_INSTRUCTORS', 'Instructors')}
+                                            placeholder={translate('common.type_to_search', 'Type to search...')}
                                             fullWidth
                                         />
                                     )}
-                                    renderTags={(tagValue, getTagProps) =>
+                                    renderTags={(tagValue, getTagProps) => 
                                         tagValue.map((option, index) => (
                                             <Chip
                                                 key={option.id || option.user_id || index}
@@ -830,7 +832,7 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                         variant="outlined"
                         onClick={handleClose}
                     >
-                        Cancel
+                        {translate('common.cancel', 'Cancel')}
                     </Button>
                     <Button
                         variant="contained"
@@ -838,7 +840,9 @@ const AddEventDrawer = ({ open, onClose, sessionId }) => {
                         disabled={createSessionEventMutation.isPending}
                         startIcon={createSessionEventMutation.isPending ? <CircularProgress size={20} /> : null}
                     >
-                        {createSessionEventMutation.isPending ? 'Creating...' : 'Confirm'}
+                        {createSessionEventMutation.isPending 
+                            ? translate('common.creating', 'Creating...') 
+                            : translate('Course management.BUTTON_CONFIRM', 'Confirm')}
                     </Button>
                 </Box>
             </Box>

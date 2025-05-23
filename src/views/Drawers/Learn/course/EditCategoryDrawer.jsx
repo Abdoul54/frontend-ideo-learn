@@ -18,8 +18,12 @@ import MultilingualTextInput from '@/components/inputs/MultilingualTextInput';
 import CategorySelector from '@/components/CategorySelector';
 import { axiosInstance } from '@/lib/axios';
 import { extractCategoryName, createCategoryNamePayload, isRootCategory } from '@/utils/categoryUtils';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
+  // Translation hook
+  const { translate } = useTranslation();
+
   // Fetch category details
   const {
     data: categoryDetails,
@@ -58,6 +62,8 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
   // Form state
   const { handleSubmit, control, formState: { errors }, setValue, watch, setError, reset, getValues } = methods;
   const [currentLang, setCurrentLang] = useState('all');
+  const [initialCategory, setInitialCategory] = useState(null);
+  const [isMultiLangMode, setIsMultiLangMode] = useState(false);
 
   // Category selector state
   const [showCategorySelector, setShowCategorySelector] = useState(false);
@@ -126,9 +132,14 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
     }
   }, [open, categoryDetails, defaultLanguage, isLoadingDetails, initialHistoryForDrawer.length, rootCategory]);
 
-  // Populate form with category details when they load
+  // Populate form with category details when they load - FIXED VERSION
   useEffect(() => {
-    if (categoryDetails && !hasInitializedForm) {
+    if (categoryDetails && !hasInitializedForm && activeLanguages?.length > 0) {
+      console.log("Loading category details:", categoryDetails);
+
+      // Store initial category data for reference
+      setInitialCategory(categoryDetails);
+
       // Set code
       setValue('code', categoryDetails.code || '');
 
@@ -136,30 +147,30 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
       const parentId = categoryDetails.id_parent;
       setValue('id_parent', parentId);
 
-      // Set translations
+      // Initialize translations object
       const newTranslations = { ...getValues().translations };
 
-      // Handle single value title - this should be visible in "all" languages view
-      if (categoryDetails.names?.type === 'single_value' && categoryDetails.names?.value) {
-        newTranslations.all = categoryDetails.names.value;
+      // Store the language to initially display
+      let initialLanguage = 'all';
 
-        // Also set it for each language to ensure it's visible (will be overridden if multi-lang values exist)
-        if (activeLanguages && activeLanguages.length > 0) {
-          activeLanguages.forEach(lang => {
-            newTranslations[lang.code] = categoryDetails.names.value;
-          });
-        }
+      // Handle single value title
+      if (categoryDetails.names?.type === 'single_value' && categoryDetails.names?.value) {
+        // For single_value, set "all" field AND populate all languages
+        newTranslations.all = categoryDetails.names.value;
+        setIsMultiLangMode(false);
+        initialLanguage = 'all';
+
+        // Also set it for each language to ensure it's visible
+        activeLanguages.forEach(lang => {
+          newTranslations[lang.code] = categoryDetails.names.value;
+        });
       }
 
       // Handle multi-language titles
       if (categoryDetails.names?.type === 'multi_lang' && categoryDetails.names?.values) {
-        // For multi-language, also update the "all" field with the default language value
-        if (defaultLanguage && categoryDetails.names.values[defaultLanguage]) {
-          newTranslations.all = categoryDetails.names.values[defaultLanguage];
-        } else if (Object.values(categoryDetails.names.values).length > 0) {
-          // Or use the first available language
-          newTranslations.all = Object.values(categoryDetails.names.values)[0];
-        }
+        // Clear the "all" field to ensure we stay in multi-language mode
+        newTranslations.all = '';
+        setIsMultiLangMode(true);
 
         // Set individual language values
         Object.entries(categoryDetails.names.values).forEach(([lang, value]) => {
@@ -167,15 +178,20 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
             newTranslations[lang] = value;
           }
         });
+
+        // Determine which language to display initially:
+        // Priority: default language, first language with content, or first language
+        if (defaultLanguage && categoryDetails.names.values[defaultLanguage]) {
+          initialLanguage = defaultLanguage;
+        } else if (Object.keys(categoryDetails.names.values).length > 0) {
+          initialLanguage = Object.keys(categoryDetails.names.values)[0];
+        }
       }
 
-      // Force an update outside the React state to ensure form values are set
-      setTimeout(() => {
-        setValue('translations', newTranslations, { shouldDirty: true });
-        setHasInitializedForm(true);
-      }, 0);
+      // Set form values first, THEN update the current language
+      setValue('translations', newTranslations, { shouldDirty: true });
 
-      // Set selected category display
+      // Set the selected category display
       if (parentId) {
         setSelectedCategory(prev => ({
           ...prev,
@@ -187,6 +203,12 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
           title: 'Root'
         });
       }
+
+      // Use a short timeout to ensure the form values are set before switching language
+      setTimeout(() => {
+        setCurrentLang(initialLanguage);
+        setHasInitializedForm(true);
+      }, 50);
     }
   }, [categoryDetails, setValue, getValues, activeLanguages, defaultLanguage, hasInitializedForm]);
 
@@ -198,6 +220,9 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
       setInitialHistoryForDrawer([]);
       setShowCategorySelector(false);
       setIsManuallyToggled(false);
+      setInitialCategory(null);
+      setIsMultiLangMode(false);
+      setCurrentLang('all'); // Always reset to 'all' when closing
     }
   }, [open, reset]);
 
@@ -267,25 +292,56 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
     }
   };
 
+  // Handle language change (add extra validation/logic if needed)
+  const handleLanguageChange = (newLang) => {
+    const prevLang = currentLang;
+    const translations = getValues().translations || {};
+
+    // When changing FROM "all" TO a specific language
+    if (prevLang === 'all' && newLang !== 'all') {
+      // Enter multi-language mode
+      setIsMultiLangMode(true);
+
+      // The MultilingualTextInput component will handle copying values
+      // and clearing the "all" field
+    }
+
+    // When changing TO "all" FROM a specific language
+    if (prevLang !== 'all' && newLang === 'all') {
+      // Only leave multi-language mode if the user actually enters a value in the "all" field
+      // This will be handled when they submit the form
+    }
+
+    // Update the current language
+    setCurrentLang(newLang);
+  };
+
   // Form submission handler
   const onSubmit = (data) => {
     const translations = data.translations || {};
+    console.log("Form data before submission:", translations);
 
     // Check if at least one translation is provided
     const hasAllTranslation = translations.all && translations.all.trim() !== '';
     const hasDefaultTranslation = defaultLanguage && translations[defaultLanguage] &&
       translations[defaultLanguage].trim() !== '';
 
-    if (!hasAllTranslation && !hasDefaultTranslation) {
+    // Check if any language has a value
+    const hasAnyLanguage = Object.entries(translations).some(([lang, value]) =>
+      lang !== 'all' && value && value.trim() !== ''
+    );
+
+    if (!hasAllTranslation && !hasDefaultTranslation && !hasAnyLanguage) {
       setError('translations', {
         type: 'manual',
-        message: `Either "All Languages" or the default language (${defaultLanguage}) translation is required`
+        message: `Either "All Languages" or at least one language translation is required`
       });
       return;
     }
 
     // Create title payload using our utility function
     const titlePayload = createCategoryNamePayload(translations, defaultLanguage);
+    console.log("Generated payload:", titlePayload);
 
     // Create update payload - start with required fields only
     const payload = {
@@ -350,6 +406,15 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
     return options;
   };
 
+  // For debugging - log what language is currently selected
+  // This helps in troubleshooting issues with initialization
+  useEffect(() => {
+    if (hasInitializedForm) {
+      console.log("Current language set to:", currentLang);
+      console.log("Current translation for this language:", getValues().translations[currentLang]);
+    }
+  }, [currentLang, hasInitializedForm, getValues]);
+
   return (
     <DrawerFormContainer
       open={open}
@@ -375,7 +440,7 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
               <Stack spacing={3}>
                 {/* General Information */}
                 <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'black' }}>
-                  General Information
+                  {translate('Course management.SECTION_COURSE_INFORMATION', 'General Information')}
                 </Typography>
 
                 <Controller
@@ -386,16 +451,16 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
                     <TextField
                       {...field}
                       fullWidth
-                      label="Code"
+                      label={translate('Course management.FIELD_COURSE_CODE', 'Code')}
                       error={!!errors.code}
-                      helperText={errors.code?.message || "Unique code for the category (optional)"}
+                      helperText={errors.code?.message || translate('Course management.PLACEHOLDER_COURSE_CODE', 'Unique code for the category (optional)')}
                     />
                   )}
                 />
 
                 {/* Parent Category Selection */}
                 <Typography variant="subtitle1" fontWeight="bold" sx={{ color: 'black' }}>
-                  Parent Category
+                  {translate('Course management.SECTION_PARENT_CATEGORY', 'Parent Category')}
                 </Typography>
 
                 <Box sx={{
@@ -423,7 +488,7 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
                       }}
                       startIcon={<i className={`solar-${showCategorySelector ? 'x' : 'folder'}-bold-duotone`} style={{ width: 16, height: 16 }} />}
                     >
-                      {showCategorySelector ? 'Close Panel' : 'Select Parent'}
+                      {showCategorySelector ?  'Close Panel' : translate('Course management.BUTTON_SELECT_CATEGORY', 'Select Parent')}
                     </Button>
                   </Stack>
 
@@ -470,7 +535,7 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
 
                 {/* Translations */}
                 <Typography variant="subtitle1" fontWeight="bold">
-                  Category Name
+                  {translate('Course management.SECTION_CATEGORY_NAME', 'Category Name')}
                 </Typography>
 
                 {isLoadingLanguages ? (
@@ -484,9 +549,9 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
                 ) : (
                   <>
                     <Alert severity="info" sx={{ mb: 2 }}>
-                      {defaultLanguage ?
-                        `You must provide either an "All Languages" translation or a translation in the default language (${defaultLanguage}).` :
-                        "You must provide at least one translation."
+                      {currentLang === 'all' ?
+                        "Using 'All Languages' will set the same text for all languages." :
+                        `You are currently editing the ${currentLang.toUpperCase()} version of this category name.`
                       }
                     </Alert>
                     <Controller
@@ -496,10 +561,10 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
                         <MultilingualTextInput
                           name="translations"
                           control={control}
-                          label="Category Name"
+                          label={translate('Course management.FIELD_CATEGORY_NAME', 'Category Name')}
                           currentLang={currentLang}
-                          onLanguageChange={setCurrentLang}
-                          defaultLanguage="all"
+                          onLanguageChange={handleLanguageChange}
+                          defaultLanguage={defaultLanguage}
                           languages={getLanguageOptions()}
                           applyToAllLanguages={currentLang === 'all'}
                           required
@@ -528,7 +593,7 @@ const EditCategoryDrawer = ({ open, onClose, categoryId, rootCategory }) => {
               <Grid container spacing={2} justifyContent="flex-end">
                 <Grid item>
                   <Button variant="outlined" color="inherit" onClick={onClose} disabled={isLoading}>
-                    Cancel
+                    {translate('common.cancel', 'Cancel')}
                   </Button>
                 </Grid>
                 <Grid item>

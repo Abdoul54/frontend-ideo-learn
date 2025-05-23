@@ -54,10 +54,6 @@ const Page = () => {
     }
   }), [filters, globalFilter, sorting, columnVisibility]);
 
-  const handlePageChange = (newPage) => {
-    setPagination((prev) => ({ ...prev, pageIndex: newPage }));
-  };
-
   return (
     <>
       <DataView
@@ -67,16 +63,8 @@ const Page = () => {
         data={items}
         isLoading={isLoading}
         error={error}
-        pagination={{
-          currentPage: pagination.pageIndex,
-          totalPages: data?.data?.pagination?.last_page || 1,
-          onPageChange: handlePageChange,
-          pageSize: pagination.pageSize,
-          onPageSizeChange: (newPageSize) =>
-            setPagination({ ...pagination, pageSize: newPageSize }),
-          total: data?.data?.pagination?.total || 0,
-        }}
-        setPagination={handlePageChange}
+        pagination={{ ...pagination, total: data?.pagination?.total }}
+        setPagination={setPagination}
         selectedRows={selectedRows}
         onSelectedRowsChange={setSelectedRows}
         toolbar={{

@@ -23,8 +23,11 @@ import { useGetListUsers } from '@/hooks/api/useUsers';
 import debounce from 'lodash/debounce';
 import DrawerFormContainer from '@/components/DrawerFormContainer';
 import { useRouter } from 'next/navigation';
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const AddSessionDrawer = ({ open, onClose, courseId }) => {
+    const { translate } = useTranslation();
+    
     // Form and API hooks
     const { control, handleSubmit, watch, reset, formState: { errors } } = useForm({
         defaultValues: {
@@ -43,9 +46,6 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
     const users = Array.isArray(usersData) ? usersData : [];
 
     const router = useRouter();
-
-
-    console.log('Number of users found:', users.length);
 
     // Watch evaluation_type to conditionally show fields
     const evaluationType = watch('evaluation_type');
@@ -97,14 +97,6 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
         }
     };
 
-    console.log("usersData structure:", usersData ?
-        {
-            hasData: !!usersData,
-            hasDataProperty: !!usersData?.data,
-            hasItems: !!usersData?.data?.items,
-            itemsLength: usersData?.data?.items?.length || 0
-        } : "No users data");
-
     // Close handler with form reset
     const handleClose = () => {
         reset();
@@ -115,8 +107,8 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
         <DrawerFormContainer
             open={open}
             onClose={handleClose}
-            title={"Create a new session"}
-            description="Fill in the form below to start creating the base for your session"
+            title={translate('Course management.MODAL_TITLE_CREATE_SESSION', 'Create a new session')}
+            description={translate('Course management.MODAL_SUBTITLE_CREATE_SESSION', 'Fill in the form below to start creating the base for your session')}
             width={500}
         >
             <form onSubmit={handleSubmit(onSubmit)} style={{ height: '100%' }}>
@@ -127,11 +119,11 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                             <Controller
                                 name="name"
                                 control={control}
-                                rules={{ required: 'Session name is required' }}
+                                rules={{ required: translate('Course management.SESSION_NAME_REQUIRED', 'Session name is required') }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
-                                        label="Name"
+                                        label={translate('Course management.SESSION_NAME', 'Name')}
                                         fullWidth
                                         margin="normal"
                                         error={!!errors.name}
@@ -145,13 +137,13 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                 name="max_enroll"
                                 control={control}
                                 rules={{
-                                    required: 'Maximum enrollments is required',
-                                    min: { value: 0, message: 'Must be at least 0' }
+                                    required: translate('Course management.max_enroll_required', 'Maximum enrollments is required'),
+                                    min: { value: 0, message: translate('Course management.min_value', 'Must be at least 0') }
                                 }}
                                 render={({ field }) => (
                                     <TextField
                                         {...field}
-                                        label="Maximum enrollments"
+                                        label={translate('Course management.FIELD_MAXIMUM_ENROLLMENTS', 'Maximum enrollments')}
                                         type="number"
                                         fullWidth
                                         margin="normal"
@@ -166,10 +158,10 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                             {/* Instructors Selection */}
                             <Box mt={4} mb={3}>
                                 <Typography variant="subtitle1" mb={1}>
-                                    Session instructors
+                                    {translate('Course management.SUB_SECTION_SESSION_INSTRUCTORS', 'Session instructors')}
                                 </Typography>
                                 <Typography variant="body2" color="text.secondary" mb={2}>
-                                    Session instructors can mark the attendance and evaluate learners
+                                    {translate('Course management.SUB_SECTION_SUBTITLE_SESSION_INSTRUCTORS', 'Session instructors can mark the attendance and evaluate learners')}
                                 </Typography>
 
                                 <Controller
@@ -193,10 +185,10 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                             renderInput={(params) => (
                                                 <TextField
                                                     {...params}
-                                                    label="Instructors"
-                                                    placeholder="Type to search..."
+                                                    label={translate('Course management.DROPDOWN_INSTRUCTORS', 'Instructors')}
+                                                    placeholder={translate('common.type_to_search', 'Type to search...')}
                                                     fullWidth
-                                                    helperText="0/200"
+                                                    helperText={`${value.length}/200`}
                                                 />
                                             )}
                                             renderTags={(tagValue, getTagProps) =>
@@ -246,7 +238,7 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                             {/* Evaluation Type */}
                             <Box mt={3} mb={3}>
                                 <FormControl component="fieldset">
-                                    <FormLabel component="legend">Session evaluation / Completion</FormLabel>
+                                    <FormLabel component="legend">{translate('Course management.SESSION_EVALUATION_COMPLETION', 'Session evaluation / Completion')}</FormLabel>
                                     <Controller
                                         name="evaluation_type"
                                         control={control}
@@ -257,9 +249,9 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                                     control={<Radio />}
                                                     label={
                                                         <Box>
-                                                            <Typography variant="body1">Manual</Typography>
+                                                            <Typography variant="body1">{translate('Course management.RADIO_MANUAL_TITLE', 'Manual')}</Typography>
                                                             <Typography variant="body2" color="text.secondary">
-                                                                The session can be marked as completed manually only by Superadmins and Power Users
+                                                                {translate('Course management.RADIO_MANUAL_SUBTITLE', 'The session can be marked as completed manually only by Superadmins and Power Users')}
                                                             </Typography>
                                                         </Box>
                                                     }
@@ -269,9 +261,9 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                                     control={<Radio />}
                                                     label={
                                                         <Box>
-                                                            <Typography variant="body1">Evaluation based</Typography>
+                                                            <Typography variant="body1">{translate('Course management.RADIO_EVALUATION_TITLE', 'Evaluation based')}</Typography>
                                                             <Typography variant="body2" color="text.secondary">
-                                                                The session is marked as completed when the evaluation is Passed. You can also configure a maximum score for the session.
+                                                                {translate('Course management.RADIO_EVALUATION_SUBTITLE', 'The session is marked as completed when the evaluation is Passed. You can also configure a maximum score for the session.')}
                                                             </Typography>
                                                         </Box>
                                                     }
@@ -284,13 +276,13 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                                             name="score_base"
                                                             control={control}
                                                             rules={{
-                                                                required: 'Maximum score is required',
-                                                                min: { value: 0, message: 'Must be at least 0' }
+                                                                required: translate('Course management.MAX_SCORE_REQUIRED', 'Maximum score is required'),
+                                                                min: { value: 0, message: translate('Course management.MIN_VALUE_REQUIRED', 'Must be at least 0') }
                                                             }}
                                                             render={({ field }) => (
                                                                 <TextField
                                                                     {...field}
-                                                                    label="Maximum score"
+                                                                    label={translate('Course management.FIELD_MAXIMUM_SCORE', 'Maximum score')}
                                                                     type="number"
                                                                     fullWidth
                                                                     margin="normal"
@@ -307,9 +299,9 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                                     control={<Radio />}
                                                     label={
                                                         <Box>
-                                                            <Typography variant="body1">Attendance based</Typography>
+                                                            <Typography variant="body1">{translate('Course management.RADIO_ATTENDANCE_TITLE', 'Attendance based')}</Typography>
                                                             <Typography variant="body2" color="text.secondary">
-                                                                The session is marked as completed when the attendance status in the attendance sheet is Present for all the events or a custom number of them
+                                                                {translate('Course management.RADIO_ATTENDANCE_SUBTITLE', 'The session is marked as completed when the attendance status in the attendance sheet is Present for all the events or a custom number of them')}
                                                             </Typography>
                                                         </Box>
                                                     }
@@ -320,9 +312,9 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                                     control={<Radio />}
                                                     label={
                                                         <Box>
-                                                            <Typography variant="body1">Training material based</Typography>
+                                                            <Typography variant="body1">{translate('Course management.RADIO_TRAINING_TITLE', 'Training material based')}</Typography>
                                                             <Typography variant="body2" color="text.secondary">
-                                                                The session is marked as completed when the learner completes the test training material
+                                                                {translate('Course management.RADIO_TRAINING_SUBTITLE', 'The session is marked as completed when the learner completes the test training material')}
                                                             </Typography>
                                                         </Box>
                                                     }
@@ -343,7 +335,7 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                     variant="outlined"
                                     onClick={handleClose}
                                 >
-                                    Cancel
+                                    {translate('common.cancel', 'Cancel')}
                                 </Button>
                             </Grid>
                             <Grid item>
@@ -354,7 +346,9 @@ const AddSessionDrawer = ({ open, onClose, courseId }) => {
                                     disabled={createSessionMutation.isLoading}
                                     startIcon={createSessionMutation.isLoading ? <CircularProgress size={20} /> : null}
                                 >
-                                    {createSessionMutation.isLoading ? 'Adding...' : 'Create & Edit'}
+                                    {createSessionMutation.isLoading ? 
+                                        translate('common.adding', 'Adding...') : 
+                                        translate('Course management.BUTTON_CREATE_EDIT', 'Create & Edit')}
                                 </Button>
                             </Grid>
                         </Grid>

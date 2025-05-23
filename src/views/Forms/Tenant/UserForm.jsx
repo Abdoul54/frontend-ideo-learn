@@ -13,8 +13,10 @@ import StepFour from "./UserSteps/StepFour";
 import { useManagerTypes } from "@/hooks/api/tenant/useManager";
 import { useAdvancedSettings } from "@/hooks/api/tenant/useAdvancedSettings";
 import StepThreeEdit from "./UserSteps/StepThreeEdit";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 export default function UserForm({ open, onClose, userId }) {
+    const { translate } = useTranslation();
     const { data: userfields } = useUseAllUserFields();
     const { data: managerTypesData } = useManagerTypes();
     const managerTypes = managerTypesData?.items || [];
@@ -320,7 +322,11 @@ export default function UserForm({ open, onClose, userId }) {
     };
 
     return (
-        <DrawerFormContainer open={open} onClose={handleClose} title={userId ? 'Edit User' : 'Create User'}>
+        <DrawerFormContainer 
+            open={open} 
+            onClose={handleClose} 
+            title={userId ? translate('User Management.MODAL_TITLE_EDIT_USER', 'Edit User') : translate('User Management.MODAL_TITLE_CREATE_USER', 'Create User')}
+        >
             <Card
                 component="form"
                 onSubmit={handleSubmit(onSubmit)}
@@ -329,10 +335,10 @@ export default function UserForm({ open, onClose, userId }) {
                 <CardHeader
                     title={
                         <Stepper activeStep={activeStep}>
-                            <Step><StepLabel>General Information</StepLabel></Step>
-                            <Step><StepLabel>Branches</StepLabel></Step>
-                            {shouldShowUserFields && <Step><StepLabel>Additional fields</StepLabel></Step>}
-                            <Step><StepLabel>Team Members</StepLabel></Step>
+                            <Step><StepLabel>{translate('User Management.TAB_GENERAL_INFORMATION', 'General Information')}</StepLabel></Step>
+                            <Step><StepLabel>{translate('User Management.TAB_BRANCHES', 'Branches')}</StepLabel></Step>
+                            {shouldShowUserFields && <Step><StepLabel>{translate('User Management.TAB_ADDITIONAL_FIELDS', 'Additional fields')}</StepLabel></Step>}
+                            <Step><StepLabel>{translate('User Management.TAB_TEAM_MEMBERS', 'Team Members')}</StepLabel></Step>
                         </Stepper>
                     }
                 />
@@ -356,16 +362,16 @@ export default function UserForm({ open, onClose, userId }) {
                         {StepRenderer(activeStep)}
                         {formState.isSubmitted && Object.keys(formState.errors).length > 0 && (
                             <Alert severity="error" sx={{ mb: 2 }}>
-                                Please fix the errors in the form before submitting.
+                                {translate('User Management.FORM_VALIDATION_ERROR', 'Please fix the errors in the form before submitting.')}
                                 {console.log('Validation errors:', formState.errors)}
                             </Alert>
                         )}
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    {activeStep > 0 && <Button sx={{ marginTop: '5px' }} onClick={handleBack}>Back</Button>}
+                    {activeStep > 0 && <Button sx={{ marginTop: '5px' }} onClick={handleBack}>{translate('User Management.BUTTON_BACK', 'Back')}</Button>}
                     {activeStep < totalSteps - 1 && (
-                        <Button variant="contained" onClick={handleNext}>Next</Button>
+                        <Button variant="contained" onClick={handleNext}>{translate('User Management.BUTTON_NEXT', 'Next')}</Button>
                     )}
                     {activeStep === totalSteps - 1 && (
                         <Button
@@ -374,8 +380,12 @@ export default function UserForm({ open, onClose, userId }) {
                             disabled={userId ? updateUserMutation.isPending : createUser.isPending}
                         >
                             {userId
-                                ? (updateUserMutation.isPending ? 'Updating...' : 'Update User')
-                                : (createUser.isPending ? 'Submitting...' : 'Create User')
+                                ? (updateUserMutation.isPending 
+                                    ? translate('common.updating', 'Updating...') 
+                                    : translate('User Management.BUTTON_UPDATE_USER', 'Update User'))
+                                : (createUser.isPending 
+                                    ? translate('common.submitting', 'Submitting...') 
+                                    : translate('User Management.BUTTON_CREATE', 'Create User'))
                             }
                         </Button>
                     )}

@@ -8,6 +8,7 @@ import {
     CardContent,
     FormControl,
     FormControlLabel,
+    FormLabel,
     Grid2 as Grid,
     List,
     ListItem,
@@ -22,8 +23,11 @@ import DataView from "@/views/DataView";
 import { useLocations } from "@/hooks/api/tenant/learn/classrooms-locations/useLocations";
 import { useCreateClassroom, useUpdateClassroom } from "@/hooks/api/tenant/learn/classrooms-locations/useClassrooms";
 import { classroomSchema } from "@/constants/ClassroomsLocations";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const ClassroomDrawer = ({ open, onClose, data }) => {
+    const { translate } = useTranslation();
+    
     const {
         control,
         handleSubmit,
@@ -85,8 +89,13 @@ const ClassroomDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title="Create Classroom"
-            description="Create a new classroom"
+            title={
+                data ? data?.name : translate('CL management.MODAL_TITLE_CREATE_CLASSROOM', "Create Classroom")
+            }
+            description={
+                data ? translate('CL management.MODAL_SUBTITLE_UPDATE_CLASSROOM', "Edit classroom details") : 
+                translate('CL management.MODAL_SUBTITLE_CREATE_CLASSROOM', "Create a new classroom to be used in your locations.")
+            }
             open={open}
             onClose={onClose}
         >
@@ -116,7 +125,7 @@ const ClassroomDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="name"
-                                label="Name"
+                                label={translate('common.name', "Name")}
                                 control={control}
                                 type="text"
                             />
@@ -124,17 +133,16 @@ const ClassroomDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="seats"
-                                label="Seats"
+                                label={translate('CL management.PLACEHOLDER_SEATS', "Seats")}
                                 control={control}
                                 type="number"
                                 inputProps={{ min: 0 }}
-
                             />
                         </Grid>
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="equipment"
-                                label="Equipment"
+                                label={translate('CL management.PLACEHOLDER_EQUIPMENT', "Equipment")}
                                 control={control}
                                 type="text"
                             />
@@ -142,7 +150,7 @@ const ClassroomDrawer = ({ open, onClose, data }) => {
                         <Grid item size={12} component={ListItem}>
                             <TextInput
                                 name="details"
-                                label="Details"
+                                label={translate('CL management.TABLE_HEADER_DETAILS', "Details")}
                                 control={control}
                                 type="text"
                                 maxRows={4}
@@ -155,12 +163,12 @@ const ClassroomDrawer = ({ open, onClose, data }) => {
                                 control={control}
                                 render={({ field, fieldState: { error } }) => (
                                     <FormControl error={!!error} fullWidth>
-                                        {/* <FormLabel>Select a location</FormLabel> */}
+                                        <FormLabel>{translate('CL management.SECTION_SELECT_LOCATION', 'Select a location')}</FormLabel>
                                         <RadioGroup
                                             {...field}
                                         >
                                             <DataView
-                                                title="Groups"
+                                                title={translate('CL management.TAB_LOCATIONS', "Locations")}
                                                 columns={[
                                                     {
                                                         accessorKey: "id",
@@ -173,17 +181,17 @@ const ClassroomDrawer = ({ open, onClose, data }) => {
                                                     },
                                                     {
                                                         accessorKey: "name",
-                                                        header: "Name",
+                                                        header: translate('common.name', "Name"),
                                                         flex: 1
                                                     },
                                                     {
                                                         accessorKey: "address",
-                                                        header: "Address",
+                                                        header: translate('CL management.PLACEHOLDER_ADDRESS', "Address"),
                                                         flex: 1
                                                     },
                                                     {
                                                         accessorKey: "country",
-                                                        header: "Country",
+                                                        header: translate('CL management.TABLE_HEADER_COUNTRY', "Country"),
                                                         flex: 1
                                                     }
                                                 ]}
@@ -218,16 +226,22 @@ const ClassroomDrawer = ({ open, onClose, data }) => {
                                     </FormControl>
                                 )}
                             />
-
-
-
                         </Grid>
-
                     </Grid>
                 </CardContent>
                 <CardActions sx={{ justifyContent: 'flex-end', gap: 2, p: 2 }}>
-                    <Button onClick={onClose} disabled={createClassroom?.isPending || updateClassroom?.isPending}>Cancel</Button>
-                    <Button variant="contained" color="primary" type="submit" disabled={createClassroom?.isPending || updateClassroom?.isPending}>Submit</Button>
+                    <Button onClick={onClose} disabled={createClassroom?.isPending || updateClassroom?.isPending}>
+                        {translate('common.cancel', "Cancel")}
+                    </Button>
+                    <Button variant="contained" color="primary" type="submit" disabled={createClassroom?.isPending || updateClassroom?.isPending}>
+                        {data 
+                            ? updateClassroom?.isPending 
+                                ? translate('common.saving', 'Saving...') 
+                                : translate('common.save', 'Save') 
+                            : createClassroom?.isPending 
+                                ? translate('common.creating', 'Creating...') 
+                                : translate('common.create', 'Create')}
+                    </Button>
                 </CardActions>
             </Card>
         </DrawerFormContainer >

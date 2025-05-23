@@ -16,20 +16,23 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import dayjs from "dayjs";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 export default function AdditionalInfoStep({ control, errors, userCount = 0 }) {
+    const { translate } = useTranslation();
+
     return (
         <Grid container spacing={3} sx={{ mt: 2 }}>
             <Grid item xs={12}>
                 <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                    You are about to enroll {userCount} user{userCount !== 1 ? 's' : ''}
+                    {translate('Course management.TEXT_ENROLLMENT_COUNT', `You are about to enroll ${userCount} user${userCount !== 1 ? 's' : ''}`)}
                 </Typography>
             </Grid>
 
             <Grid item xs={12}>
                 <Paper variant="outlined" sx={{ p: 3 }}>
                     <Typography variant="subtitle1" gutterBottom>
-                        Choose a level for the users not yet enrolled in the course
+                        {translate('Course management.SECTION_USER_LEVEL', 'Choose a level for the users not yet enrolled in the course')}
                     </Typography>
 
                     <FormControl fullWidth required sx={{ mt: 2 }}>
@@ -44,9 +47,9 @@ export default function AdditionalInfoStep({ control, errors, userCount = 0 }) {
                                     label="Level"
                                     error={!!errors.level}
                                 >
-                                    <MenuItem value={1}>Learner</MenuItem>
-                                    <MenuItem value={2}>Tutor</MenuItem>
-                                    <MenuItem value={3}>Instructor</MenuItem>
+                                    <MenuItem value={1}>{translate('Course management.DROPDOWN_LEARNER', 'Learner')}</MenuItem>
+                                    <MenuItem value={2}>{translate('Course management.DROPDOWN_TUTOR', 'Tutor')}</MenuItem>
+                                    <MenuItem value={3}>{translate('Course management.DROPDOWN_INSTRUCTOR', 'Instructor')}</MenuItem>
                                 </Select>
                             )}
                         />
@@ -62,7 +65,7 @@ export default function AdditionalInfoStep({ control, errors, userCount = 0 }) {
             <Grid item xs={12}>
                 <Paper variant="outlined" sx={{ p: 3 }}>
                     <Typography variant="subtitle1" gutterBottom>
-                        Enrollment validity period
+                        {translate('Course management.SUB_SECTION_ENROLLMENT_VALIDITY_PERIOD', 'Enrollment validity period')}
                     </Typography>
 
                     <Controller
@@ -77,13 +80,13 @@ export default function AdditionalInfoStep({ control, errors, userCount = 0 }) {
                                         onChange={(e) => field.onChange(e.target.checked)}
                                     />
                                 }
-                                label="Enable enrollment validity period"
+                                label={translate('Course management.CHECKBOX_ENABLE_VALIDITY_PERIOD', 'Enable enrollment validity period')}
                             />
                         )}
                     />
 
                     <Typography variant="caption" color="text.secondary" display="block" gutterBottom>
-                        Set a specific enrollment validity duration
+                        {translate('Course management.TEXT_VALIDITY_DESCRIPTION', 'Set a specific enrollment validity duration')}
                     </Typography>
 
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -99,7 +102,7 @@ export default function AdditionalInfoStep({ control, errors, userCount = 0 }) {
                                                 control={control}
                                                 render={({ field }) => (
                                                     <DatePicker
-                                                        label="Start Date"
+                                                        label={translate('Course management.FIELD_START_DATE', 'Start Date')}
                                                         value={field.value ? dayjs(field.value) : null}
                                                         onChange={(date) => {
                                                             if (date) {
@@ -124,7 +127,7 @@ export default function AdditionalInfoStep({ control, errors, userCount = 0 }) {
                                                 control={control}
                                                 render={({ field }) => (
                                                     <DatePicker
-                                                        label="End Date"
+                                                        label={translate('Course management.FIELD_END_DATE', 'End Date')}
                                                         value={field.value ? dayjs(field.value) : null}
                                                         onChange={(date) => {
                                                             if (date) {

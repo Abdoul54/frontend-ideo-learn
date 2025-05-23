@@ -6,6 +6,7 @@ import UserFieldDrawer from "@/views/Forms/UserField/UserFieldDrawer";
 import { useDeleteUserField, useUserFields } from "@/hooks/api/tenant/useUserFields";
 import DeleteConfirmationDialog from "@/views/Dialogs/DeleteConfirmation";
 import AssignUserFieldsToHaykalDrawer from "@/views/Drawers/AssignUserFieldsToHaykaDrawer";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 export default function Page() {
   const [filters, setFilters] = useState(null);
@@ -22,6 +23,8 @@ export default function Page() {
     data: null
   });
 
+  const { language } = useTranslation();
+
   const deleteUserField = useDeleteUserField();
   const [columnVisibility, setColumnVisibility] = useState({});
   const [assignUserFieldsToHaykalDrawerOpen, setAssignUserFieldsToHaykalDrawerOpen] = useState(false);
@@ -29,11 +32,11 @@ export default function Page() {
   const { data, isLoading, error } = useUserFields({
     page: pagination.pageIndex + 1,
     page_size: pagination.pageSize,
+    lang: language,
     search: globalFilter,
     sort: sorting,
     filters
   });
-
 
   const handleAssignUserFieldsToHaykalDrawerClose = () => {
     setAssignUserFieldsToHaykalDrawerOpen(false);

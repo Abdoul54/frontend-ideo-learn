@@ -28,7 +28,7 @@ export const useEmailSender = () => {
 export const useUpdateEmailSender = () => {
     const queryClient = useQueryClient();
 
-    const mutation = useMutation({
+    return useMutation({
         mutationFn: async (emailSenderData) => {
             const { data } = await axiosInstance.post("/tenant/domains/v1/email-sender", emailSenderData);
             return data;
@@ -41,8 +41,6 @@ export const useUpdateEmailSender = () => {
             toast.error(error?.response?.data?.message || 'Failed to update email sender configuration');
         }
     });
-
-    return mutation.mutate;
 };
 
 

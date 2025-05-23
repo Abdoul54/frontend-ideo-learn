@@ -9,14 +9,10 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import { TabContext, TabPanel } from "@mui/lab";
 import {
     Button,
-    Grid,
-    List,
+    Grid2 as Grid,
     ListItem,
     ListItemText,
-    Typography,
-
     Card,
-    CardHeader,
     CardContent,
     CardActions,
     Collapse,
@@ -119,7 +115,7 @@ const Properties = ({ data }) => {
         }} >
 
             <CardContent component={Grid} container spacing={3} >
-                <Grid item xs={12} component={ListItem}>
+                <Grid item size={12} component={ListItem}>
                     <ListItemText
                         primary="General"
                         secondary="Basic information about the skill set"
@@ -131,7 +127,7 @@ const Properties = ({ data }) => {
                             }
                         }} />
                 </Grid>
-                <Grid item xs={12} component={ListItem}>
+                <Grid item size={12} component={ListItem}>
                     <TextInput
                         name="name"
                         label="Name"
@@ -139,7 +135,7 @@ const Properties = ({ data }) => {
                         type="text"
                     />
                 </Grid>
-                <Grid item xs={12} component={ListItem}>
+                <Grid item size={12} component={ListItem}>
                     <TextInput
                         name="description"
                         label="Description"
@@ -149,7 +145,7 @@ const Properties = ({ data }) => {
                         multiline
                     />
                 </Grid>
-                <Grid item xs={12} component={ListItem}>
+                <Grid item size={12} component={ListItem}>
                     <ListItemText
                         primary='Visibility'
                         primaryTypographyProps={{
@@ -160,7 +156,7 @@ const Properties = ({ data }) => {
                             }
                         }} />
                 </Grid>
-                <Grid item xs={12} component={ListItem}>
+                <Grid item size={12} component={ListItem}>
                     <SwitchInput
                         name="visible_by.all"
                         label={
@@ -172,7 +168,7 @@ const Properties = ({ data }) => {
                         type="text"
                     />
                 </Grid>
-                <Grid item xs={12} component={ListItem}>
+                <Grid item size={12} component={ListItem}>
                     <ListItemText
                         primary='People selection'
                         secondary="Select the groups or branches of users who will be able to choose their own skills"
@@ -185,15 +181,12 @@ const Properties = ({ data }) => {
                         }} />
                 </Grid>
                 <Collapse in={watch('visible_by.all') === false} sx={{ width: '100%' }}>
-                    <Grid item xs={12} component={ListItem}>
+                    <Grid item size={12} component={ListItem}>
                         <TabContext value={currentDataTable}>
-                            <Grid container spacing={4}>
-                                <Grid item xs={12}>
-                                    <Paper elevation={0} sx={{
-                                        bgcolor: 'background.default',
-                                    }}>
+                            <Grid container spacing={4} width={1}>
+                                <Grid item size={12}>
+                                    <Paper elevation={0}>
                                         <CustomTabList
-                                            pill='true'
                                             onChange={(_, newValue) => {
                                                 setCurrentDataTable(newValue);
                                             }}
@@ -209,7 +202,7 @@ const Properties = ({ data }) => {
                                         </CustomTabList>
                                     </Paper>
                                 </Grid>
-                                <Grid item xs={12}>
+                                <Grid item size={12}>
                                     <Paper elevation={0} sx={{ border: 0, padding: 0 }}>
                                         <TabPanel value="groups">
                                             <DataView
@@ -295,8 +288,8 @@ const Properties = ({ data }) => {
                 </Collapse>
             </CardContent>
             <CardActions>
-                <Grid container justifyContent="flex-end">
-                    <Grid item>
+                <Grid container width={1} >
+                    <Grid item size={12} display='flex' justifyContent='flex-end'>
                         <Button
                             type="submit"
                             variant="contained"

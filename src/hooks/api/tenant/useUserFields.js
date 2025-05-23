@@ -8,13 +8,14 @@ export const useUserFields = ({
   page,
   page_size,
   search = "",
+  lang = "",
   sort = [],
   with_pagination = true,
   skip_all = true,
   user_id,
 }) => {
   return useQuery({
-    queryKey: ["user-fields", { page, page_size, search, sort, skip_all, user_id, with_pagination }],
+    queryKey: ["user-fields", { page, page_size, search, sort, skip_all, user_id, with_pagination, lang }],
     queryFn: async () => {
       try {
         const url = urlParamsBuilder({
@@ -23,6 +24,7 @@ export const useUserFields = ({
           page_size,
           search,
           sort,
+          lang,
           skip_all,
           user_id,
           with_pagination

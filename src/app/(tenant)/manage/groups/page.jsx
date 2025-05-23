@@ -6,6 +6,7 @@ import DeleteConfirmationDialog from "@/views/Dialogs/DeleteConfirmation";
 import { useDeleteGroup, useGroups } from "@/hooks/api/tenant/useGroups";
 import GroupsDrawer from "@/views/Forms/Groups/GroupsDrawer";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "@/@core/contexts/translationContext";
 
 export default function Page() {
   const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
@@ -16,10 +17,13 @@ export default function Page() {
     open: false,
     data: null
   });
+
   const [deleteConfirmation, setDeleteConfirmation] = useState({
     open: false,
     data: null
   });
+
+  const { translate } = useTranslation()
 
   const deleteGroup = useDeleteGroup();
   const router = useRouter();
@@ -40,8 +44,8 @@ export default function Page() {
   return (
     <>
       <DataView
-        title="Groups"
-        columns={columns(setDeleteConfirmation, router)}
+        title={translate('Group Management.PAGE_TITLE_GROUPS')}
+        columns={columns(setDeleteConfirmation, router, translate)}
         data={data?.items}
         isLoading={isLoading}
         error={error}
@@ -50,11 +54,11 @@ export default function Page() {
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         toolbar={{
-          breadcrumbs: [{ label: 'Groups', link: '/manage/groups' }],
+          breadcrumbs: [{ label: translate('Group Management.PAGE_TITLE_GROUPS'), link: '/manage/groups' }],
           buttonGroup: [{
-            text: 'New Field',
+            text: translate('Group Management.BUTTON_CREATE_GROUP'),
             variant: 'contained',
-            tooltip: 'New Field',
+            tooltip: translate('Group Management.BUTTON_CREATE_GROUP'),
             icon: 'solar-add-circle-linear',
             onClick: () => setDrawerState({ open: true, data: null })
           }]
@@ -77,6 +81,7 @@ export default function Page() {
         open={drawerState.open}
         onClose={() => setDrawerState({ open: false, data: null })}
         data={drawerState.data}
+        translate={translate}
       />
       <DeleteConfirmationDialog
         open={deleteConfirmation.open}

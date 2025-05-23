@@ -3,7 +3,7 @@ import { Tooltip } from '@mui/material';
 import * as yup from 'yup';
 
 
-export const columns = (drawerState, setDrawerState, changeLocalizationStatus) => [
+export const columns = (drawerState, setDrawerState, changeLocalizationStatus, router) => [
     {
         header: 'Code',
         accessorKey: 'code',
@@ -77,7 +77,7 @@ export const columns = (drawerState, setDrawerState, changeLocalizationStatus) =
                         menuItemProps: {
                             onClick: (e) => {
                                 e.stopPropagation();
-                                console.log('translating..', row);
+                                router.push(`/settings/localization-tool/translations?language=${row?.original?.code}`);
                             },
                             className: 'flex items-center gap-2'
                         }

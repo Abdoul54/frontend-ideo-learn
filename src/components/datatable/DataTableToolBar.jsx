@@ -1,3 +1,5 @@
+import { useTranslation } from "@/@core/contexts/translationContext";
+import { useLocalization } from "@/hooks/api/tenant/useLocalization";
 import { MAX_VISIBLE_COLUMNS } from "@/utils/columnsGenerator";
 import {
     Box,
@@ -16,9 +18,24 @@ import {
     ListItemText,
     useMediaQuery,
     Badge,
-    Tooltip
+    Tooltip,
+    Select,
+    FormControl,
+    InputLabel
 } from "@mui/material";
 import { useState, useEffect, useMemo, memo } from "react";
+
+const Modules = [
+    "Administration System",
+    "User Management",
+    "Power User & Profile Management",
+    "Group management",
+    "Course management",
+    "LP management",
+    "Skill management",
+    "CL management",
+    "CR management"
+]
 
 // Extracted reusable styles
 const iconButtonStyles = {
@@ -60,22 +77,50 @@ const SearchField = memo(({ query, onSearch }) => (
     />
 ));
 
-const BreadcrumbsSection = memo(() => (
+const BreadcrumbsSection = ({ breadcrumbs }) => (
     <Breadcrumbs
-        aria-label='breadcrumb'
+        aria-label="breadcrumb"
+        separator={
+            <i
+                className="solar-alt-arrow-right-outline"
+                style={{
+                    fontSize: 12,
+                    color: 'var(--mui-palette-text-primary)',
+                }}
+            />
+        }
         sx={{
-            flexGrow: 1,
             display: 'flex',
             alignItems: 'center',
+            paddingY: 1,
             gap: 1,
-            color: 'white'
+            color: 'var(--mui-palette-text-primary)',
+            fontSize: '0.875rem',
         }}
     >
-        {['Home', 'Data', 'Table', 'Table', 'Table'].map((text, index) => (
-            <Typography key={index} className="text-white">{text}</Typography>
+        {breadcrumbs?.map((breadcrumb, index) => (
+            <Typography
+                key={index}
+                component="span"
+                onClick={!breadcrumb?.isActive ? breadcrumb?.onClick : undefined}
+                sx={{
+                    cursor: !breadcrumb?.isActive ? 'pointer' : 'default',
+                    fontWeight: breadcrumb?.isActive ? 700 : 500,
+                    color: breadcrumb?.isActive
+                        ? 'primary.main'
+                        : 'text.primary',
+                    '&:hover': {
+                        textDecoration: !breadcrumb?.isActive ? 'underline' : 'none',
+                    },
+                }}
+            >
+                {breadcrumb?.title}
+            </Typography>
         ))}
     </Breadcrumbs>
-));
+);
+
+
 
 const DataTableToolbar = ({
     onSearch,
@@ -88,17 +133,31 @@ const DataTableToolbar = ({
     columnVisibility = {},
     onColumnVisibilityChange,
     hasFilters = false,
+    breadcrumbs = [],
+    goBack,
+    module,
+    language,
+    comparedTo,
+    openRessources,
+    setOpenRessources,
     features = {
         search: true,
         filter: false,
         navigation: false,
         columnVisibility: true,
-        breadcrumbs: true
+        breadcrumbs: false,
+        goBack: false,
+        ressources: false,
+        languageTools: false,
     }
 }) => {
     const isMobile = useMediaQuery('(max-width: 768px)');
+    const { translate } = useTranslation();
     const [isSearchOpen, setIsSearchOpen] = useState(false);
     const [anchorEl, setAnchorEl] = useState(null);
+    const { data: languages } = useLocalization({
+        with_pagination: false
+    })
 
     // Modified useEffect to not override existing visibility settings and respect locked columns
     useEffect(() => {
@@ -170,6 +229,7 @@ const DataTableToolbar = ({
 
     if (isMobile) return null;
 
+
     return (
         <Toolbar
             component={Paper}
@@ -184,7 +244,19 @@ const DataTableToolbar = ({
             }}
         >
             <Stack direction='row' gap={2} alignItems='center'>
-                {features.navigation && (
+                {features?.ressources && (
+                    <>           <IconButton
+                        size='medium'
+                        sx={getActiveIconButtonStyles(openRessources)}
+                        onClick={setOpenRessources}
+                    >
+                        <i className={`lucide-panel-left-open ${openRessources ? 'rotate-180' : ''}`} />
+                    </IconButton>
+                        {features.search && <Divider orientation="vertical" flexItem sx={{ borderColor: 'var(--mui-palette-text-primary)' }} />}
+                    </>
+                )}
+
+                {features?.navigation && (
                     <>
                         <IconButton
                             size='medium'
@@ -197,7 +269,7 @@ const DataTableToolbar = ({
                     </>
                 )}
 
-                {features.search && (
+                {features?.search && (
                     <>
                         <IconButton
                             onClick={handleSearchToggle}
@@ -220,16 +292,93 @@ const DataTableToolbar = ({
                         </Collapse>
                     </>
                 )}
+                {features?.goBack && breadcrumbs && breadcrumbs?.length > 1 && (
+                    <>
+                        {breadcrumbs && breadcrumbs?.length > 1 && <Divider orientation="vertical" flexItem sx={{ borderColor: 'var(--mui-palette-text-primary)' }} />}
+                        <Collapse in={breadcrumbs && breadcrumbs?.length > 1} orientation='horizontal'>
+                            <IconButton
+                                onClick={goBack}
+                                size='medium'
+                                sx={getActiveIconButtonStyles(breadcrumbs && breadcrumbs?.length > 1)}
+                            >
+                                <i
+                                    className="solar-alt-arrow-left-outline"
+                                />
+                            </IconButton>
+                        </Collapse>
+                    </>
+                )}
             </Stack>
 
-            {features.breadcrumbs && features.navigation && (
+            {features?.breadcrumbs && (
                 <Stack direction='row' gap={2} alignItems='center' sx={{ flexGrow: 1 }}>
-                    <BreadcrumbsSection />
+                    <BreadcrumbsSection breadcrumbs={breadcrumbs} />
                 </Stack>
             )}
+            {features?.languageTools &&
+                <Stack direction='row' gap={2} alignItems='center' sx={{ flexGrow: 1 }}>
+                    <FormControl fullWidth>
+                        <InputLabel>Module</InputLabel>
+                        <Select
+                            size='small'
+                            value={module?.value || ""}
+                            label="Module"
+                            autoFocus
+                            onChange={(e) => module?.onChange(e.target.value === "all" ? "" : e.target.value)}
+                        >
+                            <MenuItem value="all">All</MenuItem>
+                            {Modules.map((moduleItem, index) => (
+                                <MenuItem key={index} value={moduleItem}>
+                                    {moduleItem}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth>
+                        <InputLabel>Language</InputLabel>
+                        <Select
+                            size='small'
+                            label="Language"
+                            value={language?.value?.code || ""}
+                            autoFocus
+                            onChange={(e) => {
+                                // Find the full language object based on the code
+                                const selectedLang = languages?.find(lang => lang.code === e.target.value);
+                                language?.onChange(selectedLang);
+                            }}
+                        >
+                            {languages?.map((lang) => (
+                                <MenuItem key={lang.id} value={lang.code}>
+                                    {lang.native_name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                    <FormControl fullWidth>
+                        <InputLabel>Compare to</InputLabel>
+                        <Select
+                            size='small'
+                            value={comparedTo?.value?.code || ""}
+                            label="Compare to"
+                            onChange={(e) => {
+                                // Find the full language object based on the code
+                                const selectedLang = languages?.find(lang => lang.code === e.target.value);
+                                comparedTo?.onChange(selectedLang);
+                            }}
+                            autoFocus
+                        >
+                            {languages?.map((lang) => (
+                                <MenuItem key={lang.id} value={lang.code}>
+                                    {lang.native_name}
+                                </MenuItem>
+                            ))}
+                        </Select>
+                    </FormControl>
+                </Stack>
+            }
 
             <Stack direction='row' gap={2} justifyContent='flex-end' alignItems='center'>
-                {features.filter && (
+                {features?.filter && (
                     <>
                         <IconButton
                             onClick={onFilterClick}
@@ -244,8 +393,8 @@ const DataTableToolbar = ({
                     </>
                 )}
 
-                {features.columnVisibility && (
-                    <Tooltip title="Manage visible columns">
+                {features?.columnVisibility && (
+                    <Tooltip title={translate("common.column_visibility")} arrow>
                         <IconButton
                             size='medium'
                             onClick={(e) => setAnchorEl(e.currentTarget)}

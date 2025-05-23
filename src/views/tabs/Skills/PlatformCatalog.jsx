@@ -4,8 +4,10 @@ import DataView from "@/views/DataView";
 import DeleteConfirmationDialog from "@/views/Dialogs/DeleteConfirmation";
 import SkillGroupAssignmentDrawer from "@/views/Forms/Skills/SkillGroupAssignmentDrawer";
 import { useState } from "react";
+import { useTranslation } from '@/@core/contexts/translationContext';
 
 const PlatformCatalog = ({ setDrawerState }) => {
+    const { translate } = useTranslation();
     const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 15 });
     const [sorting, setSorting] = useState([]);
     const [globalFilter, setGlobalFilter] = useState('');
@@ -45,7 +47,7 @@ const PlatformCatalog = ({ setDrawerState }) => {
     return (
         <>
             <DataView
-                title="Skill Sets"
+                title={translate('Skill management.TABLE_HEADER_SKILLS', 'Skills')}
                 columns={platformCatalogColumns(setDeleteConfirmation, setDrawerState, setSkillDrawerState)}
                 data={data?.items}
                 height="calc(100vh - 328px)"
@@ -83,7 +85,7 @@ const PlatformCatalog = ({ setDrawerState }) => {
                     primaryActions: [
                         {
                             id: 'delete',
-                            label: 'Delete',
+                            label: translate('common.delete', 'Delete'),
                             color: 'error',
                             handler: () => setDeleteConfirmation({ open: true, data: selectedRows, type: 'deleteMany', variant: 'simple' }),
                         }
@@ -95,7 +97,6 @@ const PlatformCatalog = ({ setDrawerState }) => {
                         },
                     }
                 }}
-
                 datatablemulti
                 enableSelection
             />
@@ -104,7 +105,7 @@ const PlatformCatalog = ({ setDrawerState }) => {
                     open={deleteConfirmation.open}
                     onClose={() => setDeleteConfirmation({ open: false, data: null })}
                     data={deleteConfirmation?.data}
-                    title={deleteConfirmation?.data?.name || "Skills"}
+                    title={deleteConfirmation?.data?.name || translate('Skill management.TABLE_HEADER_SKILLS', 'Skills')}
                     onSubmit={handleDeleteSubmit}
                     variant={deleteConfirmation?.variant}
                 />
@@ -119,6 +120,5 @@ const PlatformCatalog = ({ setDrawerState }) => {
         </>
     );
 };
-
 
 export default PlatformCatalog;

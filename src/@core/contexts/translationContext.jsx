@@ -1,213 +1,199 @@
-'use client';
+'use client'
 
-import React, { useState, useEffect, useCallback } from 'react';
-import { useSettings } from './settingsContext';
-import { axiosInstance } from '@/lib/axios';
+import React, { useState, useEffect, useCallback, useRef } from 'react'
+import { axiosInstance } from '@/lib/axios'
+import { useLanguage } from '@/providers/LanguageProvider'
+import { usePathname } from 'next/navigation'
+import { useSettings } from './settingsContext'
+import { getPathKeys } from '@/utils/getters/getPathKeys'
 
-// Create the context
-const TranslationContext = React.createContext();
+const TranslationContext = React.createContext()
+const DEFAULT_LANGUAGE = 'fr'
+const STORAGE_KEY = 'app_translations'
 
-// Available languages
-const AVAILABLE_LANGUAGES = ['en', 'es', 'fr', 'ar'];
-const DEFAULT_LANGUAGE = 'en'; // Fallback default language
-
-// Storage key for translations cache
-const STORAGE_KEY = 'app_translations';
-
-// Translation provider component
 export const TranslationProvider = ({ children }) => {
-  // Get language from settings
-  const { settings } = useSettings();
-  const settingsLanguage = settings?.language?.locale;
+  const { language: activeLanguage, languages } = useLanguage()
+  const currentLocale = activeLanguage?.locale || DEFAULT_LANGUAGE
+  const { settings } = useSettings()
+  const pathname = usePathname()
 
-  // State for translations data
-  const [translations, setTranslations] = useState({});
-  const [language, setLanguage] = useState(() => {
-    const defaultLang = settingsLanguage && AVAILABLE_LANGUAGES.includes(settingsLanguage)
-      ? settingsLanguage
-      : DEFAULT_LANGUAGE;
-    return defaultLang;
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const translationsApplied = useRef(false)
 
-  // Load translations function - follows the pattern of loadSavedAdvancedSettings
-  const loadTranslations = useCallback(async (lang) => {
-    setLoading(true);
-    setError(null);
+  const [metadataState, setMetadataState] = useState({
+    title: '',
+    description: '',
+    favicon: settings?.header?.favicon || '/favicon.ico',
+  })
 
-    try {
-      // First check for cached translations in localStorage
-      const cachedData = localStorage.getItem(STORAGE_KEY);
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [translations, setTranslations] = useState(null)
 
-      if (cachedData) {
-        const parsed = JSON.parse(cachedData);
-
-        // Use cache if it's for the requested language and is still fresh (24 hours)
-        if (parsed.language === lang &&
-          Date.now() - parsed.timestamp < 24 * 60 * 60 * 1000) {
-          // console.log('Using cached translations for:', lang);
-          setTranslations(parsed.data);
-          setLoading(false);
-          return;
-        }
-      }
-
-      // No valid cache, fetch from API
-      // console.log('Fetching translations for:', lang);
-
-      try {
-        const res = await axiosInstance.get(`/api/getters/translations/${lang}`);
-        const data = res?.data?.data || res?.data;
-
-        // console.log('Fetched translations:', data);
-
-        if (data) {
-          // Store in localStorage
-          localStorage.setItem(STORAGE_KEY, JSON.stringify({
-            language: lang,
-            data,
-            timestamp: Date.now()
-          }));
-
-          setTranslations(data);
-        }
-      } catch (apiError) {
-        console.error('Failed to fetch translations:', apiError);
-
-        // Check if we have any cached data for this language as fallback
-        if (cachedData) {
-          const parsed = JSON.parse(cachedData);
-          if (parsed.language === lang) {
-            // console.log('Using stale cached translations as fallback');
-            setTranslations(parsed.data);
-          } else {
-            setError('Failed to load translations for ' + lang);
-          }
-        } else {
-          setError('Failed to load translations for ' + lang);
-        }
-      }
-    } catch (error) {
-      console.error('Error in loadTranslations:', error);
-      setError('Failed to load translations');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Load translations when language changes
-  useEffect(() => {
-    loadTranslations(language);
-  }, [language, loadTranslations]);
-
-  // Update language when settings change
-  useEffect(() => {
-    if (settingsLanguage &&
-      AVAILABLE_LANGUAGES.includes(settingsLanguage) &&
-      settingsLanguage !== language) {
-      // console.log('Language changed from settings:', settingsLanguage);
-      setLanguage(settingsLanguage);
-    }
-  }, [settingsLanguage, language]);
-
-  // Function to change language
-  const changeLanguage = (newLang) => {
-    if (AVAILABLE_LANGUAGES.includes(newLang)) {
-      console.log('Changing language to:', newLang);
-      setLanguage(newLang);
-    } else {
-      console.warn(`Language ${newLang} is not supported, using default`);
-      setLanguage(DEFAULT_LANGUAGE);
-    }
-  };
-
-  // Function to update metadata for a specific path
-  const updateMetadata = (path, title, description) => {
-    if (!translations.metadata) return;
-
-    const updatedMetadata = [...translations.metadata];
-    const existingIndex = updatedMetadata.findIndex(item => item.path === path);
-
-    if (existingIndex >= 0) {
-      updatedMetadata[existingIndex] = { path, title, description };
-    } else {
-      updatedMetadata.push({ path, title, description });
-    }
-
-    const updatedTranslations = {
-      ...translations,
-      metadata: updatedMetadata
-    };
-
-    setTranslations(updatedTranslations);
-
-    // Update localStorage with the new data
-    try {
-      const storageItem = {
-        language,
-        data: updatedTranslations,
-        timestamp: Date.now()
-      };
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(storageItem));
-    } catch (err) {
-      console.error('Error updating metadata in localStorage:', err);
-    }
-  };
-
-  // Translate function with placeholder support
   const translate = (key, placeholders = {}) => {
-    if (loading || !translations || !translations[key]) {
-      return key; // Return key if translation not available
+    if (!translations) return key;
+    const keys = key.split('.');
+    let result = translations;
+    for (const k of keys) result = result?.[k];
+    if (!result || typeof result !== 'string') return key;
+
+    if (placeholders && typeof placeholders === 'object') {
+      Object.keys(placeholders).forEach((ph) => {
+        if (ph === '' || ph === null || ph === undefined) return; // Skip invalid keys
+
+        try {
+          // Handle numeric placeholders specifically
+          if (!isNaN(ph)) {
+            // For numeric placeholders like {0}, use string replacement instead of regex
+            result = result.replace(`{${ph}}`, String(placeholders[ph] || ''));
+          } else {
+            // For named placeholders, use the safer regex approach
+            const escapedKey = String(ph).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            result = result.replace(new RegExp(`{${escapedKey}}`, 'g'), String(placeholders[ph] || ''));
+          }
+        } catch (e) {
+          console.warn(`Error replacing placeholder ${ph} in translation ${key}:`, e);
+        }
+      });
     }
 
-    let text = translations[key];
-
-    // Replace placeholders like {name} with actual values
-    Object.entries(placeholders).forEach(([placeholder, value]) => {
-      text = text.replace(new RegExp(`{${placeholder}}`, 'g'), value);
-    });
-
-    return text;
+    return result;
   };
 
-  // Force refresh translations
-  const forceRefreshTranslations = () => {
+  const applyMetadataFromTranslations = useCallback((metadata, path) => {
+    const pathKey = getPathKeys(path)
+
+    let newMeta = {
+      title: settings?.header?.page_title || 'IDEO SAAS',
+      description: settings?.header?.header_message?.content || 'IDEO SAAS',
+      favicon: settings?.header?.favicon || '/favicon.ico',
+    }
+
+    if (pathKey) {
+      newMeta.title = translate('metadata.' + pathKey.title) || newMeta.title
+      newMeta.description = translate('metadata.' + pathKey.description) || newMeta.description
+    } else if (metadata && typeof metadata === 'object') {
+      const item = Object.values(metadata).find(item => item.path === path)
+      if (item) {
+        newMeta.title = item.title || newMeta.title
+        newMeta.description = item.description || newMeta.description
+        newMeta.favicon = item.favicon || newMeta.favicon
+      }
+    }
+
+    setMetadataState(prev => {
+      if (
+        prev.title === newMeta.title &&
+        prev.description === newMeta.description &&
+        prev.favicon === newMeta.favicon
+      ) return prev
+      return newMeta
+    })
+  }, [settings?.header, translate])
+
+  const loadTranslations = useCallback(async (lang) => {
+    if (!lang) return
+    setLoading(true)
+    setError(null)
+
     try {
-      localStorage.removeItem(STORAGE_KEY);
-      console.log('Cleared translations cache');
-      loadTranslations(language);
-    } catch (error) {
-      console.error('Error clearing translations cache:', error);
-    }
-  };
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEY))
+      if (cached?.language === lang && cached?.data) {
+        setTranslations(cached.data)
+        return
+      }
 
-  // Context value to provide
-  const contextValue = {
-    language,
-    changeLanguage,
-    translate,
-    metadata: translations?.metadata || [],
-    updateMetadata,
-    isLoading: loading,
-    error: error,
-    availableLanguages: AVAILABLE_LANGUAGES,
-    refreshTranslations: () => loadTranslations(language),
-    forceRefreshTranslations
-  };
+      const res = await axiosInstance.get(`/tenant/localization/v1/translations/${lang}`)
+      // const res = await axiosInstance.get(`/api/getters/translations/fr`)
+      const data = res?.data?.data || res?.data
+      if (data) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({ language: lang, data, timestamp: Date.now() }))
+        setTranslations(data)
+      }
+    } catch (err) {
+      console.error('Translation fetch failed', err)
+      setError('Failed to load translations')
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!translations?.metadata || !pathname) return
+    const timeout = setTimeout(() => {
+      applyMetadataFromTranslations(translations.metadata, pathname)
+    }, 0)
+    return () => clearTimeout(timeout)
+  }, [pathname, translations?.metadata, applyMetadataFromTranslations])
+
+  useEffect(() => {
+    document.title = metadataState.title
+
+    const descTag = document.querySelector('meta[name="description"]')
+    if (descTag) {
+      descTag.setAttribute('content', metadataState.description)
+    } else {
+      const meta = document.createElement('meta')
+      meta.name = 'description'
+      meta.content = metadataState.description
+      document.head.appendChild(meta)
+    }
+
+    const faviconUrl = metadataState.favicon
+    if (faviconUrl) {
+      const favLinks = document.querySelectorAll('link[rel="icon"], link[rel="shortcut icon"]')
+      favLinks.forEach(link => { link.href = faviconUrl })
+      if (favLinks.length === 0) {
+        const link = document.createElement('link')
+        link.rel = 'icon'
+        link.href = faviconUrl
+        link.type = faviconUrl.endsWith('.png') ? 'image/png' :
+          faviconUrl.endsWith('.ico') ? 'image/x-icon' : 'image/svg+xml'
+        document.head.appendChild(link)
+      }
+    }
+  }, [metadataState])
+
+  useEffect(() => {
+    try {
+      const cached = JSON.parse(localStorage.getItem(STORAGE_KEY))
+      if (cached?.data) setTranslations(cached.data)
+    } catch (e) {
+      console.warn('Corrupted translation cache. Clearing it.', e)
+      localStorage.removeItem(STORAGE_KEY)
+    }
+    loadTranslations(currentLocale)
+  }, [currentLocale, loadTranslations])
+
+  const forceRefreshTranslations = () => {
+    localStorage.removeItem(STORAGE_KEY)
+    loadTranslations(currentLocale)
+  }
 
   return (
-    <TranslationContext.Provider value={contextValue}>
+    <TranslationContext.Provider
+      value={{
+        language: currentLocale,
+        translate,
+        isLoading: loading,
+        error,
+        availableLanguages: languages?.map(lang => lang.code) || [],
+        refreshTranslations: () => loadTranslations(currentLocale),
+        forceRefreshTranslations,
+        metadata: metadataState,
+        setMetadata: (title, desc, fav) => setMetadataState({
+          title: title || metadataState.title,
+          description: desc || metadataState.description,
+          favicon: fav || metadataState.favicon
+        })
+      }}
+    >
       {children}
     </TranslationContext.Provider>
-  );
-};
+  )
+}
 
-// Custom hook to use the translation context
 export const useTranslation = () => {
-  const context = React.useContext(TranslationContext);
-  if (!context) {
-    throw new Error('useTranslation must be used within a TranslationProvider');
-  }
-  return context;
-};
+  const ctx = React.useContext(TranslationContext)
+  if (!ctx) throw new Error('useTranslation must be used within TranslationProvider')
+  return ctx
+}

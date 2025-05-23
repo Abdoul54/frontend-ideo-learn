@@ -1,8 +1,8 @@
 // MainDomain.tsx
-import { useEmailSender, useTestEmailSender } from "@/hooks/api/tenant/useEmailSender";
+import { useEmailSender } from "@/hooks/api/tenant/useEmailSender";
 import EmailSenderDialog from "@/views/Dialogs/EmailSender";
 import EmailSenderDomainDrawer from "@/views/Forms/EmailSenderDomain/EmailDomainSenderDrawer";
-import { Box, Button, ButtonGroup, Grid, List, ListItem, ListItemText, TextField } from "@mui/material";
+import { Button, ButtonGroup, Grid2 as Grid, List, ListItem, ListItemText } from "@mui/material";
 import { useState } from "react";
 
 const EmailSenderDomains = () => {
@@ -13,39 +13,39 @@ const EmailSenderDomains = () => {
 
     return (
         <Grid container spacing={3}>
-            <Grid item xs={12} >
+            <Grid item size={12} >
                 <Grid container spacing={3} component={List}>
-                    <Grid item component={ListItem} xs={6}>
+                    <Grid item component={ListItem} size={6}>
                         <ListItemText
                             primary="Host"
                             secondary={data?.host || 'N/A'}
                         />
                     </Grid>
-                    <Grid item component={ListItem} xs={6}>
+                    <Grid item component={ListItem} size={6}>
                         <ListItemText
                             primary="Port"
                             secondary={data?.port || 'N/A'}
                         />
                     </Grid>
-                    <Grid item component={ListItem} xs={6}>
+                    <Grid item component={ListItem} size={6}>
                         <ListItemText
                             primary="Username"
                             secondary={data?.username || 'N/A'}
                         />
                     </Grid>
-                    <Grid item component={ListItem} xs={6}>
+                    <Grid item component={ListItem} size={6}>
                         <ListItemText
                             primary="Encryption"
                             secondary={data?.encryption || 'N/A'}
                         />
                     </Grid>
-                    <Grid item component={ListItem} xs={6}>
+                    <Grid item component={ListItem} size={6}>
                         <ListItemText
                             primary="From Address"
                             secondary={data?.from_address || 'N/A'}
                         />
                     </Grid>
-                    <Grid item component={ListItem} xs={6}>
+                    <Grid item component={ListItem} size={6}>
                         <ListItemText
                             primary="From Name"
                             secondary={data?.from_name || 'N/A'}
@@ -53,7 +53,7 @@ const EmailSenderDomains = () => {
                     </Grid>
                 </Grid>
             </Grid>
-            <Grid item xs={12}
+            <Grid item size={12}
                 sx={{
                     display: 'flex',
                     justifyContent: 'flex-end'

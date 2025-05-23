@@ -5,7 +5,7 @@ import TextInput from "@/components/inputs/TextInput";
 import { defaultValues, schema, FIELDS } from "@/constants/partners";
 import { useUpdatePartner } from "@/hooks/api/tenant/usePartners";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { Box, Button, Card, CardActions, CardContent, Divider, Grid, IconButton, List, ListItem, ListItemText, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Card, CardActions, CardContent, Divider, Grid2 as Grid, IconButton, List, ListItem, ListItemText, Typography } from "@mui/material";
 import { useEffect } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 
@@ -64,7 +64,8 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
 
     return (
         <DrawerFormContainer
-            title="Edit Partner"
+            title={data?.name}
+            description={"Edit the partner details and settings."}
             open={open}
             onClose={onClose}
         >
@@ -93,7 +94,7 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                 }}
                 >
                     <Grid container rowSpacing={5} padding={2} component={List}>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <SwitchInput
                                 control={control}
                                 name='is_active'
@@ -105,7 +106,7 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                                 uncheckedValue={false}
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <TextInput
                                 control={control}
                                 name='display_name'
@@ -113,7 +114,7 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                                 disabled={!isActive}
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <SelectInput
                                 control={control}
                                 name='username_attribute'
@@ -127,7 +128,7 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                                 disabled={!isActive}
                             />
                         </Grid>
-                        <Grid item xs={12} component={ListItem}>
+                        <Grid item size={12} component={ListItem}>
                             <SwitchInput
                                 control={control}
                                 name='enable_user_provisioning'
@@ -140,7 +141,7 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                         </Grid>
 
                         {enableUserProvisioning && (
-                            <Grid item xs={12} component={ListItem} sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
+                            <Grid item size={12} component={ListItem} sx={{ flexDirection: 'column', alignItems: 'flex-start' }}>
                                 <Typography variant="subtitle1" gutterBottom>
                                     Provisioning Fields
                                 </Typography>
@@ -211,7 +212,7 @@ const EditPartnerDrawer = ({ open, onClose, data }) => {
                         type="submit"
                         disabled={updatePartner?.isPending}
                     >
-                        Submit
+                        {updatePartner?.isPending ? 'Saving...' : 'Save'}
                     </Button>
                 </CardActions>
             </Card>

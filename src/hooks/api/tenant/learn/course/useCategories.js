@@ -12,11 +12,12 @@ export const useCategories = ({
     search = "",
     sort_attr = "title",
     sort_dir = "asc",
+    lang,
     category_id, // This will now be used as parent_id
     search_type = 1,
 }) => {
     return useQuery({
-        queryKey: ["categories", { page, page_size, search, sort_attr, sort_dir, category_id, search_type }],
+        queryKey: ["categories", { page, page_size, search, lang, sort_attr, sort_dir, category_id, search_type }],
         queryFn: async () => {
             try {
                 let url = "/tenant/taallum/v1/categories";
@@ -26,13 +27,14 @@ export const useCategories = ({
                     prefix: url,
                     page,
                     page_size,
+                    lang,
                     search: search || undefined,
                     sort_attr,
                     sort_dir,
                     search_type: search ? search_type : undefined,
                     parent_id: category_id !== undefined ? category_id : undefined
                 };
-                
+
                 params.with_extra_data = 1;
 
                 const finalUrl = urlParamsBuilder(params);
